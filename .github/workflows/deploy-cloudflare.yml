@@ -27,4 +27,5 @@ jobs:
         run: |
           test -n "$CLOUDFLARE_API_TOKEN" || (echo "Missing GitHub secret CLOUDFLARE_API_TOKEN" && exit 1)
           test -n "$CLOUDFLARE_ACCOUNT_ID" || (echo "Missing GitHub secret CLOUDFLARE_ACCOUNT_ID" && exit 1)
+          npx --yes wrangler@4 d1 migrations apply aurorar --remote
           npx --yes wrangler@4 deploy
