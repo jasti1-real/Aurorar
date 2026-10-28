@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS currency_wallets (
   total_deposited INTEGER NOT NULL DEFAULT 0 CHECK (total_deposited >= 0),
   total_earned INTEGER NOT NULL DEFAULT 0 CHECK (total_earned >= 0),
   total_withdrawn INTEGER NOT NULL DEFAULT 0 CHECK (total_withdrawn >= 0),
+  referral_earnings INTEGER NOT NULL DEFAULT 0 CHECK (referral_earnings >= 0),
   updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
   PRIMARY KEY (user_id, currency)
 );
