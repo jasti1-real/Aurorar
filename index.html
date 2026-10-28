@@ -50,6 +50,7 @@
      <div class="section-head"><h2>Active purchased products</h2><button class="btn outline" data-page="products">Browse products</button></div>
      <div id="activeProducts" class="card"><div class="empty">You haven’t purchased a product yet.</div></div>
      <div class="notice">Review each machine’s price, duration, and listed return before purchasing. Product terms apply.</div>
+     <div class="section-head" style="margin-top:22px"><h2>Withdrawal request history</h2><button class="btn outline" type="button" id="refreshWithdrawalHistory">Refresh</button></div><div class="card"><p class="muted small">A request is not a payout confirmation. Only a verified completed payout should be treated as paid.</p><div id="withdrawalHistory" aria-live="polite"><div class="empty">Loading withdrawal requests…</div></div></div>
     </section>
     <section id="page-products" class="page hidden">
      <div class="hello"><div><h1>Products</h1><p class="muted">Explore the available machine plans.</p></div></div>
@@ -82,7 +83,7 @@ const plans=[
 [1,15000,5000,60],[2,30000,10000,45],[3,60000,20000,30],[4,120000,30000,15],[5,250000,62500,15],[6,500000,125000,15],[7,1000000,250000,10],[8,1500000,500000,10],[9,2000000,750000,10],[10,1000000,250000,30]
 ];
 const money=n=>{const c=({UG:'UGX',RW:'RWF',ZM:'ZMW'})[state.country||'UG']||'UGX';const locale=({UG:'en-UG',RW:'en-RW',ZM:'en-ZM'})[state.country||'UG']||'en-UG';return c+' '+Number(n||0).toLocaleString(locale)};
-const state={phone:'',country:'UG',refCode:'',products:[],regionalProducts:[],balance:0,welcomeBonus:0,deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[],referralRows:[],currencyWallets:[]};
+const state={phone:'',country:'UG',refCode:'',products:[],regionalProducts:[],balance:0,welcomeBonus:0,deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[],referralRows:[],currencyWallets:[],withdrawalRequests:[]};
 let mode='login',deferredPrompt=null,installPromptReady=false;
 const $=id=>document.getElementById(id);
 function chooseCountry(){
@@ -130,12 +131,15 @@ function toast(s){
 }
 async function loadAccount(){
  // Fetch account and referral data concurrently to reduce dashboard wait time.
- const [response,referralResponse]=await Promise.all([
+ const [response,referralResponse,withdrawalResponse]=await Promise.all([
   fetch('/api/me',{credentials:'same-origin',cache:'no-store'}),
-  fetch('/api/referrals',{credentials:'same-origin',cache:'no-store'}).catch(()=>null)
+  fetch('/api/referrals',{credentials:'same-origin',cache:'no-store'}).catch(()=>null),
+  fetch('/api/withdrawals',{credentials:'same-origin',cache:'no-store'}).catch(()=>null)
  ]);
  const data=await response.json().catch(()=>({}));
  const referralData=referralResponse ? await referralResponse.json().catch(()=>({})) : {};
+ const withdrawalData=withdrawalResponse ? await withdrawalResponse.json().catch(()=>({})) : {};
+ state.withdrawalRequests=withdrawalResponse&&withdrawalResponse.ok?(withdrawalData.requests||[]):[];
  state.referralRows=referralResponse&&referralResponse.ok?(referralData.referrals||[]):[];
  if(!response.ok) throw new Error(data.error||'Could not load your account.');
  const w=data.wallet||{};
@@ -164,6 +168,15 @@ async function loadAccount(){
  state.regionalProducts=(data.regionalProducts||[]).map(p=>({id:p.id,n:Number(p.product_id||0),name:p.name,price:Number(p.price||0),daily:Number(p.daily_income||0),days:Number(p.days||p.duration_days||0),currency:p.currency||'RWF'}));
  state.currencyWallets=(data.currencyWallets||[]).map(w=>({currency:w.currency,available_balance:Number(w.available_balance||0),total_deposited:Number(w.total_deposited||0),total_earned:Number(w.total_earned||0),total_withdrawn:Number(w.total_withdrawn||0)}));
  state.ledger=(data.transactions||[]).map(t=>({id:t.id||'',type:t.type,amount:Number(t.amount_ugx||0),currency:t.currency||'UGX',status:t.status,created_at:t.created_at}));
+ renderWithdrawalHistory();
+}
+function withdrawalSafe(v){return String(v??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+function renderWithdrawalHistory(){
+ const target=$('withdrawalHistory');if(!target)return;
+ const labels={requested:'Awaiting review',approved:'Approved · not yet paid',processing:'Processing',completed:'Completed payout',rejected:'Rejected',failed:'Payout failed'};
+ const requests=state.withdrawalRequests||[];
+ if(!requests.length){target.innerHTML='<div class="empty">No withdrawal requests yet. When you submit one, its status will appear here.</div>';return}
+ target.innerHTML='<div class="table-wrap"><table><thead><tr><th>Request date</th><th>Amount</th><th>Mobile money number</th><th>Status</th><th>Last updated</th></tr></thead><tbody>'+requests.slice(0,20).map(r=>'<tr><td>'+withdrawalSafe(r.created_at||'—')+'</td><td>'+Number(r.amount||0).toLocaleString('en-UG')+' '+withdrawalSafe(r.currency||'UGX')+'</td><td>'+withdrawalSafe(r.phone_number||'—')+'</td><td><span class="pill">'+withdrawalSafe(labels[r.status]||r.status||'Unknown')+'</span></td><td>'+withdrawalSafe(r.updated_at||'—')+'</td></tr>').join('')+'</tbody></table></div>';
 }
 function setMode(next){mode=next;const reg=mode==='register';$('registerCountryWrap').classList.toggle('hidden',!reg);$('loginTab').classList.toggle('active',!reg);$('registerTab').classList.toggle('active',reg);$('authTitle').textContent=reg?'Create your Aurorar account':'Welcome back';$('authSub').textContent=reg?'Register with your mobile number to get started.':'Log in to access your account.';$('submitAuth').textContent=reg?'Create account':'Log in';$('confirmWrap').classList.toggle('hidden',!reg);$('termsWrap').classList.toggle('hidden',!reg);$('confirmPassword').required=reg;$('terms').required=reg;$('password').autocomplete=reg?'new-password':'current-password';updatePhonePrefix()}
 function updatePhonePrefix(){const c=$('registerCountry')?.value||'UG';const p={UG:'+256',RW:'+250',ZM:'+260'}[c];$('phone').placeholder=mode==='register'?p+' 7XX XXX XXX':'Enter number with country code, e.g. +256… / +250… / +260…'}
@@ -212,6 +225,7 @@ async function renderProducts(){
  }catch(error){grid.innerHTML='<div class="card">'+error.message+'</div>'}
 }
 $('productCurrency')?.addEventListener('change',renderProducts);
+$('refreshWithdrawalHistory')?.addEventListener('click',async()=>{const b=$('refreshWithdrawalHistory');b.disabled=true;try{const r=await fetch('/api/withdrawals',{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Could not refresh withdrawal history.');state.withdrawalRequests=d.requests||[];renderWithdrawalHistory();toast('Withdrawal history refreshed.')}catch(e){toast(e.message||'Could not refresh withdrawal history.')}finally{b.disabled=false}});
 function render(){
  const rwf=state.currencyWallets.find(w=>w.currency==='RWF');
  const zmw=state.currencyWallets.find(w=>w.currency==='ZMW');
