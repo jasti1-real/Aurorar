@@ -114,9 +114,34 @@ export default {
           const user = await env.DB.prepare("SELECT phone, referral_code, welcome_bonus FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
           if (!user) return json({ error: "Account not found." }, 401);
           const wallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
-          const products = await env.DB.prepare("SELECT up.id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active'").bind(id).all();
+          const products = await env.DB.prepare("SELECT up.id, p.id AS product_id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days, up.starts_at, up.ends_at, up.status FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.purchased_at DESC").bind(id).all();
           const transactions = await env.DB.prepare("SELECT type, amount_ugx, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50").bind(id).all();
           return json({ user, wallet: wallet || {}, products: products.results || [], transactions: transactions.results || [] });
+        }
+        if (url.pathname === "/api/products/purchase" && request.method === "POST") {
+          const userId = await sessionUser(request, env);
+          if (!userId) return json({ error: "Please log in before purchasing a machine." }, 401);
+          const body = await readJson(request);
+          const productId = Number(body?.productId);
+          if (!Number.isSafeInteger(productId) || productId < 1 || productId > 10) return json({ error: "Select a valid machine." }, 400);
+          const product = await env.DB.prepare("SELECT id, name, price_ugx, active FROM products WHERE id = ?").bind(productId).first<any>();
+          if (!product || product.active !== 1) return json({ error: "This machine is not currently available." }, 404);
+          const price = Number(product.price_ugx);
+          const purchaseId = crypto.randomUUID();
+          const transactionId = crypto.randomUUID();
+          // The conditional debit prevents concurrent requests spending the same balance twice.
+          const debit = await env.DB.prepare("UPDATE wallets SET available_balance = available_balance - ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id = ? AND available_balance >= ?").bind(price, userId, price).run();
+          if ((debit.meta?.changes || 0) !== 1) return json({ error: "Insufficient available balance. Deposit funds through a verified payment method before purchasing." }, 409);
+          try {
+            await env.DB.batch([
+              env.DB.prepare("INSERT INTO user_products (id, user_id, product_id, purchase_price_ugx, starts_at, ends_at, status) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), datetime('now', '+' || (SELECT duration_days FROM products WHERE id = ?) || ' days'), 'active')").bind(purchaseId, userId, product.id, price, product.id),
+              env.DB.prepare("INSERT INTO transactions (id, user_id, type, amount_ugx, status, external_reference, description, completed_at) VALUES (?, ?, 'product_purchase', ?, 'completed', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(transactionId, userId, -price, "purchase:" + purchaseId, "Purchased " + product.name)
+            ]);
+          } catch (writeError) {
+            await env.DB.prepare("UPDATE wallets SET available_balance = available_balance + ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id = ?").bind(price, userId).run();
+            throw writeError;
+          }
+          return json({ ok: true, message: product.name + " purchased.", purchase: { id: purchaseId, productId: product.id, name: product.name, priceUgx: price } }, 201);
         }
         if (url.pathname === "/api/products" && request.method === "GET") {
           const products = await env.DB.prepare("SELECT id, name, price_ugx, daily_income_ugx, duration_days FROM products WHERE active = 1 ORDER BY id").all();
