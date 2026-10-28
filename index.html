@@ -181,6 +181,44 @@ function render(){
  const refs=$('referralRows');if(refs)refs.innerHTML=state.referralRows.length?state.referralRows.map(r=>'<tr><td>'+r.phone+'</td><td>'+new Date(r.created_at).toLocaleString('en-UG',{dateStyle:'medium',timeStyle:'short'})+'</td><td>'+money(r.confirmed_deposit)+'</td><td>'+(Number(r.confirmed_deposit)>0?'Deposit confirmed':'Awaiting deposit')+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">No referrals recorded yet.</td></tr>';
  const ledger=$('ledgerRows');if(ledger)ledger.innerHTML=state.ledger.length?state.ledger.map(t=>'<tr><td>'+new Date(t.created_at).toLocaleString('en-UG',{dateStyle:'medium',timeStyle:'short'})+'</td><td>'+String(t.type||'transaction').replaceAll('_',' ')+'</td><td style="color:'+(t.amount<0?'#bd3e4b':'#08784f')+'">'+(t.currency&&t.currency!=='UGX'?t.currency+' '+Number(t.amount||0).toLocaleString(t.currency==='RWF'?'en-RW':'en-ZM'):money(t.amount))+'</td><td>'+String(t.status||'pending')+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">No transactions recorded yet.</td></tr>';
 }
+document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',async()=>{
+ const action=button.dataset.action;
+ if(action!=='deposit'&&action!=='withdraw')return;
+ if(!state.phone){toast('Please log in first.');return;}
+ if(action==='deposit'){
+  const amountText=prompt('Enter deposit amount in UGX (minimum 500):');
+  if(amountText===null)return;
+  const amount=Number(amountText);
+  if(!Number.isSafeInteger(amount)||amount<500||amount>10000000){toast('Enter an amount between UGX 500 and UGX 10,000,000.');return;}
+  const phone=prompt('Enter the MTN or Airtel Money number to charge (e.g. 07XXXXXXXX or +2567XXXXXXXX):',state.phone);
+  if(phone===null)return;
+  button.disabled=true;const label=button.textContent;button.textContent='Sending request…';
+  try{
+   const response=await fetch('/api/payments/deposit',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({amount,phone,country:'UG'})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||'Could not start deposit. Please try again.');
+   toast(data.message||'Deposit request sent. Check your phone and approve the payment prompt.');
+   setTimeout(()=>loadAccount().then(render).catch(()=>{}),2500);
+  }catch(error){toast(error.message||'Deposit failed.');}
+  finally{button.disabled=false;button.textContent=label;}
+ }else{
+  const amountText=prompt('Enter withdrawal amount in UGX (minimum 3,000):');
+  if(amountText===null)return;
+  const amount=Number(amountText);
+  if(!Number.isSafeInteger(amount)||amount<3000){toast('Minimum withdrawal is UGX 3,000.');return;}
+  const phone=prompt('Enter the Uganda mobile money number to receive payment:',state.phone);
+  if(phone===null)return;
+  button.disabled=true;const label=button.textContent;button.textContent='Submitting…';
+  try{
+   const response=await fetch('/api/withdrawals',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({country:'UG',amount,phone,idempotencyKey:crypto.randomUUID().replaceAll('-','')})});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.error||'Could not submit withdrawal request.');
+   toast(data.message||'Withdrawal request submitted for review.');
+   await loadAccount();render();
+  }catch(error){toast(error.message||'Withdrawal failed.');}
+  finally{button.disabled=false;button.textContent=label;}
+ }
+}));
 async function logout(){try{await fetch('/api/auth/logout',{method:'POST',credentials:'same-origin',cache:'no-store'})}catch(error){console.error('Logout request failed',error)}state.phone='';state.refCode='';state.products=[];state.balance=0;state.welcomeBonus=0;state.deposit=0;state.today=0;state.referrals=0;state.earned=0;state.withdrawn=0;state.ledger=[];$('appView').classList.add('hidden');$('authView').classList.remove('hidden');$('password').value='';$('confirmPassword').value='';toast('You have been logged out.')}
 $('sidebarLogout').onclick=logout;$('accountLogout').onclick=logout;
 $('changePassword').onclick=async()=>{if(!state.phone){toast('Please log in first.');return}const currentPassword=prompt('Enter your current password:');if(currentPassword===null)return;const newPassword=prompt('Enter a new password (8–128 characters):');if(newPassword===null)return;const confirmPassword=prompt('Confirm your new password:');if(confirmPassword===null)return;if(newPassword.length<8||newPassword.length>128){toast('New password must be 8–128 characters.');return}if(newPassword!==confirmPassword){toast('The new passwords do not match.');return}const b=$('changePassword');b.disabled=true;b.textContent='Updating…';try{const response=await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({currentPassword,newPassword})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not change password.');toast(data.message||'Password changed successfully.')}catch(error){toast(error.message||'Could not change password.')}finally{b.disabled=false;b.textContent='Change'}};
