@@ -451,3 +451,17 @@ hr{border-color:rgba(169,194,222,.13)!important}
 @media(prefers-reduced-motion:no-preference){
  .card,.btn,button{transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}
 }
+
+/* High-clarity dark UI typography and logo treatment */
+.brand{display:flex!important;align-items:center!important;gap:11px!important;color:#f7fbff!important;font-weight:850!important;letter-spacing:.4px!important;text-shadow:0 1px 0 rgba(255,255,255,.06)!important}
+.brand-logo{display:block!important;width:43px!important;height:43px!important;object-fit:contain!important;flex:0 0 43px!important;border-radius:13px!important;filter:drop-shadow(0 5px 12px rgba(43,218,176,.2))!important}
+.brand-mark{display:none!important}
+body,p,label,button,input,select,textarea,small,.muted,.helper-text,.nav-label{
+ -webkit-font-smoothing:antialiased!important;text-rendering:optimizeLegibility!important
+}
+p,label,.muted,.helper-text,small{color:#c0ccdc!important}
+h1,h2,h3,h4,strong,.stat-value,.metric-value{color:#f7faff!important}
+input::placeholder,textarea::placeholder{color:#9eafc5!important}
+#productsGrid>article.product-card.card .product-meta small{color:#b8c6d8!important}
+#productsGrid>article.product-card.card .product-body>p{color:#b8c6d8!important}
+nav a,.bottom-nav a,.tabbar a,.mobile-nav a{color:#b4c1d3!important}
