@@ -79,11 +79,19 @@ export default {
           const hash = await passwordHash(password, salt);
           const referralCode = "AU" + randomHex(5).toUpperCase();
           const referrer = refCode ? await env.DB.prepare("SELECT id FROM users WHERE referral_code = ? AND status = 'active'").bind(refCode).first<{id:string}>() : null;
-          await env.DB.batch([
-            env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status) VALUES (?, ?, ?, ?, ?, ?, 0, 'active')").bind(id, phone, hash, salt, referralCode, referrer?.id || null),
-            env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id),
-            ...(referrer ? [env.DB.prepare("INSERT INTO referrals (id, referrer_user_id, referred_user_id, level) VALUES (?, ?, ?, 1)").bind(crypto.randomUUID(), referrer.id, id)] : [])
-          ]);
+          // Insert the user first, then dependent rows separately so the failing
+          // operation is isolated in Worker logs and account creation is recoverable.
+          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status) VALUES (?, ?, ?, ?, ?, ?, 0, 'active')").bind(id, phone, hash, salt, referralCode, referrer?.id || null).run();
+          try {
+            await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
+            if (referrer) {
+              await env.DB.prepare("INSERT INTO referrals (id, referrer_user_id, referred_user_id, level) VALUES (?, ?, ?, 1)").bind(crypto.randomUUID(), referrer.id, id).run();
+            }
+          } catch (dependentInsertError) {
+            // Do not leave a half-created account if wallet/referral setup fails.
+            await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id).run();
+            throw dependentInsertError;
+          }
           const token = await makeSession(id, env.SESSION_SECRET);
           return json({ ok: true, user: { phone, referralCode }, message: "Account created." }, 201, { "Set-Cookie": cookie(token, 604800) });
         }
