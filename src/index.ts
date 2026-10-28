@@ -82,7 +82,7 @@ export default {
           const referrer = refCode ? await env.DB.prepare("SELECT id FROM users WHERE referral_code = ? AND status = 'active'").bind(refCode).first<{id:string}>() : null;
           // Insert the user first, then dependent rows separately so the failing
           // operation is isolated in Worker logs and account creation is recoverable.
-          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status) VALUES (?, ?, ?, ?, ?, ?, 0, 'active')").bind(id, phone, hash, salt, referralCode, referrer?.id || null).run();
+          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status) VALUES (?, ?, ?, ?, ?, ?, 5000, 'active')").bind(id, phone, hash, salt, referralCode, referrer?.id || null).run();
           try {
             await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
             if (referrer) {
@@ -111,7 +111,7 @@ export default {
         if (url.pathname === "/api/me" && request.method === "GET") {
           const id = await sessionUser(request, env);
           if (!id) return json({ error: "Please log in." }, 401);
-          const user = await env.DB.prepare("SELECT phone, referral_code FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
+          const user = await env.DB.prepare("SELECT phone, referral_code, welcome_bonus FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
           if (!user) return json({ error: "Account not found." }, 401);
           const wallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
           const products = await env.DB.prepare("SELECT up.id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active'").bind(id).all();
