@@ -1096,3 +1096,78 @@ html body .bottom-nav .wallet-shortcut span:last-child{
   color:#08784f!important;
 }
 html body .toast{color:#fff!important}
+
+
+/* Targeted home dashboard light-theme repair; overrides legacy dark-mode rules */
+html body #page-home>.hello{
+  background:linear-gradient(120deg,#ffffff,#f7fbff)!important;
+  border:1px solid #e1e8ef!important;
+  border-radius:20px!important;
+  padding:20px!important;
+  box-shadow:0 8px 24px rgba(20,43,74,.06)!important;
+  color:#182434!important;
+}
+html body #page-home>.hello h1,
+html body #page-home>.hello h1 *,
+html body #page-home>.hello p,
+html body #page-home>.hello .muted{
+  color:#142b4a!important;
+  opacity:1!important;
+}
+html body #page-home>.hello .pill{
+  color:#08784f!important;
+  background:#eaf8f1!important;
+  border:1px solid #ccefe0!important;
+}
+html body #page-home>.hero{
+  background:linear-gradient(120deg,#e5f4ff 0%,#e0f8f0 100%)!important;
+  border:1px solid #cfe6e3!important;
+  color:#142b4a!important;
+  box-shadow:0 12px 28px rgba(20,43,74,.08)!important;
+}
+html body #page-home>.hero h2,
+html body #page-home>.hero .balance,
+html body #page-home>.hero .small{
+  color:#142b4a!important;
+  opacity:1!important;
+  text-shadow:none!important;
+}
+html body #page-home>.hero .btn{
+  background:#fff!important;
+  color:#142b4a!important;
+  border:1px solid #e1e8ef!important;
+}
+html body #page-home>.card[style*="Welcome bonus"],
+html body #page-home>.card[style*="linear-gradient(110deg"]{
+  background:linear-gradient(110deg,#eaf8f1,#ffffff)!important;
+  color:#182434!important;
+  border-color:#bfe8d5!important;
+}
+html body #page-home>.card[style*="linear-gradient(110deg"] *,
+html body #page-home>.card[style*="linear-gradient(110deg"] .muted,
+html body #page-home>.card[style*="linear-gradient(110deg"] strong{
+  color:#08784f!important;
+  opacity:1!important;
+}
+html body #page-home .stats>.stat,
+html body #page-home .stats>.card.stat{
+  background:#fff!important;
+  border:1px solid #e1e8ef!important;
+  color:#182434!important;
+  box-shadow:0 8px 24px rgba(20,43,74,.06)!important;
+}
+html body #page-home .stats>.stat .label,
+html body #page-home .stats>.card.stat .label{
+  color:#718096!important;
+  opacity:1!important;
+}
+html body #page-home .stats>.stat .value,
+html body #page-home .stats>.card.stat .value{
+  color:#142b4a!important;
+  opacity:1!important;
+}
+html body #page-home .stats>.stat .symbol,
+html body #page-home .stats>.card.stat .symbol{
+  background:#eaf8f1!important;
+  color:#15966b!important;
+}
