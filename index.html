@@ -107,8 +107,14 @@ function chooseCountry(){
 }
 function toast(s){const feedback=$('authFeedback');if(feedback&&!$('authView').classList.contains('hidden')){feedback.textContent=s;feedback.style.display='block'}$('toast').textContent=s;$('toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),6000)}
 async function loadAccount(){
- const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
+ // Fetch account and referral data concurrently to reduce dashboard wait time.
+ const [response,referralResponse]=await Promise.all([
+  fetch('/api/me',{credentials:'same-origin',cache:'no-store'}),
+  fetch('/api/referrals',{credentials:'same-origin',cache:'no-store'}).catch(()=>null)
+ ]);
  const data=await response.json().catch(()=>({}));
+ const referralData=referralResponse ? await referralResponse.json().catch(()=>({})) : {};
+ state.referralRows=referralResponse&&referralResponse.ok?(referralData.referrals||[]):[];
  if(!response.ok) throw new Error(data.error||'Could not load your account.');
  const w=data.wallet||{};
  state.phone=data.user?.phone||state.phone;
@@ -132,7 +138,6 @@ async function loadAccount(){
  state.regionalProducts=(data.regionalProducts||[]).map(p=>({id:p.id,n:Number(p.product_id||0),name:p.name,price:Number(p.price||0),daily:Number(p.daily_income||0),days:Number(p.days||p.duration_days||0),currency:p.currency||'RWF'}));
  state.currencyWallets=(data.currencyWallets||[]).map(w=>({currency:w.currency,available_balance:Number(w.available_balance||0),total_deposited:Number(w.total_deposited||0),total_earned:Number(w.total_earned||0),total_withdrawn:Number(w.total_withdrawn||0)}));
  state.ledger=(data.transactions||[]).map(t=>({id:t.id||'',type:t.type,amount:Number(t.amount_ugx||0),currency:t.currency||'UGX',status:t.status,created_at:t.created_at}));
- try{const rr=await fetch('/api/referrals',{credentials:'same-origin',cache:'no-store'});const rd=await rr.json();state.referralRows=rr.ok?(rd.referrals||[]):[]}catch{state.referralRows=[]}
 }
 function setMode(next){mode=next;const reg=mode==='register';$('registerCountryWrap').classList.toggle('hidden',!reg);$('loginTab').classList.toggle('active',!reg);$('registerTab').classList.toggle('active',reg);$('authTitle').textContent=reg?'Create your Aurorar account':'Welcome back';$('authSub').textContent=reg?'Register with your mobile number to get started.':'Log in to access your account.';$('submitAuth').textContent=reg?'Create account':'Log in';$('confirmWrap').classList.toggle('hidden',!reg);$('termsWrap').classList.toggle('hidden',!reg);$('confirmPassword').required=reg;$('terms').required=reg;$('password').autocomplete=reg?'new-password':'current-password';updatePhonePrefix()}
 function updatePhonePrefix(){const c=$('registerCountry')?.value||'UG';const p={UG:'+256',RW:'+250',ZM:'+260'}[c];$('phone').placeholder=mode==='register'?p+' 7XX XXX XXX':'Enter number with country code, e.g. +256… / +250… / +260…'}
