@@ -150,11 +150,14 @@ export default {
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let provider: any = null;
           try {
-            const path = "https://wallet.wearemarz.com/api/v1/transactions?type=collection&reference=" + encodeURIComponent(local.external_reference || "");
+            const path = "https://wallet.wearemarz.com/api/v1/transactions?per_page=100&type=collection&reference=" + encodeURIComponent(local.external_reference || "");
             const response = await fetch(path, { headers: { "Authorization": "Basic " + auth, "Accept": "application/json" } });
             const data: any = await response.json().catch(() => ({}));
             if (!response.ok || data?.status === "error") return json({ error: data?.message || "MarzPay could not verify this payment yet. Please try again later." }, 502);
-            provider = data?.transaction || data?.data?.transaction || (Array.isArray(data?.data?.transactions) ? data.data.transactions.find((t: any) => t.reference === local.external_reference) : null);
+            const rows = Array.isArray(data?.data?.transactions) ? data.data.transactions
+              : Array.isArray(data?.transactions) ? data.transactions
+              : Array.isArray(data?.data?.data?.transactions) ? data.data.data.transactions : [];
+            provider = data?.transaction || data?.data?.transaction || rows.find((t: any) => String(t.reference || "") === String(local.external_reference || "")) || null;
           } catch {
             return json({ error: "Could not contact MarzPay to verify this payment. Please try again later." }, 502);
           }
