@@ -509,50 +509,42 @@ export default {
           const currency = typeof body?.currency === "string" ? body.currency.toUpperCase() : "UGX";
           if (!Number.isSafeInteger(productId) || productId < 1 || productId > 10) return json({ error: "Select a valid machine." }, 400);
           if (!["UGX","RWF","ZMW"].includes(currency)) return json({ error: "Choose a supported wallet currency." }, 400);
+
           if (currency !== "UGX") {
-            const account = await env.DB.prepare("SELECT country FROM users WHERE id=?").bind(userId).first<{country:string}>();
+            const account = await env.DB.prepare("SELECT country FROM users WHERE id=? AND status='active'").bind(userId).first<{country:string}>();
             const expectedCountry = currency === "RWF" ? "RW" : "ZM";
             if (!account || account.country !== expectedCountry) return json({ error: "Your registered country does not match this wallet currency. No money was deducted." }, 403);
             if (env.REGIONAL_EARNINGS_ENABLED !== "true") return json({ error: "Regional machine purchases are temporarily paused while daily earnings are being verified. No money was deducted." }, 409);
             const product = await env.DB.prepare("SELECT id,name,price,daily_income,duration_days,active FROM regional_products WHERE id=? AND currency=?").bind(productId,currency).first<any>();
-            if (!product || product.active !== 1) return json({ error: "This " + currency + " machine is not configured and enabled yet. No money was deducted." }, 409);
-            const price = Number(product.price);
-            if (!Number.isSafeInteger(price) || price <= 0) return json({ error: "This regional machine has an invalid price. No money was deducted." }, 409);
-            const debit = await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=?").bind(price,userId,currency,price).run();
-            if (Number(debit.meta?.changes || 0) !== 1) return json({ error: "Insufficient " + currency + " wallet balance. No money was deducted." }, 409);
-            const purchaseId = crypto.randomUUID();
-            const transactionId = crypto.randomUUID();
-            try {
-              await env.DB.batch([
-                env.DB.prepare("INSERT INTO regional_user_products (id,user_id,product_id,currency,purchase_price,daily_income,starts_at,ends_at,status) VALUES (?,?,?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),datetime('now','+' || ? || ' days'),'active')").bind(purchaseId,userId,productId,currency,price,Number(product.daily_income),Number(product.duration_days)),
-                env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?, 'product_purchase', ?, ?, 'completed', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(transactionId,userId,-price,currency,"regional-purchase:"+purchaseId,"Purchased "+product.name+" ("+currency+")")
-              ]);
-            } catch (err) {
-              await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(price,userId,currency).run();
-              throw err;
-            }
+            if (!product || Number(product.active) !== 1) return json({ error: "This " + currency + " machine is not configured and enabled yet. No money was deducted." }, 409);
+            const price = Number(product.price), dailyIncome = Number(product.daily_income), durationDays = Number(product.duration_days);
+            if (!Number.isSafeInteger(price) || price <= 0 || !Number.isSafeInteger(dailyIncome) || dailyIncome < 0 || !Number.isSafeInteger(durationDays) || durationDays < 1) return json({ error: "This regional machine has invalid pricing. No money was deducted." }, 409);
+            const purchaseId = crypto.randomUUID(), transactionId = crypto.randomUUID();
+            const result = await env.DB.batch([
+              env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=?").bind(price,userId,currency,price),
+              env.DB.prepare("INSERT INTO regional_user_products (id,user_id,product_id,currency,purchase_price,daily_income,starts_at,ends_at,status) SELECT ?,?,?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),datetime('now','+' || ? || ' days'),'active' WHERE changes()=1").bind(purchaseId,userId,productId,currency,price,dailyIncome,durationDays),
+              env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) SELECT ?,?, 'product_purchase', ?, ?, 'completed', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE EXISTS (SELECT 1 FROM regional_user_products WHERE id=?)").bind(transactionId,userId,-price,currency,"regional-purchase:"+purchaseId,"Purchased "+product.name+" ("+currency+")",purchaseId)
+            ]);
+            if (Number(result[0]?.meta?.changes || 0) !== 1) return json({ error: "Insufficient " + currency + " wallet balance. No money was deducted." }, 409);
+            if (Number(result[1]?.meta?.changes || 0) !== 1 || Number(result[2]?.meta?.changes || 0) !== 1) return json({ error: "Purchase could not be recorded. No money was deducted." }, 409);
             return json({ok:true,message:product.name+" purchased using "+currency+".",purchase:{id:purchaseId,productId,name:product.name,price,currency}},201);
           }
+
           const account = await env.DB.prepare("SELECT country FROM users WHERE id=? AND status='active'").bind(userId).first<{country:string}>();
           if (!account || (account.country || "UG") !== "UG") return json({ error: "This account is registered outside Uganda. UGX machine purchases are not available for your market. No money was deducted." }, 403);
-          const product = await env.DB.prepare("SELECT id, name, price_ugx, active FROM products WHERE id = ?").bind(productId).first<any>();
-          if (!product || product.active !== 1) return json({ error: "This machine is not currently available." }, 404);
-          const price = Number(product.price_ugx);
-          if (!Number.isSafeInteger(price) || price <= 0) return json({ error: "This machine has an invalid price. No money was deducted." }, 409);
-          const purchaseId = crypto.randomUUID();
-          const transactionId = crypto.randomUUID();
-          const debit = await env.DB.prepare("UPDATE wallets SET available_balance = available_balance - ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id = ? AND available_balance >= ?").bind(price, userId, price).run();
-          if (Number(debit.meta?.changes || 0) !== 1) return json({ error: "Your UGX wallet does not have enough available funds for this machine. Deposit funds through a verified payment method, then try again. No money was deducted." }, 409);
-          try {
-            await env.DB.batch([
-              env.DB.prepare("INSERT INTO user_products (id, user_id, product_id, purchase_price_ugx, starts_at, ends_at, status) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), datetime('now', '+' || (SELECT duration_days FROM products WHERE id = ?) || ' days'), 'active')").bind(purchaseId, userId, product.id, price, product.id),
-              env.DB.prepare("INSERT INTO transactions (id, user_id, type, amount_ugx, currency, status, external_reference, description, completed_at) VALUES (?, ?, 'product_purchase', ?, 'UGX', 'completed', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(transactionId, userId, -price, "purchase:" + purchaseId, "Purchased " + product.name)
-            ]);
-          } catch (writeError) {
-            await env.DB.prepare("UPDATE wallets SET available_balance = available_balance + ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id = ?").bind(price, userId).run();
-            throw writeError;
-          }
-          return json({ ok: true, message: product.name + " purchased.", purchase: { id: purchaseId, productId: product.id, name: product.name, priceUgx: price, currency:"UGX" } }, 201);
+          const product = await env.DB.prepare("SELECT id,name,price_ugx,active,duration_days FROM products WHERE id=?").bind(productId).first<any>();
+          if (!product || Number(product.active) !== 1) return json({ error: "This machine is not currently available." }, 404);
+          const price = Number(product.price_ugx), durationDays = Number(product.duration_days);
+          if (!Number.isSafeInteger(price) || price <= 0 || !Number.isSafeInteger(durationDays) || durationDays < 1) return json({ error: "This machine has invalid pricing. No money was deducted." }, 409);
+          const purchaseId = crypto.randomUUID(), transactionId = crypto.randomUUID();
+          const result = await env.DB.batch([
+            env.DB.prepare("UPDATE wallets SET available_balance=available_balance-?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND available_balance>=?").bind(price,userId,price),
+            env.DB.prepare("INSERT INTO user_products (id,user_id,product_id,purchase_price_ugx,starts_at,ends_at,status) SELECT ?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),datetime('now','+' || ? || ' days'),'active' WHERE changes()=1").bind(purchaseId,userId,product.id,price,durationDays),
+            env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) SELECT ?,?, 'product_purchase', ?, 'UGX', 'completed', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE EXISTS (SELECT 1 FROM user_products WHERE id=?)").bind(transactionId,userId,-price,"purchase:"+purchaseId,"Purchased "+product.name,purchaseId)
+          ]);
+          if (Number(result[0]?.meta?.changes || 0) !== 1) return json({ error: "Your UGX wallet does not have enough available funds. No money was deducted." }, 409);
+          if (Number(result[1]?.meta?.changes || 0) !== 1 || Number(result[2]?.meta?.changes || 0) !== 1) return json({ error: "Purchase could not be recorded. No money was deducted." }, 409);
+          return json({ok:true,message:product.name+" purchased.",purchase:{id:purchaseId,productId:product.id,name:product.name,priceUgx:price,currency:"UGX"}},201);
         }
         if (url.pathname === "/api/products" && request.method === "GET") {
           const currency = (url.searchParams.get("currency") || "UGX").toUpperCase();
