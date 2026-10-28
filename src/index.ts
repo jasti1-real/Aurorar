@@ -502,6 +502,15 @@ export default {
             ]);
             return json({ user, products: products.results || [], transactions: transactions.results || [] });
           }
+          if (url.pathname === "/api/admin/withdrawals" && request.method === "GET") {
+            const status = (url.searchParams.get("status") || "").trim().toLowerCase();
+            const allowedStatuses = ["requested", "approved", "processing", "completed", "rejected", "failed"];
+            if (status && !allowedStatuses.includes(status)) return json({ error: "Invalid withdrawal status filter." }, 400);
+            const rows = status
+              ? await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.phone_number, wr.status, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id WHERE wr.status=? ORDER BY wr.created_at DESC LIMIT 200").bind(status).all()
+              : await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.phone_number, wr.status, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id ORDER BY wr.created_at DESC LIMIT 200").all();
+            return json({ withdrawals: rows.results || [], message: "These are withdrawal requests, not confirmed payouts. No payout is sent by this endpoint." });
+          }
           if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
             const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.currency, t.status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
             return json({ transactions: rows.results || [] });
