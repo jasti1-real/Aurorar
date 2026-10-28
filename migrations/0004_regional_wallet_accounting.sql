@@ -1,2 +1,4 @@
--- Match regional wallet accounting fields to the UGX wallet without moving or converting funds.
-ALTER TABLE currency_wallets ADD COLUMN referral_earnings INTEGER NOT NULL DEFAULT 0 CHECK (referral_earnings >= 0);
+-- The referral_earnings column is included in the base regional-wallet migration for new databases.
+-- Production already has this column, so this historical migration is intentionally a no-op
+-- to allow D1 migration history to catch up without attempting a duplicate ALTER TABLE.
+SELECT 1;
