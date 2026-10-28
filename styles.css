@@ -1426,3 +1426,68 @@ html body .auth-card,html body #page-account .card{overflow-wrap:anywhere}
  html body #page-account .row{align-items:center!important;gap:10px!important}
  html body #page-account .row .btn{max-width:38%!important;padding:11px 12px!important}
 }
+
+
+/* Account page typography and layout polish: consistent, readable, organized */
+html body #page-account{color:#eaf5fa!important}
+html body #page-account .card{padding:clamp(18px,4.5vw,28px)!important;border-radius:26px!important}
+html body #page-account .card>h2{
+ font-size:clamp(21px,5.5vw,26px)!important;line-height:1.25!important;
+ letter-spacing:-.45px!important;margin:0 0 20px!important;color:#f4fbff!important;
+}
+html body #page-account .table-wrap{
+ width:100%!important;max-width:100%!important;overflow-x:auto!important;
+ border-radius:16px!important;border:1px solid rgba(210,235,244,.15)!important;
+ background:rgba(5,17,26,.3)!important;
+}
+html body #page-account table{width:100%!important;min-width:520px!important;border-collapse:separate!important;border-spacing:0!important}
+html body #page-account th{
+ padding:15px 14px!important;text-align:left!important;white-space:nowrap!important;
+ font-size:14px!important;font-weight:750!important;letter-spacing:.15px!important;
+ background:#203442!important;color:#e4f1f7!important;
+}
+html body #page-account td{
+ padding:15px 14px!important;font-size:14px!important;line-height:1.45!important;
+ vertical-align:middle!important;white-space:nowrap!important;color:#eaf5fa!important;
+ background:#142530!important;
+}
+html body #page-account tr:nth-child(even) td{background:#192d39!important}
+html body #page-account tbody tr+tr td{border-top:1px solid rgba(211,237,245,.08)!important}
+html body #page-account td:last-child{font-weight:750!important;color:#83f2c8!important}
+html body #page-account .stack{display:flex!important;flex-direction:column!important;gap:0!important}
+html body #page-account .stack .row{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:18px!important;padding:21px 0!important;margin:0!important;
+ background:transparent!important;border:0!important;border-bottom:1px solid rgba(207,235,243,.11)!important;
+}
+html body #page-account .stack .row:last-child{border-bottom:0!important;padding-bottom:0!important}
+html body #page-account .stack .row:first-child{padding-top:0!important}
+html body #page-account .stack .row>div{flex:1 1 auto!important;min-width:0!important}
+html body #page-account .stack .row strong{
+ display:block!important;font-size:16px!important;line-height:1.35!important;
+ letter-spacing:-.15px!important;color:#f4fbff!important;margin-bottom:5px!important;
+}
+html body #page-account .stack .row .muted{
+ display:block!important;font-size:13px!important;line-height:1.55!important;
+ color:#b5c7d2!important;overflow-wrap:anywhere!important;
+}
+html body #page-account .stack .row .btn{
+ flex:0 0 auto!important;width:auto!important;min-width:94px!important;max-width:38%!important;
+ min-height:46px!important;padding:11px 15px!important;border-radius:14px!important;
+ font-size:14px!important;font-weight:750!important;line-height:1.25!important;
+ white-space:normal!important;text-align:center!important;
+}
+html body #page-account .stack .row .btn.secondary,
+html body #page-account .stack .row .btn.outline{
+ background:rgba(224,247,255,.06)!important;color:#eaf7fb!important;
+ border:1px solid rgba(207,235,243,.16)!important;
+}
+html body #page-account .stack .row .btn:active{transform:scale(.98)!important}
+html body #page-account .empty{padding:20px!important;text-align:center!important;font-size:14px!important;line-height:1.5!important}
+@media(max-width:420px){
+ html body #page-account .card{padding:17px!important}
+ html body #page-account .stack .row{gap:12px!important;padding:19px 0!important}
+ html body #page-account .stack .row strong{font-size:15px!important}
+ html body #page-account .stack .row .muted{font-size:12.5px!important}
+ html body #page-account .stack .row .btn{min-width:82px!important;max-width:34%!important;padding:10px 11px!important;font-size:13px!important}
+}
