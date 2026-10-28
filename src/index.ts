@@ -168,6 +168,17 @@ export default {
             const rows = await env.DB.prepare(`SELECT u.id, u.phone, u.referral_code, u.status, u.created_at, COALESCE(w.available_balance,0) AS balance, COALESCE(w.total_deposited,0) AS total_deposited, COALESCE(w.total_withdrawn,0) AS total_withdrawn FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE (? = '' OR u.phone LIKE ? OR u.referral_code LIKE ?) ORDER BY u.created_at DESC LIMIT 100`).bind(q, "%" + q + "%", "%" + q + "%").all();
             return json({ users: rows.results || [] });
           }
+          if (url.pathname.startsWith("/api/admin/users/") && request.method === "GET") {
+            const targetId = decodeURIComponent(url.pathname.slice("/api/admin/users/".length)).trim();
+            if (!targetId || targetId.length > 100) return json({ error: "Invalid user id." }, 400);
+            const user = await env.DB.prepare("SELECT u.id, u.phone, u.referral_code, u.referred_by, u.status, u.created_at, u.welcome_bonus, COALESCE(w.available_balance,0) AS balance, COALESCE(w.total_deposited,0) AS total_deposited, COALESCE(w.total_earned,0) AS total_earned, COALESCE(w.total_withdrawn,0) AS total_withdrawn, COALESCE(w.referral_earnings,0) AS referral_earnings FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE u.id=?").bind(targetId).first<any>();
+            if (!user) return json({ error: "User not found." }, 404);
+            const [products, transactions] = await Promise.all([
+              env.DB.prepare("SELECT up.id, p.name, up.purchase_price_ugx AS price, up.purchased_at, up.starts_at, up.ends_at, up.status FROM user_products up JOIN products p ON p.id=up.product_id WHERE up.user_id=? ORDER BY up.purchased_at DESC LIMIT 50").bind(targetId).all(),
+              env.DB.prepare("SELECT type, amount_ugx, status, external_reference, description, created_at FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(targetId).all()
+            ]);
+            return json({ user, products: products.results || [], transactions: transactions.results || [] });
+          }
           if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
             const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
             return json({ transactions: rows.results || [] });
