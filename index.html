@@ -224,7 +224,7 @@ async function renderProducts(){
     if(b.isConnected){b.disabled=false;b.textContent=purchased?'Purchase again':'Purchase machine'}
    }
   });
- }catch(error){grid.innerHTML='<div class="card">'+error.message+'</div>'}
+ }catch(error){grid.innerHTML='<div class="card product-load-error"><div class="product-load-icon" aria-hidden="true">↻</div><h3>We could not load the machines</h3><p class="muted">Aurorar could not retrieve the product list just now. Your wallet has not been changed.</p><button type="button" class="btn primary full" id="retryProducts">Try again</button></div>';const retry=$('retryProducts');if(retry)retry.onclick=()=>renderProducts()}
 }
 $('productCurrency')?.addEventListener('change',renderProducts);
 $('refreshWithdrawalHistory')?.addEventListener('click',async()=>{const b=$('refreshWithdrawalHistory');b.disabled=true;try{const r=await fetch('/api/withdrawals',{credentials:'same-origin',cache:'no-store'});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Could not refresh withdrawal history.');state.withdrawalRequests=d.requests||[];renderWithdrawalHistory();toast('Withdrawal history refreshed.')}catch(e){toast(e.message||'Could not refresh withdrawal history.')}finally{b.disabled=false}});
