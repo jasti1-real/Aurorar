@@ -1225,3 +1225,58 @@ html body #page-home .card[style*="linear-gradient(110deg"]{
  color:#17385d!important;border:1px solid #cfe9dc!important;
 }
 html body #page-home .card[style*="linear-gradient(110deg"] *{color:#08784f!important}
+
+
+/* User-requested full light theme: force every surface to stay light */
+:root{color-scheme:light!important;--navy:#244b70!important;--ink:#24405a!important;--muted:#687f91!important;--line:#dce9ee!important;--bg:#f5fbff!important;--white:#fff!important;--glass:#ffffffed!important;--glass-border:#ffffff!important}
+html,body,#app,.wrap,.layout,main,.page,.section,.content,.sidebar{
+ background:#f5fbff!important;color:#24405a!important;
+}
+html body .card,html body .stat,html body .product-card,html body .row,
+html body .table-wrap,html body .auth-card,html body .hello,
+html body .empty,html body .section-head,html body #activeProducts,
+html body .account-card,html body .dashboard-card{
+ background:#fff!important;background-image:none!important;color:#24405a!important;
+ border-color:#dce9ee!important;box-shadow:0 6px 20px rgba(36,75,112,.06)!important;
+}
+html body h1,html body h2,html body h3,html body p,
+html body label,html body strong,html body .brand,html body .stat .value,
+html body .product-meta strong,html body .hello *{
+ color:#244b70!important;text-shadow:none!important;
+}
+html body .muted,html body .small,html body .stat .label,
+html body .empty,html body .product-meta small{
+ color:#687f91!important;
+}
+html body .hero,html body .balance-card{
+ background:linear-gradient(120deg,#e5f4ff,#e0f8ed)!important;
+ color:#244b70!important;border:1px solid #d4e9e6!important;
+}
+html body .hero *,html body .balance-card *{
+ color:#244b70!important;text-shadow:none!important;
+}
+html body .bonus-card,html body .card[style*="linear-gradient"],
+html body .card[style*="background"]{
+ background:linear-gradient(120deg,#effaf4,#ffffff)!important;
+ color:#244b70!important;border-color:#d3eadf!important;
+}
+html body .bonus-card *,html body .card[style*="linear-gradient"] *{
+ color:#267b5c!important;text-shadow:none!important;
+}
+html body .btn:not(.primary),html body button.outline{
+ background:#fff!important;color:#244b70!important;border:1px solid #dce9ee!important;
+}
+html body .btn.primary,html body button.primary{
+ background:linear-gradient(120deg,#35d9a5,#16a878)!important;color:#073d31!important;
+}
+html body input,html body select,html body textarea{
+ background:#fff!important;color:#24405a!important;border-color:#dce9ee!important;
+}
+html body .bottom-nav{
+ background:rgba(255,255,255,.98)!important;color:#687f91!important;
+ border-color:#dce9ee!important;
+}
+html body .bottom-nav *{text-shadow:none!important}
+html body .bottom-nav .nav-btn,html body .bottom-nav .nav-btn span{color:#687f91!important}
+html body .bottom-nav .nav-btn.active,html body .bottom-nav .nav-btn.active span,
+html body .bottom-nav .wallet-shortcut,html body .bottom-nav .wallet-shortcut span{color:#16845f!important}
