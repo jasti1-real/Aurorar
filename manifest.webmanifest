@@ -1,0 +1,15 @@
+{
+  "id": "/",
+  "name": "Aurorar",
+  "short_name": "Aurorar",
+  "description": "Aurorar account dashboard",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef5f8",
+  "theme_color": "#0b8f68",
+  "icons": [
+    {"src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
