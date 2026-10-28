@@ -988,3 +988,26 @@ article.product-card.card .product-meta strong {font-size:13px!important;line-he
     display:block!important;font-size:9px!important;font-weight:850!important;color:#08784f!important;
   }
 }
+
+
+/* Aurorar light theme: disable the dark appearance across the whole app */
+:root{color-scheme:light!important;--navy:#142b4a;--green:#15966b;--mint:#eaf8f1;--ink:#182434;--muted:#718096;--line:#e1e8ef;--bg:#f3f6fa;--white:#fff;--red:#bd3e4b;--shadow:0 10px 28px rgba(20,43,74,.08);--glass:rgba(255,255,255,.82);--glass-border:rgba(255,255,255,.9);--glass-shadow:0 18px 45px rgba(20,43,74,.09)}
+html,body{background:#f3f6fa!important;color:#182434!important}
+body{color-scheme:light!important}
+body .wrap,body .main,body .layout{color:#182434}
+body .card,body .stat,body .product-card,body .product-meta div,body .profile,body .row,body .table-wrap,body .hello,body .section-head{
+  background-color:#fff!important;color:#182434!important;border-color:#e1e8ef!important;
+}
+body h1,body h2,body h3,body .brand,body .stat .value,body .product-meta strong{color:#142b4a!important}
+body .muted,body .stat .label,body .product-meta small{color:#718096!important}
+body input,body select,body textarea{background:#fff!important;color:#182434!important;border-color:#dce3eb!important}
+body .hero{background:linear-gradient(120deg,#e3f3ff,#d9f7eb)!important;color:#142b4a!important;border:1px solid #cfe6e3!important}
+body .hero h2{color:#456078!important;opacity:1!important}
+body .hero .balance{color:#142b4a!important}
+body .hero .btn{background:#fff!important;color:#142b4a!important}
+body .bottom-nav{background:rgba(255,255,255,.96)!important;border-top:1px solid #dce3eb!important;box-shadow:0 -8px 28px rgba(20,43,74,.08)!important;backdrop-filter:blur(18px)!important}
+body .bottom-nav .nav-btn{color:#617085!important}
+body .bottom-nav .nav-btn.active{background:#eaf8f1!important;color:#08784f!important}
+body .machine-stage,body .machine-art{background:linear-gradient(135deg,#f8fbff,#edf7f2)!important}
+body .notice{background:#fff9e9!important;color:#75551b!important}
+body .toast{background:#142b4a!important;color:#fff!important}
