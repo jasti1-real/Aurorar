@@ -331,7 +331,7 @@ installButton.onclick=async()=>{
    deferredPrompt=null;
    if(choice&&choice.outcome==='accepted'){
     installButton.textContent='Installing…';
-    toast('Follow the browser prompt to finish installing Aurorar.');
+    toast('Aurorar is ready to install. Follow the installation message shown by your device to add it to your home screen.');
    }else{
     updateInstallButton();
     toast('Installation was cancelled. Tap Install app to try again.');
@@ -340,14 +340,14 @@ installButton.onclick=async()=>{
    console.error('PWA install prompt failed',error);
    deferredPrompt=null;
    updateInstallButton();
-   await showInstallHelp('The browser did not open the install prompt. In Chrome, open ⋮ and choose “Install app” or “Add to Home screen”.');
+   await showInstallHelp('Aurorar could not open the installation window automatically. To install the website, open your device menu and choose “Install app” or “Add to Home screen”.');
   }finally{installButton.disabled=false;}
   return;
  }
  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
  const isAndroid=/android/i.test(navigator.userAgent);
  const isChrome=/chrome|chromium/i.test(navigator.userAgent)&&!/edg|opr/i.test(navigator.userAgent);
- const instructions=isIOS?'To install Aurorar, open this site in Safari, tap Share, then choose “Add to Home Screen”.':isAndroid&&isChrome?'Chrome has not offered the one-tap install prompt yet. Open ⋮ in Chrome and choose “Install app” or “Add to Home screen”. If that option is missing, reload the site after the page finishes loading.':'Open the browser menu and choose “Install app” or “Add to Home screen”.';
+ const instructions=isIOS?'To add Aurorar to your home screen, open the website in Safari, tap Share, then choose “Add to Home Screen”.':isAndroid&&isChrome?'Aurorar can be added to your home screen. Open the website menu and choose “Install app” or “Add to Home screen”. If that option is not shown, reload Aurorar and try again.':'To add Aurorar to your home screen, open the website menu and choose “Install app” or “Add to Home screen”.';
  await showInstallHelp(instructions);
 };
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;updateInstallButton()});
