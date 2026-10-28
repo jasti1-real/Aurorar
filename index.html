@@ -54,7 +54,7 @@
     </section>
     <section id="page-products" class="page hidden">
      <div class="hello"><div><h1>Products</h1><p class="muted">Explore the available machine plans.</p></div></div>
-     <div class="notice">Regional prices are shown for reference. Rwanda and Zambia purchases and payments are not available yet while local payment, product, and withdrawal rules are verified. No regional wallet will be charged.</div>
+     <div id="regionalProductNotice" class="notice hidden">Regional purchases and payments are not available yet while local payment, product, and withdrawal rules are verified. No wallet will be charged.</div>
      <div class="card" style="margin-bottom:14px;padding:12px"><strong id="catalogueCountry">🇺🇬 Uganda — UGX</strong><p class="muted small" style="margin:4px 0 0">Your catalogue and wallet are based on the country selected at registration.</p></div><input type="hidden" id="productCurrency" value="UGX">
      <div id="productsGrid" class="products-grid"></div>
     </section>
@@ -98,6 +98,8 @@ async function loadAccount(){
  $('accountCountryPill').textContent=countryInfo.flag+' '+countryInfo.name+' · '+countryInfo.currency;
  $('catalogueCountry').textContent=countryInfo.flag+' '+countryInfo.name+' — '+countryInfo.currency;
  $('productCurrency').value=countryInfo.currency;
+ $('regionalProductNotice').classList.toggle('hidden',state.country==='UG');
+ $('regionalProductNotice').textContent=state.country==='RW'?'Rwanda market: prices are for reference only. RWF deposits, purchases, and withdrawals are not enabled yet. No wallet will be charged.':state.country==='ZM'?'Zambia market: prices are for reference only. ZMW deposits, purchases, and withdrawals are not enabled yet. No wallet will be charged.':'';
  $('regionalWalletSection').classList.add('hidden'); // Keep other countries' wallets and market cards off the home dashboard; show only the registered country's account.
  state.refCode=data.user?.referral_code||data.user?.referralCode||state.refCode;
  state.balance=Number(w.available_balance||0);
