@@ -168,6 +168,28 @@ export default {
             const rows = await env.DB.prepare(`SELECT u.id, u.phone, u.referral_code, u.status, u.created_at, COALESCE(w.available_balance,0) AS balance, COALESCE(w.total_deposited,0) AS total_deposited, COALESCE(w.total_withdrawn,0) AS total_withdrawn FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE (? = '' OR u.phone LIKE ? OR u.referral_code LIKE ?) ORDER BY u.created_at DESC LIMIT 100`).bind(q, "%" + q + "%", "%" + q + "%").all();
             return json({ users: rows.results || [] });
           }
+          if (url.pathname.startsWith("/api/admin/users/") && request.method === "DELETE") {
+            const targetId = decodeURIComponent(url.pathname.slice("/api/admin/users/".length)).trim();
+            if (!targetId || targetId.length > 100) return json({ error: "Invalid user id." }, 400);
+            if (targetId === adminUserId) return json({ error: "You cannot delete the administrator account you are currently using." }, 409);
+            const target = await env.DB.prepare("SELECT id, phone FROM users WHERE id=?").bind(targetId).first<{id:string;phone:string}>();
+            if (!target) return json({ error: "User not found." }, 404);
+            const [transactions, purchases, referrals, paymentEvents, referredBy] = await Promise.all([
+              env.DB.prepare("SELECT COUNT(*) AS n FROM transactions WHERE user_id=?").bind(targetId).first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS n FROM user_products WHERE user_id=?").bind(targetId).first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS n FROM referrals WHERE referrer_user_id=? OR referred_user_id=?").bind(targetId,targetId).first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS n FROM payment_events WHERE user_id=?").bind(targetId).first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS n FROM users WHERE referred_by=?").bind(target.phone).first<any>()
+            ]);
+            if ([transactions,purchases,referrals,paymentEvents,referredBy].some(x => Number(x?.n || 0) > 0)) {
+              return json({ error: "This account has financial, machine, referral, or payment records. For audit safety, it cannot be permanently deleted; suspend the account instead." }, 409);
+            }
+            await env.DB.batch([
+              env.DB.prepare("DELETE FROM wallets WHERE user_id=?").bind(targetId),
+              env.DB.prepare("DELETE FROM users WHERE id=?").bind(targetId)
+            ]);
+            return json({ ok: true, message: "Account permanently deleted." });
+          }
           if (url.pathname.startsWith("/api/admin/users/") && request.method === "GET") {
             const targetId = decodeURIComponent(url.pathname.slice("/api/admin/users/".length)).trim();
             if (!targetId || targetId.length > 100) return json({ error: "Invalid user id." }, 400);
