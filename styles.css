@@ -1365,3 +1365,64 @@ html body .product-meta div{background:rgba(255,255,255,.035)!important;border-c
 @media(prefers-reduced-motion:no-preference){
  html body .bottom-nav .wallet-shortcut .wallet-logo-orbit{animation:aurorarGlobeSpin 5s linear infinite,aurorarGlobeGlow 2s ease-in-out infinite alternate!important}
 }
+
+
+/* Account and sign-in pages: polished contrast, balanced spacing, responsive light/dark glass */
+html body .auth{background:radial-gradient(ellipse at 8% 0%,rgba(76,225,184,.18),transparent 34%),radial-gradient(ellipse at 95% 90%,rgba(95,187,230,.12),transparent 38%),#0b131a!important;padding:22px 16px!important}
+html body .auth-card{
+ width:min(100%,460px)!important;padding:clamp(22px,6vw,34px)!important;
+ border-radius:30px!important;border:1px solid rgba(224,255,247,.18)!important;
+ background:linear-gradient(145deg,rgba(22,38,51,.94),rgba(12,23,32,.97))!important;
+ color:#f2fbff!important;box-shadow:0 30px 90px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.07)!important;
+ backdrop-filter:blur(26px) saturate(150%)!important;-webkit-backdrop-filter:blur(26px) saturate(150%)!important;
+}
+html body .auth-card .brand,html body .auth-card h1,html body .auth-card h2,
+html body .auth-card strong,html body .auth-card label{color:#f4fbff!important}
+html body .auth-card p,html body .auth-card .muted,html body .auth-card .small{color:#b2c4d0!important}
+html body .auth-card .brand{font-size:26px!important;gap:13px!important;margin-bottom:28px!important}
+html body .auth-card .brand-mark{width:54px!important;height:54px!important;border-radius:17px!important}
+html body .auth-card h1{font-size:clamp(27px,7vw,34px)!important;letter-spacing:-.8px!important;margin-bottom:9px!important}
+html body .auth-tabs{background:rgba(4,15,23,.52)!important;border:1px solid rgba(217,244,250,.10)!important;border-radius:16px!important;padding:5px!important;gap:5px!important}
+html body .auth-tabs button{color:#b0c2ce!important;border-radius:12px!important;min-height:48px!important}
+html body .auth-tabs button.active{background:linear-gradient(130deg,rgba(53,224,173,.22),rgba(95,216,221,.12))!important;color:#9cf5d4!important;box-shadow:inset 0 0 0 1px rgba(101,244,198,.18)!important}
+html body .auth-card .field{gap:8px!important;margin-bottom:17px!important}
+html body .auth-card .field label{font-size:13px!important;color:#c8d8e2!important}
+html body .auth-card .field input,html body .auth-card input{
+ min-height:54px!important;border-radius:15px!important;padding:14px 16px!important;
+ background:rgba(4,16,25,.76)!important;color:#f3fbff!important;
+ border:1px solid rgba(211,239,247,.15)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.025)!important;
+}
+html body .auth-card input::placeholder{color:#8297a7!important;opacity:1!important}
+html body .auth-card input:focus{border-color:#4ce0b0!important;box-shadow:0 0 0 4px rgba(76,224,176,.12)!important}
+html body .auth-card .btn.primary{min-height:54px!important;border-radius:16px!important;background:linear-gradient(110deg,#39e3b0,#13b88a)!important;color:#062b22!important;font-weight:850!important;box-shadow:0 10px 26px rgba(19,184,138,.22)!important}
+html body .auth-card .btn.outline,html body .auth-card .btn.secondary{background:rgba(255,255,255,.06)!important;color:#e9f7fb!important;border:1px solid rgba(211,239,247,.15)!important}
+html body .auth-card .check{color:#b2c4d0!important}
+html body #page-account .card{
+ background:linear-gradient(145deg,rgba(21,37,50,.95),rgba(13,24,34,.97))!important;
+ border:1px solid rgba(209,239,246,.13)!important;color:#f0f8fc!important;
+ border-radius:24px!important;padding:clamp(16px,4vw,24px)!important;
+ box-shadow:0 16px 38px rgba(0,0,0,.2),inset 0 1px 0 rgba(255,255,255,.04)!important;
+}
+html body #page-account h2,html body #page-account strong{color:#f4fbff!important}
+html body #page-account .muted,html body #page-account .small{color:#adbfcc!important}
+html body #page-account .table-wrap{border:1px solid rgba(207,235,243,.12)!important;border-radius:15px!important;overflow:auto!important}
+html body #page-account table{background:transparent!important;color:#eaf5fa!important}
+html body #page-account th{background:rgba(255,255,255,.06)!important;color:#b8cbd6!important;border-color:rgba(207,235,243,.12)!important}
+html body #page-account td{background:transparent!important;color:#eaf5fa!important;border-color:rgba(207,235,243,.10)!important}
+html body #page-account td:last-child{color:#82f1c7!important}
+html body #page-account .row{gap:14px!important;padding:17px 0!important;border-color:rgba(207,235,243,.12)!important}
+html body #page-account .row>div{min-width:0!important;flex:1!important}
+html body #page-account .row .btn{flex-shrink:0!important;max-width:42%!important;white-space:normal!important}
+html body #page-account .btn.outline,html body #page-account .btn.secondary{
+ background:rgba(255,255,255,.06)!important;color:#eaf7fb!important;border:1px solid rgba(207,235,243,.14)!important;
+}
+html body #page-account .btn.danger{background:rgba(189,62,75,.14)!important;color:#ffb4bc!important;border:1px solid rgba(255,120,135,.16)!important}
+html body #page-account .empty{background:transparent!important;color:#9fb3c0!important}
+html body .auth-card,html body #page-account .card{overflow-wrap:anywhere}
+@media(max-width:480px){
+ html body .auth{padding:16px 12px!important}
+ html body .auth-card{padding:24px 20px!important;border-radius:26px!important}
+ html body #page-account .table-wrap{margin-top:8px!important}
+ html body #page-account .row{align-items:center!important;gap:10px!important}
+ html body #page-account .row .btn{max-width:38%!important;padding:11px 12px!important}
+}
