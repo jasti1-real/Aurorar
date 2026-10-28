@@ -351,7 +351,7 @@ export default {
           ]);
           const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? AND currency = ?").bind(id, currency).all();
           const selectedWallet = currency === "UGX" ? (ugWallet || {}) : ((currencyWallets.results || [])[0] || {});
-          const transactions = await env.DB.prepare("SELECT type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? AND COALESCE(currency, 'UGX') = ? ORDER BY created_at DESC LIMIT 50").bind(id, currency).all();
+          const transactions = await env.DB.prepare("SELECT id, type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? AND COALESCE(currency, 'UGX') = ? ORDER BY created_at DESC LIMIT 50").bind(id, currency).all();
           return json({ user, wallet: selectedWallet, currencyWallets: currencyWallets.results || [], products: products.results || [], regionalProducts: regionalProducts.results || [], transactions: transactions.results || [] });
         }
         if (url.pathname === "/api/referrals" && request.method === "GET") {
