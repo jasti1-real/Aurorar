@@ -1280,3 +1280,88 @@ html body .bottom-nav *{text-shadow:none!important}
 html body .bottom-nav .nav-btn,html body .bottom-nav .nav-btn span{color:#687f91!important}
 html body .bottom-nav .nav-btn.active,html body .bottom-nav .nav-btn.active span,
 html body .bottom-nav .wallet-shortcut,html body .bottom-nav .wallet-shortcut span{color:#16845f!important}
+
+
+/* Aurorar premium fintech glass theme — cohesive dark navy with iridescent mint */
+:root{
+ color-scheme:dark!important;
+ --navy:#f4fbff!important;--green:#39e4b0!important;--mint:#12352f!important;
+ --ink:#eef7fb!important;--muted:#a7bac7!important;--line:rgba(200,230,239,.13)!important;
+ --bg:#0b131a!important;--white:#111e28!important;
+ --shadow:0 18px 42px rgba(0,0,0,.25)!important;
+ --glass:rgba(18,31,42,.76)!important;--glass-border:rgba(255,255,255,.16)!important;
+ --glass-shadow:0 20px 48px rgba(0,0,0,.3)!important;
+}
+html,body,#app,.wrap,.layout,main,.page,.section,.content,.sidebar{
+ background:#0b131a!important;color:#eef7fb!important;
+}
+body{
+ background:radial-gradient(ellipse at 18% 0%,rgba(35,101,113,.22),transparent 38%),radial-gradient(ellipse at 95% 35%,rgba(37,142,111,.12),transparent 34%),#0b131a!important;
+ color:#eef7fb!important;
+}
+html body .card,html body .stat,html body .product-card,html body .row,
+html body .table-wrap,html body .auth-card,html body .hello,
+html body .empty,html body .section-head,html body #activeProducts,
+html body .account-card,html body .dashboard-card{
+ background:linear-gradient(145deg,rgba(22,38,51,.94),rgba(13,24,34,.97))!important;
+ background-image:linear-gradient(145deg,rgba(22,38,51,.94),rgba(13,24,34,.97))!important;
+ color:#eef7fb!important;border:1px solid rgba(196,230,239,.12)!important;
+ box-shadow:0 16px 36px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+html body h1,html body h2,html body h3,html body p,html body label,
+html body strong,html body .brand,html body .stat .value,
+html body .product-meta strong{color:#f3f9fc!important;text-shadow:none!important}
+html body .muted,html body .small,html body .stat .label,
+html body .empty,html body .product-meta small{color:#a7bac7!important}
+html body .hero,html body .balance-card{
+ position:relative!important;overflow:hidden!important;
+ background:linear-gradient(115deg,rgba(18,47,70,.96),rgba(33,91,102,.92) 48%,rgba(18,83,69,.95))!important;
+ border:1px solid rgba(210,250,245,.22)!important;
+ box-shadow:0 20px 48px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.22)!important;
+}
+html body .hero:after,html body .balance-card:after{
+ content:""!important;position:absolute!important;inset:-40%!important;pointer-events:none!important;
+ background:linear-gradient(112deg,transparent 32%,rgba(214,255,246,.13) 44%,rgba(185,247,239,.08) 52%,transparent 64%)!important;
+ transform:rotate(-8deg)!important;
+}
+html body .hero *,html body .balance-card *{color:#f5fffd!important;text-shadow:none!important}
+html body .hero .balance,html body .balance-card .balance{color:#b9ffe7!important}
+html body .bonus-card,html body .card[style*="linear-gradient"],
+html body .card[style*="background"]{
+ background:linear-gradient(130deg,rgba(15,49,49,.96),rgba(16,34,43,.98))!important;
+ color:#eafcf5!important;border-color:rgba(115,236,199,.18)!important;
+}
+html body .bonus-card *,html body .card[style*="linear-gradient"] *{color:#eafcf5!important;text-shadow:none!important}
+html body .btn:not(.primary),html body button.outline{
+ background:rgba(22,39,54,.96)!important;color:#edf7fb!important;
+ border:1px solid rgba(206,233,242,.13)!important;
+}
+html body .btn.primary,html body button.primary{
+ background:linear-gradient(110deg,#36e0ad,#13b987)!important;color:#05271f!important;
+ box-shadow:0 8px 22px rgba(20,208,151,.2)!important;
+}
+html body input,html body select,html body textarea{
+ background:#101e29!important;color:#f0f8fb!important;border-color:rgba(206,233,242,.16)!important;
+}
+html body .pill,html body .secondary{
+ background:rgba(46,206,157,.12)!important;color:#8af5ce!important;border:1px solid rgba(94,238,190,.15)!important;
+}
+html body .bottom-nav{
+ background:rgba(224,242,244,.84)!important;color:#526a7a!important;
+ border:1px solid rgba(255,255,255,.45)!important;
+ box-shadow:0 -8px 32px rgba(0,0,0,.18)!important;
+ backdrop-filter:blur(24px) saturate(1.4)!important;
+}
+html body .bottom-nav .nav-btn,html body .bottom-nav .nav-btn span{color:#61798a!important}
+html body .bottom-nav .nav-btn.active,html body .bottom-nav .nav-btn.active span,
+html body .bottom-nav .wallet-shortcut,html body .bottom-nav .wallet-shortcut span{color:#087f5b!important}
+html body .bottom-nav .nav-btn.active{background:rgba(143,255,216,.3)!important;border-radius:22px!important}
+html body .stats>.stat .symbol,html body .stat .symbol{
+ background:rgba(143,255,216,.85)!important;color:#087f5b!important;
+ box-shadow:0 0 18px rgba(80,240,184,.13)!important;
+}
+html body .empty{background:linear-gradient(145deg,#142633,#101c26)!important;color:#b3c4cf!important}
+html body .product-meta div{background:rgba(255,255,255,.035)!important;border-color:rgba(255,255,255,.09)!important}
+@media(prefers-reduced-motion:no-preference){
+ html body .bottom-nav .wallet-shortcut .wallet-logo-orbit{animation:aurorarGlobeSpin 5s linear infinite,aurorarGlobeGlow 2s ease-in-out infinite alternate!important}
+}
