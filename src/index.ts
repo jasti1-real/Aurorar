@@ -1,5 +1,6 @@
 export interface Env {
   ASSETS: Fetcher;
+  REGIONAL_EARNINGS_ENABLED?: string;
   DB: D1Database;
   SESSION_SECRET: string;
   ADMIN_PHONES?: string;
@@ -66,6 +67,28 @@ function normalizePhone(input: unknown): string | null {
   return phone;
 }
 export default {
+  async scheduled(_controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
+    // Disabled unless an operator explicitly sets REGIONAL_EARNINGS_ENABLED=true.
+    if (env.REGIONAL_EARNINGS_ENABLED !== "true") {
+      console.log("Regional earnings scheduler disabled; no wallets changed.");
+      return;
+    }
+    if (!env.DB) throw new Error("D1 binding is unavailable.");
+    const dateRow = await env.DB.prepare("SELECT date(datetime('now','+3 hours')) AS earning_date").first<{earning_date:string}>();
+    const earningDate = dateRow?.earning_date;
+    if (!earningDate) throw new Error("Could not determine EAT earning date.");
+    const eligible = await env.DB.prepare("SELECT rup.id AS product_id, rup.user_id, rup.currency, rup.daily_income FROM regional_user_products rup WHERE rup.status='active' AND rup.currency IN ('RWF','ZMW') AND rup.daily_income>0 AND datetime(rup.starts_at)<=datetime('now') AND datetime(rup.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM regional_earning_ledger el WHERE el.user_product_id=rup.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;currency:string;daily_income:number}>();
+    for (const p of eligible.results || []) {
+      const ledgerId = crypto.randomUUID();
+      await env.DB.batch([
+        env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(p.user_id,p.currency),
+        env.DB.prepare("INSERT OR IGNORE INTO regional_earning_ledger (id,user_product_id,user_id,currency,earning_date,amount,status) VALUES (?,?,?,?,?,?,'pending')").bind(ledgerId,p.product_id,p.user_id,p.currency,earningDate,Math.trunc(Number(p.daily_income))),
+        env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+(SELECT amount FROM regional_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending'),total_earned=total_earned+(SELECT amount FROM regional_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending'),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM regional_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending')").bind(p.product_id,earningDate,p.product_id,earningDate,p.user_id,p.currency,p.product_id,earningDate),
+        env.DB.prepare("UPDATE regional_earning_ledger SET status='credited',credited_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_product_id=? AND earning_date=? AND status='pending' AND EXISTS (SELECT 1 FROM currency_wallets WHERE user_id=? AND currency=?)").bind(p.product_id,earningDate,p.user_id,p.currency)
+      ]);
+    }
+    console.log("Regional earnings run completed.", { earningDate, eligibleMachines: eligible.results?.length || 0 });
+  },
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     if (url.pathname.startsWith("/api/")) {
@@ -408,7 +431,7 @@ export default {
             const transactionId = crypto.randomUUID();
             try {
               await env.DB.batch([
-                env.DB.prepare("INSERT INTO regional_user_products (id,user_id,product_id,currency,purchase_price,starts_at,ends_at,status) VALUES (?,?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),datetime('now','+' || ? || ' days'),'active')").bind(purchaseId,userId,productId,currency,price,Number(product.duration_days)),
+                env.DB.prepare("INSERT INTO regional_user_products (id,user_id,product_id,currency,purchase_price,daily_income,starts_at,ends_at,status) VALUES (?,?,?,?,?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'),datetime('now','+' || ? || ' days'),'active')").bind(purchaseId,userId,productId,currency,price,Number(product.daily_income),Number(product.duration_days)),
                 env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?, 'product_purchase', ?, ?, 'completed', ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(transactionId,userId,-price,currency,"regional-purchase:"+purchaseId,"Purchased "+product.name+" ("+currency+")")
               ]);
             } catch (err) {
