@@ -465,3 +465,29 @@ input::placeholder,textarea::placeholder{color:#9eafc5!important}
 #productsGrid>article.product-card.card .product-meta small{color:#b8c6d8!important}
 #productsGrid>article.product-card.card .product-body>p{color:#b8c6d8!important}
 nav a,.bottom-nav a,.tabbar a,.mobile-nav a{color:#b4c1d3!important}
+
+/* Strong, accessible text contrast across the full dark dashboard */
+:root{color-scheme:dark}
+body{color:#f7faff!important}
+body p,body label,body small,body .muted,body .helper-text,body .subtle,body .description{
+ color:#d1dbea!important;opacity:1!important
+}
+body h1,body h2,body h3,body h4,body strong,body b,body .section-title,body .stat-value,body .metric-value{
+ color:#ffffff!important;opacity:1!important
+}
+body .hello p,body .hello .muted{color:#dbe5f2!important}
+body .pill,body .badge{color:#7df5cc!important}
+body .card,body .panel,body .stat-card,body .balance-card{color:#f4f8ff!important}
+body .stat-card *,body .metric-card *,body .stat *,body .dashboard-stat *{opacity:1!important}
+body .stat-card .muted,body .metric-card .muted,body .stat .muted,body .dashboard-stat .muted{color:#c0ccdc!important}
+body .stat-card strong,body .metric-card strong,body .stat strong,body .dashboard-stat strong,
+body .stat-card .value,body .metric-card .value,body .stat .value,body .dashboard-stat .value{
+ color:#f4f8ff!important;text-shadow:none!important
+}
+body input,body select,body textarea{color:#f7faff!important;background:#0b1422!important}
+body input::placeholder,body textarea::placeholder{color:#aebed2!important;opacity:1!important}
+body .btn.outline,body button.outline{color:#edf5ff!important}
+body .btn.secondary,body button.secondary{color:#edf5ff!important}
+body .bottom-nav a,body .mobile-nav a,body .tabbar a{color:#d0dbea!important;opacity:1!important}
+body .bottom-nav a.active,body .mobile-nav a.active,body .tabbar a.active{color:#73efc4!important}
+body .card .value,body .card .amount,body .card .number{color:#fff!important;opacity:1!important}
