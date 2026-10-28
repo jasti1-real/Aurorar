@@ -1,1 +1,3 @@
-ALTER TABLE users ADD COLUMN country TEXT NOT NULL DEFAULT 'UG' CHECK (country IN ('UG','RW','ZM'));
+-- The country column already exists in the production users table.
+-- Keep this historical migration as a no-op so remote migration history can catch up safely.
+SELECT 1;
