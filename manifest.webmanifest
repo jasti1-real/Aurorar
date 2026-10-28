@@ -3,15 +3,29 @@
   "name": "Aurorar",
   "short_name": "Aurorar",
   "description": "Aurorar account dashboard",
-  "start_url": "/",
+  "start_url": "/?source=pwa",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["standalone", "minimal-ui"],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
   "orientation": "portrait",
   "background_color": "#080d16",
   "theme_color": "#080d16",
+  "prefer_related_applications": false,
   "icons": [
-    {"src": "/icon.svg?v=aurorar-compass", "sizes": "any", "type": "image/svg+xml", "purpose": "any"},
-    {"src": "/icon.svg?v=aurorar-compass", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable"}
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
   ]
 }
