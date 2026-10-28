@@ -143,14 +143,16 @@ export default {
           const body = await readJson(request);
           const transactionId = typeof body?.transactionId === "string" ? body.transactionId : "";
           if (!transactionId) return json({ error: "Select a deposit transaction to check." }, 400);
-          const local = await env.DB.prepare("SELECT id,user_id,amount_ugx,currency,status,external_reference FROM transactions WHERE id=? AND user_id=? AND type='deposit'").bind(transactionId,userId).first<any>();
+          const local = await env.DB.prepare("SELECT id,user_id,amount_ugx,currency,status,external_reference,provider_transaction_uuid FROM transactions WHERE id=? AND user_id=? AND type='deposit'").bind(transactionId,userId).first<any>();
           if (!local) return json({ error: "Deposit transaction not found." }, 404);
           if (local.status === "completed") return json({ ok: true, status: "completed", message: "This deposit is already credited." });
           if (["failed","reversed"].includes(local.status)) return json({ ok: true, status: local.status, message: "This deposit was not completed." });
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let provider: any = null;
           try {
-            const path = "https://wallet.wearemarz.com/api/v1/transactions?per_page=100&type=collection&reference=" + encodeURIComponent(local.external_reference || "");
+            const path = local.provider_transaction_uuid
+              ? "https://wallet.wearemarz.com/api/v1/transactions/" + encodeURIComponent(local.provider_transaction_uuid)
+              : "https://wallet.wearemarz.com/api/v1/transactions?per_page=100&type=collection&reference=" + encodeURIComponent(local.external_reference || "");
             const response = await fetch(path, { headers: { "Authorization": "Basic " + auth, "Accept": "application/json" } });
             const data: any = await response.json().catch(() => ({}));
             if (!response.ok || data?.status === "error") return json({ error: data?.message || "MarzPay could not verify this payment yet. Please try again later." }, 502);
@@ -233,7 +235,9 @@ export default {
             await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay connection failed' WHERE id=? AND status='pending'").bind(transactionId).run();
             return json({ error: "Could not connect to MarzPay. Please try again." }, 502);
           }
-          await env.DB.prepare("UPDATE transactions SET status='processing', description='MarzPay payment request sent' WHERE id=? AND status='pending'").bind(transactionId).run();
+          const providerTx = providerResponse?.transaction || providerResponse?.data?.transaction || providerResponse?.data || {};
+          const providerUuid = providerTx?.uuid || providerTx?.transaction_uuid || providerTx?.id || providerResponse?.transaction_uuid || providerResponse?.uuid || null;
+          await env.DB.prepare("UPDATE transactions SET status='processing', provider_transaction_uuid=COALESCE(?,provider_transaction_uuid), description='MarzPay payment request sent' WHERE id=? AND status='pending'").bind(providerUuid ? String(providerUuid) : null,transactionId).run();
           return json({ ok: true, message: providerResponse?.message || "Payment request sent. Approve it on your phone and wait for confirmation.", reference, status: "processing", country, currency: market.currency }, 201);
         }
         if (url.pathname === "/api/withdrawals" && (request.method === "POST" || request.method === "GET")) {
