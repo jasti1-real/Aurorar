@@ -201,7 +201,7 @@ export default {
           if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Payment country must match your registered account country." }, 403);
           const amount = Number(body?.amount);
           const markets: Record<string, { prefix: string; currency: string; name: string; min: number; max: number }> = {
-            UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 500, max: 10000000 },
+            UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 15000, max: 10000000 },
             RW: { prefix: "+250", currency: "RWF", name: "Rwanda", min: 100, max: 10000000 },
             ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 1, max: 10000000 }
           };
