@@ -97,7 +97,7 @@ export default {
       try {
         if (url.pathname === "/api/payments/marzpay/callback" && request.method === "POST") {
           const rawBody = await request.text();
-          const signingSecret = env.MARZPAY_WEBHOOK_SECRET;
+          const signingSecret = env["MARZPAY-WEBHOOK-SECRET"];
           const timestamp = request.headers.get("X-MarzPay-Timestamp") || "";
           const signatureHeader = request.headers.get("X-MarzPay-Signature") || "";
           const signature = signatureHeader.split(",").map(v => v.trim()).find(v => v.startsWith("v1="))?.slice(3) || "";
@@ -139,7 +139,7 @@ export default {
         if (url.pathname === "/api/payments/deposit" && request.method === "POST") {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before depositing." }, 401);
-          if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) return json({ error: "Payments are not fully configured yet. Contact support." }, 503);
+          if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env["MARZPAY-WEBHOOK-SECRET"]) return json({ error: "Payments are not fully configured yet. Contact support." }, 503);
           const body = await readJson(request);
           const account = await env.DB.prepare("SELECT country FROM users WHERE id = ? AND status = 'active'").bind(userId).first<{country:string}>();
           if (!account) return json({ error: "Active account not found." }, 401);
