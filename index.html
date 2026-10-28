@@ -166,12 +166,26 @@ async function renderProducts(){
   if(!items.length){grid.innerHTML='<div class="card"><h3>'+currency+' products are not available yet</h3><p class="muted">'+(data.message||'Local product prices must be configured and verified before purchases can open.')+'</p><p class="small muted">No money has been deducted. Uganda’s UGX catalogue remains separate.</p></div>';return}
   grid.innerHTML=items.map(p=>'<article class="card product-card"><div class="machine-art" aria-hidden="true">⚙️</div><div class="product-body"><div class="section-head"><h3>'+p.name+'</h3><span class="pill">Plan '+p.n+'</span></div><div class="product-meta"><div><small>Price</small><strong>'+localMoney(p.price,currency)+'</strong></div><div><small>Listed daily return*</small><strong>'+localMoney(p.daily,currency)+'</strong></div><div><small>Duration</small><strong>'+p.days+' days</strong></div><div><small>Listed total return*</small><strong>'+localMoney(p.daily*p.days,currency)+'</strong></div></div>'+(currency==='UGX'?'<button class="btn primary full" data-buy="'+p.n+'">Purchase machine</button>':'<button class="btn outline full" disabled aria-disabled="true">Purchases coming soon</button>')+'<p class="muted small">'+(state.country==='UG'?'Uses only the UGX wallet. Returns are not guaranteed.':'Regional payments are not enabled until MarzPay confirms the market and settlement flow.')+'</p></div></article>').join('');
   document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=async()=>{
+   if(b.dataset.purchasing==='true')return;
    if(!state.phone){toast('Please log in to purchase a machine.');return}
-   const id=Number(b.dataset.buy);if(!await appConfirm('Purchase Machine '+id+' using your '+currency+' wallet?','Confirm purchase','Purchase machine'))return;
-   b.disabled=true;b.textContent='Processing…';
-   try{const response=await fetch('/api/products/purchase',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({productId:id,currency})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Purchase failed.');await loadAccount();render();toast(data.message||'Machine purchased successfully.')}
-   catch(error){toast(error.message||'Purchase could not be completed.')}
-   finally{b.disabled=false;b.textContent='Purchase machine'}
+   const id=Number(b.dataset.buy);
+   if(!Number.isSafeInteger(id)||id<1){toast('This machine has an invalid product ID. Please refresh the page.');return}
+   if(!await appConfirm('Purchase Machine '+id+' using your '+currency+' wallet?','Confirm purchase','Purchase machine'))return;
+   b.dataset.purchasing='true';b.disabled=true;b.textContent='Processing…';
+   let purchased=false;
+   try{
+    const response=await fetch('/api/products/purchase',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({productId:id,currency})});
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||'Purchase failed. No purchase confirmation was received.');
+    purchased=true;
+    toast(data.message||'Machine purchased successfully.');
+    try{await loadAccount();render()}
+    catch(refreshError){toast('Purchase confirmed, but your dashboard could not refresh. Reopen Home or refresh the page to see the updated account.')}
+   }catch(error){toast(error.message||'Purchase could not be completed.')}
+   finally{
+    delete b.dataset.purchasing;
+    if(b.isConnected){b.disabled=false;b.textContent=purchased?'Purchase again':'Purchase machine'}
+   }
   });
  }catch(error){grid.innerHTML='<div class="card">'+error.message+'</div>'}
 }
