@@ -837,3 +837,89 @@ article.product-card.card .product-meta strong {font-size:13px!important;line-he
   article.product-card.card>.machine-art.machine-image-wrap {height:220px!important;min-height:220px!important;max-height:220px!important;flex-basis:220px!important;padding:10px!important;}
   article.product-card.card>.product-body {padding:15px!important;}
 }
+
+
+/* Aurorar mobile navigation: keep all five destinations on one row */
+@media(max-width:800px){
+  body .bottom-nav{
+    display:grid!important;
+    grid-template-columns:repeat(5,minmax(0,1fr))!important;
+    grid-auto-flow:row!important;
+    align-items:center!important;
+    gap:2px!important;
+    width:100%!important;
+    padding:8px 7px calc(8px + env(safe-area-inset-bottom))!important;
+    overflow:visible!important;
+  }
+  body .bottom-nav>.nav-btn{
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    align-items:center!important;
+    justify-self:stretch!important;
+    align-self:center!important;
+    min-width:0!important;
+    width:100%!important;
+    min-height:58px!important;
+    margin:0!important;
+    padding:7px 1px!important;
+    gap:4px!important;
+    white-space:nowrap!important;
+    text-align:center!important;
+    font-size:clamp(8px,2.65vw,10px)!important;
+    line-height:1.1!important;
+    overflow:visible!important;
+  }
+  body .bottom-nav>.nav-btn>span:last-child{
+    display:block!important;
+    max-width:100%!important;
+    overflow:visible!important;
+    white-space:nowrap!important;
+  }
+  body .bottom-nav>.nav-btn .nav-icon{
+    width:auto!important;
+    font-size:20px!important;
+    line-height:1!important;
+  }
+  body .bottom-nav>.wallet-shortcut{
+    position:relative!important;
+    transform:none!important;
+    margin:0!important;
+    padding-top:3px!important;
+    color:#08784f!important;
+  }
+  body .bottom-nav>.wallet-shortcut .wallet-logo-orbit{
+    width:37px!important;
+    height:37px!important;
+    min-width:37px!important;
+    display:grid!important;
+    place-items:center!important;
+    margin:0 auto 1px!important;
+    border-radius:50%!important;
+    background:radial-gradient(circle at 30% 25%,#ffffff,#d8fff1 35%,#14b88a 72%,#08784f)!important;
+    border:1px solid rgba(255,255,255,.9)!important;
+    box-shadow:0 0 0 3px rgba(20,184,138,.14),0 0 17px rgba(20,184,138,.55),inset 0 0 9px rgba(255,255,255,.9)!important;
+    animation:aurorarGlobeSpin 5s linear infinite,aurorarGlobeGlow 2s ease-in-out infinite alternate!important;
+  }
+  body .bottom-nav>.wallet-shortcut .wallet-logo-orbit img{
+    display:block!important;
+    width:27px!important;
+    height:27px!important;
+    object-fit:contain!important;
+    animation:aurorarLogoCounterSpin 5s linear infinite!important;
+    filter:drop-shadow(0 0 4px rgba(255,255,255,.9))!important;
+  }
+  body .bottom-nav>.wallet-shortcut>span:last-child{
+    font-size:clamp(8px,2.5vw,10px)!important;
+    font-weight:850!important;
+    color:#08784f!important;
+  }
+  body .bottom-nav>.wallet-shortcut.active{background:rgba(20,184,138,.10)!important}
+}
+@keyframes aurorarGlobeSpin{from{transform:rotateY(0deg) rotateZ(0deg)}to{transform:rotateY(360deg) rotateZ(360deg)}}
+@keyframes aurorarLogoCounterSpin{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@keyframes aurorarGlobeGlow{from{box-shadow:0 0 0 2px rgba(20,184,138,.10),0 0 9px rgba(20,184,138,.30),inset 0 0 7px rgba(255,255,255,.8)}to{box-shadow:0 0 0 4px rgba(20,184,138,.17),0 0 20px rgba(20,184,138,.65),inset 0 0 11px rgba(255,255,255,1)}}
+@media(prefers-reduced-motion:reduce){
+  body .bottom-nav>.wallet-shortcut .wallet-logo-orbit,
+  body .bottom-nav>.wallet-shortcut .wallet-logo-orbit img{animation:none!important}
+}
