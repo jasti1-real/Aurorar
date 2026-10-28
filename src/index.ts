@@ -178,11 +178,20 @@ export default {
             return json({ error: "Provider transaction details do not match this deposit. Contact support before retrying." }, 409);
           }
           if (["completed","successful","succeeded"].includes(providerStatus)) {
+            const currency = String(local.currency || "UGX").toUpperCase();
+            // Ensure the regional wallet exists before attempting to credit a confirmed payment.
+            if (currency !== "UGX") {
+              await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings) VALUES (?,?,0,0,0,0,0)").bind(userId,currency).run();
+            }
             const changed = await env.DB.prepare("UPDATE transactions SET status='completed',completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'),description='MarzPay payment verified by status check' WHERE id=? AND user_id=? AND type='deposit' AND status IN ('pending','processing')").bind(local.id,userId).run();
             if (Number(changed.meta?.changes || 0) === 1) {
-              await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId).run();
+              if (currency === "UGX") {
+                await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId).run();
+              } else {
+                await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId,currency).run();
+              }
             }
-            return json({ ok: true, status: "completed", message: "MarzPay confirmed this deposit. Refresh your account balance." });
+            return json({ ok: true, status: "completed", message: "MarzPay confirmed this deposit. Your wallet has been updated; refresh your account balance." });
           }
           if (["failed","cancelled"].includes(providerStatus)) {
             await env.DB.prepare("UPDATE transactions SET status='failed',description='MarzPay reports payment '||? WHERE id=? AND status IN ('pending','processing')").bind(providerStatus,local.id).run();
