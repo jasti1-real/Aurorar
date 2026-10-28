@@ -179,8 +179,23 @@ function render(){
  const activeItems=[...state.products,...state.regionalProducts];
  $('activeProducts').innerHTML=activeItems.length?activeItems.map(p=>'<div class="row"><div><strong>'+(p.name||('Machine '+p.n))+'</strong><div class="muted small">'+p.days+' day plan'+(p.currency&&p.currency!=='UGX'?' · '+p.currency:'')+'</div></div><strong>'+(p.currency&&p.currency!=='UGX'?p.currency+' '+Number(p.price||0).toLocaleString(p.currency==='RWF'?'en-RW':'en-ZM'):money(p.price))+'</strong></div>').join(''):'<div class="empty">You haven’t purchased a product yet.</div>';
  const refs=$('referralRows');if(refs)refs.innerHTML=state.referralRows.length?state.referralRows.map(r=>'<tr><td>'+r.phone+'</td><td>'+new Date(r.created_at).toLocaleString('en-UG',{dateStyle:'medium',timeStyle:'short'})+'</td><td>'+money(r.confirmed_deposit)+'</td><td>'+(Number(r.confirmed_deposit)>0?'Deposit confirmed':'Awaiting deposit')+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">No referrals recorded yet.</td></tr>';
- const ledger=$('ledgerRows');if(ledger)ledger.innerHTML=state.ledger.length?state.ledger.map(t=>'<tr><td>'+new Date(t.created_at).toLocaleString('en-UG',{dateStyle:'medium',timeStyle:'short'})+'</td><td>'+String(t.type||'transaction').replaceAll('_',' ')+'</td><td style="color:'+(t.amount<0?'#bd3e4b':'#08784f')+'">'+(t.currency&&t.currency!=='UGX'?t.currency+' '+Number(t.amount||0).toLocaleString(t.currency==='RWF'?'en-RW':'en-ZM'):money(t.amount))+'</td><td>'+String(t.status||'pending')+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">No transactions recorded yet.</td></tr>';
+ const ledger=$('ledgerRows');if(ledger)ledger.innerHTML=state.ledger.length?state.ledger.map(t=>'<tr><td>'+new Date(t.created_at).toLocaleString('en-UG',{dateStyle:'medium',timeStyle:'short'})+'</td><td>'+String(t.type||'transaction').replaceAll('_',' ')+'</td><td style="color:'+(t.amount<0?'#bd3e4b':'#08784f')+'">'+(t.currency&&t.currency!=='UGX'?t.currency+' '+Number(t.amount||0).toLocaleString(t.currency==='RWF'?'en-RW':'en-ZM'):money(t.amount))+'</td><td>'+String(t.status||'pending')+(t.type==='deposit'&&['pending','processing'].includes(String(t.status||'').toLowerCase())?' <button class="btn outline" style="padding:5px 8px;font-size:12px" data-check-deposit="'+String(t.id||'')+'">Check status</button>':'')+'</td></tr>').join(''):'<tr><td colspan="4" class="empty">No transactions recorded yet.</td></tr>';
 }
+document.addEventListener('click',async e=>{
+ const button=e.target.closest('[data-check-deposit]');
+ if(!button)return;
+ const transactionId=button.dataset.checkDeposit;
+ if(!transactionId){toast('This transaction has no reference to check. Please contact support.');return;}
+ button.disabled=true;button.textContent='Checking…';
+ try{
+  const response=await fetch('/api/payments/check',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({transactionId})});
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok)throw new Error(result.error||'Could not check payment status.');
+  toast(result.message||('Payment status: '+result.status));
+  await loadAccount();
+ }catch(error){toast(error.message||'Could not check payment status.');}
+ finally{button.disabled=false;button.textContent='Check status';}
+});
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',async()=>{
  const action=button.dataset.action;
  if(action!=='deposit'&&action!=='withdraw')return;
