@@ -1171,3 +1171,57 @@ html body #page-home .stats>.card.stat .symbol{
   background:#eaf8f1!important;
   color:#15966b!important;
 }
+
+
+/* Final comprehensive light palette: no dark panels, readable contrast */
+html,body,#app,#page-home,.page,main{
+ background:#f4f8fc!important;color:#172b45!important;
+}
+html body #page-home .card,
+html body #page-home .empty,
+html body #page-home #activeProducts,
+html body #page-home .section-head,
+html body #page-home .section-head h2{
+ background:#fff!important;color:#172b45!important;
+ border-color:#dce7ef!important;
+}
+html body #page-home .empty{
+ display:block!important;min-height:120px!important;padding:28px 18px!important;
+ border-radius:18px!important;text-align:center!important;
+ color:#52657a!important;font-size:16px!important;font-weight:600!important;
+ background:linear-gradient(135deg,#fff,#f1fbf7)!important;
+ border:1px solid #dceee6!important;
+}
+html body #page-home .section-head{
+ display:flex!important;align-items:center!important;justify-content:space-between!important;
+ gap:12px!important;padding:12px 0!important;
+}
+html body #page-home .section-head h2{
+ color:#17385d!important;font-size:21px!important;font-weight:800!important;
+ line-height:1.35!important;margin:0!important;
+}
+html body #page-home #activeProducts{
+ min-height:150px!important;border-radius:22px!important;
+ background:#fff!important;color:#52657a!important;
+ box-shadow:0 8px 24px rgba(20,43,74,.06)!important;
+}
+html body #page-home #activeProducts .row{
+ background:#fff!important;color:#172b45!important;border-color:#e1eaf1!important;
+}
+html body #page-home #activeProducts .row strong,
+html body #page-home #activeProducts .row .muted{color:#52657a!important}
+html body #page-home .stats>.stat,
+html body #page-home .stats>.card.stat{
+ background:#fff!important;color:#172b45!important;
+ border:1px solid #dce7ef!important;
+ box-shadow:0 6px 18px rgba(20,43,74,.05)!important;
+}
+html body #page-home .stats .label{color:#66788b!important}
+html body #page-home .stats .value{color:#17385d!important}
+html body #page-home .hero{background:linear-gradient(120deg,#e5f4ff,#def8ee)!important}
+html body #page-home .hero *{color:#17385d!important;text-shadow:none!important}
+html body #page-home .card[style*="linear-gradient(110deg"]{
+ background:linear-gradient(110deg,#e9f8f0,#fff)!important;
+ color:#17385d!important;border:1px solid #cfe9dc!important;
+}
+html body #page-home .card[style*="linear-gradient(110deg"] *{color:#08784f!important}
