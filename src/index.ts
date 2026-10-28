@@ -94,7 +94,7 @@ export default {
           if (!reference || !tx?.uuid || !eventType.startsWith("collection.")) return json({ received: true, ignored: true });
           const local = await env.DB.prepare("SELECT id, user_id, amount_ugx, status FROM transactions WHERE external_reference=? AND type='deposit'").bind(reference).first<any>();
           if (!local) return json({ received: true, ignored: true });
-          if (Number(tx?.amount?.raw) !== Number(local.amount_ugx)) return json({ error: "Payment amount mismatch." }, 409);
+          if (Number(tx?.amount?.raw) !== Number(local.amount_ugx) || tx?.amount?.currency !== "UGX") return json({ error: "Payment amount or currency mismatch." }, 409);
           if (tx.status === "completed" && eventType === "collection.completed") {
             const changed = await env.DB.prepare("UPDATE transactions SET status='completed', completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(local.id).run();
             if (Number(changed.meta?.changes || 0) === 1) {
@@ -122,6 +122,9 @@ export default {
           };
           const market = markets[country];
           const phone = normalizePhone(body?.phone);
+          // The current product catalogue and wallet ledger are UGX-only. Do not collect
+          // RWF/ZMW until separate currency ledgers and country-specific product accounting exist.
+          if (country !== "UG") return json({ error: "Rwanda and Zambia payments are being prepared. Deposits for these countries will open after separate RWF/ZMW wallet accounting is enabled. No payment has been requested." }, 409);
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
