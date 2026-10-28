@@ -269,15 +269,18 @@ export default {
           if (!id) return json({ error: "Please log in." }, 401);
           const user = await env.DB.prepare("SELECT phone, referral_code, welcome_bonus, country FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
           if (!user) return json({ error: "Account not found." }, 401);
-          const wallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
+          const countryCurrency: Record<string, string> = { UG: "UGX", RW: "RWF", ZM: "ZMW" };
+          const currency = countryCurrency[user.country] || "UGX";
+          const ugWallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
           const products = await env.DB.prepare("SELECT up.id, p.id AS product_id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days, up.starts_at, up.ends_at, up.status FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.purchased_at DESC").bind(id).all();
           await env.DB.batch([
             env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id),
             env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id)
           ]);
-          const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? ORDER BY currency").bind(id).all();
-          const transactions = await env.DB.prepare("SELECT type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50").bind(id).all();
-          return json({ user, wallet: wallet || {}, currencyWallets: currencyWallets.results || [], products: products.results || [], transactions: transactions.results || [] });
+          const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? AND currency = ?").bind(id, currency).all();
+          const selectedWallet = currency === "UGX" ? (ugWallet || {}) : ((currencyWallets.results || [])[0] || {});
+          const transactions = await env.DB.prepare("SELECT type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? AND COALESCE(currency, 'UGX') = ? ORDER BY created_at DESC LIMIT 50").bind(id, currency).all();
+          return json({ user, wallet: selectedWallet, currencyWallets: currencyWallets.results || [], products: products.results || [], transactions: transactions.results || [] });
         }
         if (url.pathname === "/api/referrals" && request.method === "GET") {
           const userId = await sessionUser(request, env);
