@@ -165,6 +165,45 @@ export default {
           await env.DB.prepare("UPDATE transactions SET status='processing', description='MarzPay payment request sent' WHERE id=? AND status='pending'").bind(transactionId).run();
           return json({ ok: true, message: providerResponse?.message || "Payment request sent. Approve it on your phone and wait for confirmation.", reference, status: "processing", country, currency: market.currency }, 201);
         }
+        if (url.pathname === "/api/withdrawals" && (request.method === "POST" || request.method === "GET")) {
+          const userId = await sessionUser(request, env);
+          if (!userId) return json({ error: "Please log in before requesting a withdrawal." }, 401);
+          if (request.method === "GET") {
+            const rows = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at, updated_at FROM withdrawal_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(userId).all();
+            return json({ requests: rows.results || [] });
+          }
+          const body = await readJson(request);
+          const country = typeof body?.country === "string" ? body.country.toUpperCase() : "";
+          const markets: Record<string, {currency:string; prefix:string; min:number; name:string}> = {
+            UG: { currency:"UGX", prefix:"+256", min:3000, name:"Uganda" },
+            RW: { currency:"RWF", prefix:"+250", min:100, name:"Rwanda" },
+            ZM: { currency:"ZMW", prefix:"+260", min:10, name:"Zambia" }
+          };
+          const market = markets[country];
+          if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
+          // Foreign currency withdrawals remain locked until that country's collection/disbursement
+          // service and wallet accounting have been verified end-to-end by the operator.
+          if (country !== "UG") return json({ error: "RWF and ZMW withdrawals are not open yet. Their separate wallet balances and payout callbacks must be verified first. No payout was sent." }, 409);
+          const amount = Number(body?.amount);
+          if (!Number.isSafeInteger(amount) || amount < market.min) return json({ error: "The minimum withdrawal is " + market.min + " " + market.currency + "." }, 400);
+          const phone = normalizePhone(body?.phone);
+          if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
+          const idempotencyKey = typeof body?.idempotencyKey === "string" ? body.idempotencyKey.slice(0,80) : "";
+          if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
+          const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
+          if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+          const wallet = await env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>();
+          if (!wallet || Number(wallet.available_balance || 0) < amount) return json({ error:"Your available UGX balance is not enough for this withdrawal. No money was deducted." }, 400);
+          const id = crypto.randomUUID();
+          try {
+            await env.DB.prepare("INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key) VALUES (?,?,?, ?,?,?, 'requested',?)").bind(id,userId,country,market.currency,amount,phone,idempotencyKey).run();
+          } catch {
+            const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
+            if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+            throw new Error("Could not record the withdrawal request.");
+          }
+          return json({ ok:true, request:{id,country,currency:market.currency,amount,phone_number:phone,status:"requested"}, message:"Withdrawal request recorded for review. This is not a payment confirmation; no money has been deducted and no payout has been sent. The balance will be rechecked before any payout is approved." }, 201);
+        }
         if (url.pathname === "/api/auth/register" && request.method === "POST") {
           const body = await readJson(request);
           const phone = normalizePhone(body?.phone);
