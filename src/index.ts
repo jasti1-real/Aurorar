@@ -126,16 +126,17 @@ export default {
             if (localCurrency !== "UGX") {
               await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(local.user_id, localCurrency).run();
             }
-            const changed = await env.DB.prepare("UPDATE transactions SET status='completed', completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(local.id).run();
-            if (Number(changed.meta?.changes || 0) === 1) {
-              const ledgerUpdate = localCurrency === "UGX"
-                ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx), Number(local.amount_ugx), local.user_id)
-                : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(Number(local.amount_ugx), Number(local.amount_ugx), local.user_id, localCurrency);
-              await env.DB.batch([
-                ledgerUpdate,
-                env.DB.prepare("INSERT OR IGNORE INTO payment_events (id,provider,provider_event_id,user_id,transaction_id,event_type,verified,payload_json) VALUES (?,?,?,?,?,?,1,?)").bind(crypto.randomUUID(),"marzpay",String(tx.uuid),local.user_id,local.id,eventType,rawBody)
-              ]);
-            }
+            const completedAt = new Date().toISOString();
+            const completeTx = env.DB.prepare("UPDATE transactions SET status='completed', completed_at=?, description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(completedAt,local.id);
+            const ledgerUpdate = localCurrency === "UGX"
+              ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay collection completed')").bind(Number(local.amount_ugx),Number(local.amount_ugx),local.user_id,local.id,completedAt)
+              : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay collection completed')").bind(Number(local.amount_ugx),Number(local.amount_ugx),local.user_id,localCurrency,local.id,completedAt);
+            // D1 batch is atomic, so transaction completion and wallet credit cannot separate.
+            await env.DB.batch([
+              completeTx,
+              ledgerUpdate,
+              env.DB.prepare("INSERT OR IGNORE INTO payment_events (id,provider,provider_event_id,user_id,transaction_id,event_type,verified,payload_json) VALUES (?,?,?,?,?,?,1,?)").bind(crypto.randomUUID(),"marzpay",String(tx.uuid),local.user_id,local.id,eventType,rawBody)
+            ]);
           } else if (["failed","cancelled"].includes(tx.status) && ["collection.failed","collection.cancelled"].includes(eventType)) {
             await env.DB.prepare("UPDATE transactions SET status='failed', description=? WHERE id=? AND status IN ('pending','processing')").bind("MarzPay collection " + tx.status, local.id).run();
           }
@@ -188,15 +189,19 @@ export default {
             if (currency !== "UGX") {
               await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings) VALUES (?,?,0,0,0,0,0)").bind(userId,currency).run();
             }
-            const changed = await env.DB.prepare("UPDATE transactions SET status='completed',completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'),description='MarzPay payment verified by status check' WHERE id=? AND user_id=? AND type='deposit' AND status IN ('pending','processing')").bind(local.id,userId).run();
-            if (Number(changed.meta?.changes || 0) === 1) {
-              if (currency === "UGX") {
-                await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId).run();
-              } else {
-                await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId,currency).run();
-              }
-            }
-            return json({ ok: true, status: "completed", message: "MarzPay confirmed this deposit. Your wallet has been updated; refresh your account balance." });
+            // Keep completion and wallet credit atomic and tie the credit to this exact state transition.
+            const completedAt = new Date().toISOString();
+            const completeTx = env.DB.prepare("UPDATE transactions SET status='completed',completed_at=?,description='MarzPay payment verified by status check' WHERE id=? AND user_id=? AND type='deposit' AND status IN ('pending','processing')").bind(completedAt,local.id,userId);
+            const creditWallet = currency === "UGX"
+              ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay payment verified by status check')").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId,local.id,completedAt)
+              : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay payment verified by status check')").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId,currency,local.id,completedAt);
+            const results = await env.DB.batch([completeTx,creditWallet]);
+            const completed = Number(results[0]?.meta?.changes || 0) === 1;
+            const credited = Number(results[1]?.meta?.changes || 0) === 1;
+            if (completed && !credited) throw new Error("Confirmed deposit wallet credit did not apply.");
+            return json({ ok: true, status: "completed", message: completed && credited
+              ? "MarzPay confirmed this deposit. Your wallet has been updated; refresh your account balance."
+              : "This deposit was already processed. Refresh your account balance." });
           }
           if (["failed","cancelled"].includes(providerStatus)) {
             await env.DB.prepare("UPDATE transactions SET status='failed',description='MarzPay reports payment '||? WHERE id=? AND status IN ('pending','processing')").bind(providerStatus,local.id).run();
