@@ -1,8 +1,7 @@
 -- Multi-currency groundwork for Aurorar.
+-- The transactions.currency column already exists in the remote database, so this
+-- migration only ensures the regional wallet table and index exist.
 -- Existing wallets remain the UGX ledger. These rows are separate RWF/ZMW ledgers.
-ALTER TABLE transactions ADD COLUMN currency TEXT NOT NULL DEFAULT 'UGX'
-  CHECK (currency IN ('UGX', 'RWF', 'ZMW'));
-
 CREATE TABLE IF NOT EXISTS currency_wallets (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   currency TEXT NOT NULL CHECK (currency IN ('RWF', 'ZMW')),
