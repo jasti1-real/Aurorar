@@ -332,7 +332,7 @@ export default {
           const candidate = await passwordHash(body.password, user.password_salt);
           if (candidate !== user.password_hash) return json({ error: "Phone number or password is incorrect." }, 401);
           const token = await makeSession(user.id, env.SESSION_SECRET);
-          return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 604800) });
+          return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 31536000) });
         }
         if (url.pathname === "/api/auth/change-password" && request.method === "POST") {
           const userId = await sessionUser(request, env);
