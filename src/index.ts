@@ -223,8 +223,13 @@ export default {
           if (!user) return json({ error: "Account not found." }, 401);
           const wallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
           const products = await env.DB.prepare("SELECT up.id, p.id AS product_id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days, up.starts_at, up.ends_at, up.status FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.purchased_at DESC").bind(id).all();
-          const transactions = await env.DB.prepare("SELECT type, amount_ugx, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50").bind(id).all();
-          return json({ user, wallet: wallet || {}, products: products.results || [], transactions: transactions.results || [] });
+          await env.DB.batch([
+            env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id),
+            env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id)
+          ]);
+          const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn FROM currency_wallets WHERE user_id = ? ORDER BY currency").bind(id).all();
+          const transactions = await env.DB.prepare("SELECT type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50").bind(id).all();
+          return json({ user, wallet: wallet || {}, currencyWallets: currencyWallets.results || [], products: products.results || [], transactions: transactions.results || [] });
         }
         if (url.pathname === "/api/referrals" && request.method === "GET") {
           const userId = await sessionUser(request, env);
