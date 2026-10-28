@@ -597,3 +597,104 @@ body .card .value,body .card .amount,body .card .number{color:#fff!important;opa
   .bottom-nav .nav-btn{font-size:10px!important;min-height:59px!important}
   .bottom-nav .nav-icon{font-size:21px!important}
 }
+
+
+/* Five-tab mobile dock with a rotating Aurorar wallet shortcut in the center */
+@media(max-width:800px){
+ .bottom-nav{
+   grid-template-columns:repeat(5,minmax(0,1fr))!important;
+   gap:5px!important;
+   padding:8px 8px calc(8px + env(safe-area-inset-bottom))!important;
+ }
+ .bottom-nav .nav-btn{min-width:0!important;overflow:visible!important}
+ .bottom-nav .wallet-shortcut{
+   position:relative!important;
+   margin-top:-22px!important;
+   min-height:78px!important;
+   padding:0 2px 7px!important;
+   gap:4px!important;
+   color:#c9d8e8!important;
+   background:transparent!important;
+   border:0!important;
+   box-shadow:none!important;
+ }
+ .bottom-nav .wallet-shortcut:before{display:none!important}
+ .wallet-logo-orbit{
+   position:relative;
+   display:grid;
+   place-items:center;
+   width:56px;
+   height:56px;
+   border-radius:50%;
+   background:linear-gradient(145deg,#163b4c,#0b1727 68%);
+   border:2px solid rgba(91,240,192,.78);
+   box-shadow:0 0 0 4px rgba(41,211,157,.11),0 8px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);
+   overflow:hidden;
+ }
+ .wallet-logo-orbit:before{
+   content:"";
+   position:absolute;
+   inset:-4px;
+   border-radius:50%;
+   border:2px dashed rgba(117,245,205,.72);
+   animation:aurorarLogoOrbit 8s linear infinite;
+ }
+ .wallet-logo-orbit:after{
+   content:"";
+   position:absolute;
+   inset:4px;
+   border-radius:50%;
+   border:1px solid rgba(255,255,255,.13);
+   pointer-events:none;
+ }
+ .wallet-logo-orbit img{
+   display:block!important;
+   width:39px!important;
+   height:39px!important;
+   object-fit:contain!important;
+   border-radius:11px!important;
+   animation:aurorarLogoSpin 12s linear infinite;
+   filter:drop-shadow(0 0 9px rgba(73,235,184,.34))!important;
+ }
+ .bottom-nav .wallet-shortcut>span:last-child{
+   font-size:10px!important;
+   font-weight:850!important;
+   line-height:1.1!important;
+   color:#7af1c8!important;
+ }
+ .bottom-nav .wallet-shortcut:active .wallet-logo-orbit{transform:scale(.94)}
+}
+.wallet-shortcut-overlay{
+ position:fixed;inset:0;z-index:100001;display:grid;place-items:end center;
+ padding:18px 14px calc(94px + env(safe-area-inset-bottom));
+ background:rgba(3,10,20,.65);backdrop-filter:blur(14px) saturate(135%);
+ -webkit-backdrop-filter:blur(14px) saturate(135%);
+}
+.wallet-shortcut-overlay.hidden{display:none!important}
+.wallet-shortcut-card{
+ position:relative;width:min(100%,430px);padding:24px;
+ border-radius:27px;border:1px solid rgba(255,255,255,.13);
+ background:linear-gradient(155deg,rgba(21,38,57,.98),rgba(8,17,30,.98));
+ color:#f5f9ff;box-shadow:0 28px 90px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.07);
+ animation:walletSheetUp .22s ease-out;
+}
+.wallet-shortcut-card h2{margin:18px 0 5px;color:#fff!important;font-size:23px}
+.wallet-shortcut-card p{margin-bottom:18px;color:#c5d3e3!important}
+.wallet-shortcut-brand{display:flex;align-items:center;gap:10px;font-size:15px;font-weight:850;color:#f7fbff}
+.wallet-shortcut-brand img{width:38px;height:38px;object-fit:contain;border-radius:12px;filter:drop-shadow(0 0 9px rgba(73,235,184,.25))}
+.wallet-shortcut-close{position:absolute;right:15px;top:15px;width:36px;height:36px;border:1px solid rgba(255,255,255,.12);border-radius:50%;background:rgba(255,255,255,.06);color:#fff;font-size:24px;line-height:1}
+.wallet-shortcut-actions{display:grid;gap:11px}
+.wallet-shortcut-actions button{display:flex;align-items:center;gap:13px;width:100%;padding:15px;border-radius:17px;text-align:left;border:1px solid rgba(255,255,255,.10);color:#f8fbff;background:rgba(255,255,255,.045)}
+.wallet-shortcut-actions button>span:first-child{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;font-size:25px;font-weight:800}
+.wallet-action-deposit>span:first-child{background:rgba(46,216,157,.14);color:#71f1c5}
+.wallet-action-withdraw>span:first-child{background:rgba(113,170,255,.14);color:#9cc4ff}
+.wallet-shortcut-actions button>span:nth-child(2){display:grid;gap:3px;flex:1}
+.wallet-shortcut-actions strong{font-size:15px;color:#fff}
+.wallet-shortcut-actions small{font-size:12px;color:#b9c9dc}
+.wallet-shortcut-actions button>b{font-size:24px;color:#93a9bf;font-weight:500}
+@keyframes aurorarLogoSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes aurorarLogoOrbit{from{transform:rotate(0deg)}to{transform:rotate(-360deg)}}
+@keyframes walletSheetUp{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(min-width:801px){.wallet-shortcut-overlay{padding-bottom:24px;place-items:center}}
+@media(max-width:360px){.wallet-logo-orbit{width:49px;height:49px}.wallet-logo-orbit img{width:34px!important;height:34px!important}.bottom-nav .wallet-shortcut{margin-top:-17px!important}}
+@media(prefers-reduced-motion:reduce){.wallet-logo-orbit:before,.wallet-logo-orbit img{animation:none!important}}
