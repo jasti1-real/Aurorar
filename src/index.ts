@@ -288,6 +288,13 @@ export default {
           // Foreign currency withdrawals remain locked until that country's collection/disbursement
           // service and wallet accounting have been verified end-to-end by the operator.
           if (country !== "UG") return json({ error: "RWF and ZMW withdrawals are not open yet. Their separate wallet balances and payout callbacks must be verified first. No payout was sent." }, 409);
+          // Enforce the Uganda withdrawal window on the server, not just in the UI.
+          // EAT is UTC+3; allow requests from 10:00 through 16:59 EAT.
+          const nowUtc = new Date();
+          const eatMinutes = (((nowUtc.getUTCHours() + 3) % 24) * 60) + nowUtc.getUTCMinutes();
+          if (eatMinutes < 10 * 60 || eatMinutes >= 17 * 60) {
+            return json({ error: "Withdrawals are open from 10:00 AM to 5:00 PM Uganda time (EAT). Please try again during that window. No request was recorded and no money was deducted." }, 409);
+          }
           const amount = Number(body?.amount);
           if (!Number.isSafeInteger(amount) || amount < market.min) return json({ error: "The minimum withdrawal is " + market.min + " " + market.currency + "." }, 400);
           const phone = normalizePhone(body?.phone);
