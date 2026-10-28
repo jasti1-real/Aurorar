@@ -354,3 +354,15 @@ article.product-card.card .product-body>.btn{min-height:50px!important;border-ra
 @media(max-width:380px){
  #productsGrid>article.product-card.card>.machine-image-wrap{height:275px!important;min-height:275px!important;max-height:275px!important;padding:7px!important}
 }
+
+/* Improve machine photo clarity: avoid blur, soften filters, maximize native detail */
+#productsGrid>article.product-card.card>.machine-image-wrap{background:#f8fafb!important}
+#productsGrid>article.product-card.card>.machine-image-wrap>.machine-image{
+ image-rendering:auto!important;
+ object-fit:contain!important;
+ filter:none!important;
+ opacity:1!important;
+ mix-blend-mode:normal!important;
+ transform:translateZ(0)!important;
+ backface-visibility:hidden!important;
+}
