@@ -1682,3 +1682,14 @@ html body #page-referrals th{background:#f2f7fb!important;color:#435d75!importan
 html body #page-referrals td{background:#fff!important;color:#344b61!important}
 html body #page-referrals .empty{color:#60758a!important}
 @media(max-width:480px){html body #page-referrals .ref-box{flex-direction:column!important}html body #page-referrals #copyInvite{width:100%!important}html body #page-referrals .stats{gap:10px!important}html body #page-referrals .stats .stat .value{font-size:26px!important}}
+
+/* Final high-contrast override for referral page: no pale/white text on light surfaces */
+html body #appView #page-referrals h1,html body #appView #page-referrals h2,html body #appView #page-referrals h3,html body #appView #page-referrals .section-head,html body #appView #page-referrals .section-head *{color:#183651!important;-webkit-text-fill-color:#183651!important;opacity:1!important;filter:none!important;text-shadow:none!important}
+html body #appView #page-referrals .card *,html body #appView #page-referrals .card p,html body #appView #page-referrals .card span,html body #appView #page-referrals .card strong,html body #appView #page-referrals .card div{opacity:1!important;text-shadow:none!important}
+html body #appView #page-referrals .card h2,html body #appView #page-referrals .card h3{color:#183651!important;-webkit-text-fill-color:#183651!important}
+html body #appView #page-referrals .card .muted,html body #appView #page-referrals .card p{color:#52677c!important;-webkit-text-fill-color:#52677c!important}
+html body #appView #page-referrals .stats .stat .value,html body #appView #page-referrals .stats .stat strong{color:#087b5b!important;-webkit-text-fill-color:#087b5b!important}
+html body #appView #page-referrals #refCode{color:#087b5b!important;-webkit-text-fill-color:#087b5b!important}
+html body #appView #page-referrals .table-wrap,html body #appView #page-referrals table{background:#fff!important;color:#263f57!important}
+html body #appView #page-referrals th{color:#435d75!important;-webkit-text-fill-color:#435d75!important;background:#f2f7fb!important}
+html body #appView #page-referrals td{color:#344b61!important;-webkit-text-fill-color:#344b61!important;background:#fff!important}
