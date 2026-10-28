@@ -242,6 +242,20 @@ $('sidebarLogout').onclick=logout;$('accountLogout').onclick=logout;
 $('changePassword').onclick=async()=>{if(!state.phone){toast('Please log in first.');return}const currentPassword=prompt('Enter your current password:');if(currentPassword===null)return;const newPassword=prompt('Enter a new password (8–128 characters):');if(newPassword===null)return;const confirmPassword=prompt('Confirm your new password:');if(confirmPassword===null)return;if(newPassword.length<8||newPassword.length>128){toast('New password must be 8–128 characters.');return}if(newPassword!==confirmPassword){toast('The new passwords do not match.');return}const b=$('changePassword');b.disabled=true;b.textContent='Updating…';try{const response=await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({currentPassword,newPassword})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not change password.');toast(data.message||'Password changed successfully.')}catch(error){toast(error.message||'Could not change password.')}finally{b.disabled=false;b.textContent='Change'}};
 $('installApp').onclick=async()=>{if(deferredPrompt){deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null}else toast('On Android Chrome, use the browser menu and choose Install app or Add to Home screen.')};
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e});
-renderProducts();render();
+renderProducts();
+render();
+(async function restoreLoginSession(){
+ try{
+  const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
+  if(!response.ok)return;
+  await loadAccount();
+  $('authView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  render();
+  showPage('home');
+ }catch(error){
+  // Keep the login screen visible when the session is expired or unavailable.
+ }
+})();
 </script>
 </body></html>
