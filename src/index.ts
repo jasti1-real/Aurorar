@@ -181,7 +181,7 @@ export default {
         if (url.pathname === "/api/payments/deposit" && request.method === "POST") {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before depositing." }, 401);
-          if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) return json({ error: "Payments are not fully configured yet. Contact support." }, 503);
+          if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET) return json({ error: "MarzPay API credentials are not configured. Contact support." }, 503);
           const body = await readJson(request);
           const account = await env.DB.prepare("SELECT country FROM users WHERE id = ? AND status = 'active'").bind(userId).first<{country:string}>();
           if (!account) return json({ error: "Active account not found." }, 401);
