@@ -366,3 +366,88 @@ article.product-card.card .product-body>.btn{min-height:50px!important;border-ra
  transform:translateZ(0)!important;
  backface-visibility:hidden!important;
 }
+
+/* Aurorar premium dark theme — midnight glass + emerald accents */
+:root{
+ color-scheme:dark;
+ --aurora-bg:#080d16;
+ --aurora-panel:#101927;
+ --aurora-panel-2:#141f30;
+ --aurora-line:rgba(169,194,222,.13);
+ --aurora-text:#edf4ff;
+ --aurora-muted:#9aaac0;
+ --aurora-green:#22d39a;
+}
+html,body{background:#080d16!important;color:#edf4ff!important}
+body{
+ background:
+  radial-gradient(ellipse at 8% 0%,rgba(20,108,94,.18),transparent 34%),
+  radial-gradient(ellipse at 95% 12%,rgba(49,83,150,.18),transparent 32%),
+  #080d16!important;
+ font-family:Inter,"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif!important;
+ letter-spacing:-.12px;
+ -webkit-font-smoothing:antialiased;
+ text-rendering:optimizeLegibility;
+}
+h1,h2,h3,h4,.section-head h3,.brand,.stat-value,.metric-value{
+ color:#f2f7ff!important;
+ font-family:Inter,"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+ letter-spacing:-.65px!important;
+}
+p,label,small,.muted,.helper-text{color:#a5b4c8}
+.card,.panel,.modal,.dialog,.auth-card,.stat-card,.balance-card,.notice,.hello,
+#page-products>.card{
+ color:#edf4ff!important;
+ background:linear-gradient(145deg,rgba(20,31,48,.97),rgba(12,20,33,.98))!important;
+ border:1px solid rgba(174,199,228,.13)!important;
+ box-shadow:0 18px 44px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+input,select,textarea{
+ color:#f1f6ff!important;background:#0c1523!important;
+ border:1px solid rgba(165,190,219,.19)!important;border-radius:14px!important;
+}
+input::placeholder,textarea::placeholder{color:#71829a!important}
+button,.btn{font-family:Inter,"SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;font-weight:700!important;letter-spacing:-.15px}
+.btn.primary,button.primary,[data-buy]{
+ color:#041b14!important;
+ background:linear-gradient(135deg,#39e3ae,#0eaa78)!important;
+ border:1px solid rgba(121,255,211,.35)!important;
+ box-shadow:0 9px 25px rgba(16,185,129,.19)!important;
+}
+.btn.outline{color:#d8e6f7!important;border-color:rgba(171,198,226,.23)!important;background:#152236!important}
+.pill,.badge{color:#78edc4!important;background:rgba(27,181,132,.12)!important;border:1px solid rgba(70,225,174,.18)!important}
+nav,.bottom-nav,.tabbar,.mobile-nav{
+ background:rgba(9,15,25,.91)!important;
+ border-color:rgba(169,194,222,.13)!important;
+ -webkit-backdrop-filter:blur(24px) saturate(150%)!important;
+ backdrop-filter:blur(24px) saturate(150%)!important;
+}
+nav a,.bottom-nav a,.tabbar a,.mobile-nav a{color:#9aaac0!important}
+nav a.active,.bottom-nav a.active,.tabbar a.active,.mobile-nav a.active,
+nav .active,.bottom-nav .active,.tabbar .active,.mobile-nav .active{
+ color:#6ce9bd!important;background:rgba(35,199,146,.13)!important;border-radius:18px!important;
+}
+#productsGrid>article.product-card.card{
+ background:linear-gradient(145deg,#111c2b,#0d1623)!important;
+ border:1px solid rgba(169,194,222,.15)!important;
+ box-shadow:0 18px 42px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.035)!important;
+}
+#productsGrid>article.product-card.card>.machine-image-wrap{
+ background:radial-gradient(ellipse at 50% 45%,#263448 0%,#172436 58%,#101a29 100%)!important;
+ border-bottom:1px solid rgba(169,194,222,.12)!important;
+}
+#productsGrid>article.product-card.card>.product-body{background:transparent!important;color:#edf4ff!important}
+#productsGrid>article.product-card.card .section-head h3{color:#f2f7ff!important}
+#productsGrid>article.product-card.card .product-meta>div{
+ background:linear-gradient(145deg,#172436,#111d2c)!important;
+ border:1px solid rgba(169,194,222,.13)!important;
+}
+#productsGrid>article.product-card.card .product-meta small{color:#9aaac0!important}
+#productsGrid>article.product-card.card .product-meta strong{color:#edf4ff!important}
+#productsGrid>article.product-card.card .product-body>p{color:#a5b4c8!important}
+.notice{border-left:3px solid #22d39a!important}
+hr{border-color:rgba(169,194,222,.13)!important}
+::selection{background:rgba(34,211,154,.3);color:#fff}
+@media(prefers-reduced-motion:no-preference){
+ .card,.btn,button{transition:background .2s ease,border-color .2s ease,box-shadow .2s ease,transform .2s ease}
+}
