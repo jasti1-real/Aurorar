@@ -323,11 +323,31 @@ export default {
           }
           const id = crypto.randomUUID();
           try {
-            await env.DB.prepare("INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key) VALUES (?,?,?, ?,?,?, 'requested',?)").bind(id,userId,country,market.currency,amount,phone,idempotencyKey).run();
-          } catch {
+            // Enforce the balance reservation in the same SQL statement as the insert.
+            // This closes the race where two simultaneous requests both pass the earlier
+            // display check and reserve the same funds.
+            const inserted = await env.DB.prepare(`
+              INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key)
+              SELECT ?,?,?,?, ?,?, 'requested',?
+              WHERE EXISTS (
+                SELECT 1 FROM wallets w
+                WHERE w.user_id=?
+                  AND w.available_balance - COALESCE((
+                    SELECT SUM(wr.amount) FROM withdrawal_requests wr
+                    WHERE wr.user_id=? AND wr.currency='UGX'
+                      AND wr.status IN ('requested','approved','processing')
+                  ),0) >= ?
+              )
+            `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,userId,userId,amount).run();
+            if (Number(inserted.meta?.changes || 0) !== 1) {
+              const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
+              if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+              return json({ error:"Your spendable UGX balance changed while submitting. Refresh your balance and try again. No money was deducted." }, 409);
+            }
+          } catch (error) {
             const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
             if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
-            throw new Error("Could not record the withdrawal request.");
+            throw error;
           }
           return json({ ok:true, request:{id,country,currency:market.currency,amount,phone_number:phone,status:"requested"}, message:"Withdrawal request recorded for review. This is not a payment confirmation; no money has been deducted and no payout has been sent. The balance will be rechecked before any payout is approved." }, 201);
         }
