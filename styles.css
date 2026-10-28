@@ -1648,3 +1648,20 @@ section.hidden,
 div.hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
 #authView:not(.hidden),
 #appView:not(.hidden){visibility:visible}
+
+
+/* Definitive auth/dashboard visibility fix: ID-level hidden rules beat legacy layout overrides. */
+html body #authView.hidden,
+html body #appView.hidden,
+html body #page-home.hidden,
+html body #page-products.hidden,
+html body #page-referrals.hidden,
+html body #page-account.hidden {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+html body #authView:not(.hidden),
+html body #appView:not(.hidden) {
+  visibility: visible;
+}
