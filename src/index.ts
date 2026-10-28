@@ -114,19 +114,36 @@ export default {
           if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) return json({ error: "Payments are not fully configured yet. Contact support." }, 503);
           const body = await readJson(request);
           const amount = Number(body?.amount);
+          const country = typeof body?.country === "string" ? body.country.toUpperCase() : "UG";
+          const markets: Record<string, { prefix: string; currency: string; name: string; min: number; max: number }> = {
+            UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 500, max: 10000000 },
+            RW: { prefix: "+250", currency: "RWF", name: "Rwanda", min: 100, max: 10000000 },
+            ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 1, max: 10000000 }
+          };
+          const market = markets[country];
           const phone = normalizePhone(body?.phone);
-          if (!Number.isSafeInteger(amount) || amount < 500 || amount > 10000000) return json({ error: "Deposit amount must be between UGX 500 and UGX 10,000,000." }, 400);
-          if (!phone || !phone.startsWith("+256")) return json({ error: "Enter a valid Ugandan mobile money number starting with +256." }, 400);
+          if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
+          if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
+          if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
           const reference = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
           await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,'pending',?,?,?)").bind(transactionId,userId,amount,reference,phone,"MarzPay mobile money deposit").run();
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let providerResponse: any;
           try {
+            const form = new FormData();
+            form.set("amount", String(amount));
+            form.set("phone_number", phone);
+            form.set("country", country);
+            form.set("currency", market.currency);
+            form.set("reference", reference);
+            form.set("description", "Aurorar account deposit");
+            form.set("callback_url", new URL("/api/payments/marzpay/callback", url.origin).toString());
+            form.set("metadata", JSON.stringify([{ transactionId }]));
             const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money", {
               method: "POST",
-              headers: { "Authorization": "Basic " + auth, "Content-Type": "application/json" },
-              body: JSON.stringify({ amount, phone_number: phone, country: "UG", reference, description: "Aurorar account deposit", callback_url: new URL("/api/payments/marzpay/callback", url.origin).toString(), metadata: [{ transactionId }] })
+              headers: { "Authorization": "Basic " + auth },
+              body: form
             });
             providerResponse = await response.json().catch(() => ({}));
             if (!response.ok || providerResponse?.status === "error") {
@@ -138,7 +155,7 @@ export default {
             return json({ error: "Could not connect to MarzPay. Please try again." }, 502);
           }
           await env.DB.prepare("UPDATE transactions SET status='processing', description='MarzPay payment request sent' WHERE id=? AND status='pending'").bind(transactionId).run();
-          return json({ ok: true, message: providerResponse?.message || "Payment request sent. Approve it on your phone and wait for confirmation.", reference, status: "processing" }, 201);
+          return json({ ok: true, message: providerResponse?.message || "Payment request sent. Approve it on your phone and wait for confirmation.", reference, status: "processing", country, currency: market.currency }, 201);
         }
         if (url.pathname === "/api/auth/register" && request.method === "POST") {
           const body = await readJson(request);
