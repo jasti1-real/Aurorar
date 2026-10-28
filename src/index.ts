@@ -277,6 +277,12 @@ export default {
           if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
           const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
           if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+          // Withdrawal eligibility: require both a confirmed deposit and an active machine purchase.
+          // The welcome bonus is visible in the balance immediately, but remains withdrawal-locked
+          // until these two account milestones are satisfied.
+          const eligibility = await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM user_products WHERE user_id=? AND status='active') AS has_machine").bind(userId,userId).first<any>();
+          if (!Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock withdrawals, first complete a successful deposit and then purchase a machine." }, 403);
+          if (!Number(eligibility?.has_machine || 0)) return json({ error:"To unlock withdrawals, purchase a machine after your successful deposit." }, 403);
           const wallet = await env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>();
           if (!wallet || Number(wallet.available_balance || 0) < amount) return json({ error:"Your available UGX balance is not enough for this withdrawal. No money was deducted." }, 400);
           const id = crypto.randomUUID();
@@ -354,6 +360,15 @@ export default {
           if (!id) return json({ error: "Please log in." }, 401);
           const user = await env.DB.prepare("SELECT phone, referral_code, welcome_bonus, country FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
           if (!user) return json({ error: "Account not found." }, 401);
+          // Credit the one-time UGX welcome bonus into the real wallet exactly once.
+          // A stable unique reference makes this safe to retry for existing accounts.
+          if ((user.country || "UG") === "UG" && Number(user.welcome_bonus || 0) > 0) {
+            const bonusRef = "welcome-bonus:" + id;
+            const bonusInsert = await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',5000,'UGX','completed',?,'One-time welcome bonus credited to UGX wallet',strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusRef).run();
+            if (Number(bonusInsert.meta?.changes || 0) === 1) {
+              await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+5000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(id).run();
+            }
+          }
           const countryCurrency: Record<string, string> = { UG: "UGX", RW: "RWF", ZM: "ZMW" };
           const currency = countryCurrency[user.country] || "UGX";
           const ugWallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
