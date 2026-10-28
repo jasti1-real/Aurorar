@@ -1,0 +1,16 @@
+name = "aurorar"
+compatibility_date = "2026-10-28"
+pages_build_output_dir = "."
+
+[[d1_databases]]
+binding = "DB"
+database_name = "aurorar-db"
+database_id = "REPLACE_WITH_YOUR_CLOUDFLARE_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# Configure secrets in Cloudflare Pages > Settings > Variables and Secrets.
+# Required before enabling payment integrations:
+# SESSION_SECRET
+# MARZPAY_API_BASE_URL
+# MARZPAY_API_KEY
+# MARZPAY_WEBHOOK_SECRET
