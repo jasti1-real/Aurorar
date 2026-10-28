@@ -328,3 +328,29 @@ article.product-card.card .product-body>.btn{min-height:50px!important;border-ra
  #productsGrid>article.product-card.card .product-meta>div{padding:10px!important;min-height:70px!important}
  #productsGrid>article.product-card.card .product-meta strong{font-size:12px!important}
 }
+
+/* Hero-scale machine photography — enlarge the machine itself within its image frame */
+#productsGrid>article.product-card.card>.machine-image-wrap{
+ height:clamp(290px,86vw,390px)!important;
+ min-height:290px!important;
+ max-height:390px!important;
+ padding:8px!important;
+ background:radial-gradient(ellipse at 50% 46%,#fff 0%,#f8fafb 52%,#e9f1f4 100%)!important;
+}
+#productsGrid>article.product-card.card>.machine-image-wrap>.machine-image{
+ width:100%!important;height:100%!important;
+ max-width:none!important;max-height:none!important;
+ object-fit:contain!important;object-position:center!important;
+ border-radius:8px!important;
+ filter:drop-shadow(0 15px 17px rgba(20,43,74,.13))!important;
+}
+/* Remove oversized inner white margins around image elements where present */
+#productsGrid>article.product-card.card>.machine-image-wrap{
+ background-color:#f7f9fb!important;
+}
+@media(min-width:600px){
+ #productsGrid>article.product-card.card>.machine-image-wrap{height:340px!important;min-height:340px!important;max-height:340px!important;padding:10px!important}
+}
+@media(max-width:380px){
+ #productsGrid>article.product-card.card>.machine-image-wrap{height:275px!important;min-height:275px!important;max-height:275px!important;padding:7px!important}
+}
