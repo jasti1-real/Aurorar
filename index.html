@@ -83,6 +83,21 @@ const state={phone:'',refCode:'',products:[],deposit:0,today:0,referrals:0,earne
 let mode='login',deferredPrompt=null;
 const $=id=>document.getElementById(id);
 function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),3000)}
+async function loadAccount(){
+ const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
+ const data=await response.json().catch(()=>({}));
+ if(!response.ok) throw new Error(data.error||'Could not load your account.');
+ const w=data.wallet||{};
+ state.phone=data.user?.phone||state.phone;
+ state.refCode=data.user?.referral_code||data.user?.referralCode||state.refCode;
+ state.deposit=Number(w.total_deposited||0);
+ state.earned=Number(w.total_earned||0);
+ state.withdrawn=Number(w.total_withdrawn||0);
+ state.referrals=Number(w.referral_earnings||0);
+ state.today=0;
+ state.products=(data.products||[]).map(p=>({id:p.id,name:p.name,price:Number(p.price||0),days:Number(p.days||0)}));
+ state.ledger=(data.transactions||[]).map(t=>({type:t.type,amount:Number(t.amount_ugx||0),status:t.status,created_at:t.created_at}));
+}
 function setMode(next){mode=next;const reg=mode==='register';$('loginTab').classList.toggle('active',!reg);$('registerTab').classList.toggle('active',reg);$('authTitle').textContent=reg?'Create your Aurorar account':'Welcome back';$('authSub').textContent=reg?'Register with your mobile number to get started.':'Log in to access your account.';$('submitAuth').textContent=reg?'Create account':'Log in';$('confirmWrap').classList.toggle('hidden',!reg);$('termsWrap').classList.toggle('hidden',!reg);$('confirmPassword').required=reg;$('terms').required=reg;$('password').autocomplete=reg?'new-password':'current-password'}
 $('loginTab').onclick=()=>setMode('login');$('registerTab').onclick=()=>setMode('register');
 $('togglePassword').onclick=()=>{const p=$('password');p.type=p.type==='password'?'text':'password';$('togglePassword').textContent=p.type==='password'?'Show':'Hide'};
