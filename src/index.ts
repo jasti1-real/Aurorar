@@ -29,7 +29,24 @@ async function makeSession(userId: string, secret: string): Promise<string> {
   return payload + "." + await hmac(payload, secret);
 }
 async function sessionUser(request: Request, env: Env): Promise<string | null> {
-  const cookie = request.headers.get("Cookie") || "";
+  const cookieHeader = request.headers.get("Cookie") || "";
+  const token = cookieHeader.split(";").map(s => s.trim()).find(s => s.startsWith("aurorar_session="))?.slice("aurorar_session=".length);
+  if (!token || !env.SESSION_SECRET) return null;
+  const dot = token.lastIndexOf(".");
+  if (dot < 1) return null;
+  const payload = token.slice(0, dot);
+  const signature = token.slice(dot + 1);
+  const expected = await hmac(payload, env.SESSION_SECRET);
+  if (signature.length !== expected.length) return null;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) mismatch |= expected.charCodeAt(i) ^ (signature.charCodeAt(i) || 0);
+  if (mismatch !== 0) return null;
+  try {
+    const data = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
+    return data.exp > Date.now() && typeof data.sub === "string" ? data.sub : null;
+  } catch { return null; }
+}
+const cookie = request.headers.get("Cookie") || "";
   const token = cookie.split(";").map(s => s.trim()).find(s => s.startsWith("aurorar_session="))?.slice("aurorar_session=".length);
   if (!token || !env.SESSION_SECRET) return null;
   const [payload, signature] = token.split(".");
@@ -108,8 +125,8 @@ export default {
         }
         return json({ error: "Not found" }, 404);
       } catch (error) {
-        console.error("API error", error);
-        return json({ error: "The account service encountered an error. Please try again later." }, 500);
+        console.error("Aurorar API error:", error instanceof Error ? error.message : String(error));
+        return json({ error: "Registration failed because of a server/database configuration issue. Please retry after the administrator checks the Worker logs." }, 500);
       }
     }
     return env.ASSETS.fetch(request);
