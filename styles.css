@@ -1011,3 +1011,88 @@ body .bottom-nav .nav-btn.active{background:#eaf8f1!important;color:#08784f!impo
 body .machine-stage,body .machine-art{background:linear-gradient(135deg,#f8fbff,#edf7f2)!important}
 body .notice{background:#fff9e9!important;color:#75551b!important}
 body .toast{background:#142b4a!important;color:#fff!important}
+
+
+/* LIGHT THEME HOTFIX: override legacy high-specificity dark glass rules */
+html,html body,body#app,body .app-shell,body .page,body .dashboard,body .main,body .wrap{
+  background:#f3f6fa!important;color:#182434!important;
+}
+html body .hello,
+html body .hello *,
+html body .welcome-card,
+html body .welcome-card *,
+html body .hero,
+html body .hero *,
+html body .balance-card,
+html body .balance-card *,
+html body .bonus-card,
+html body .bonus-card *,
+html body .stat,
+html body .stat *,
+html body .card:not(.app-modal-card),
+html body .product-card,
+html body .product-body,
+html body .product-meta div,
+html body .account-card,
+html body .dashboard-card{
+  color:#182434!important;
+}
+html body .hello,
+html body .welcome-card,
+html body .balance-card,
+html body .bonus-card,
+html body .stat,
+html body .card:not(.app-modal-card),
+html body .product-card,
+html body .account-card,
+html body .dashboard-card{
+  background:#fff!important;
+  border:1px solid #e1e8ef!important;
+  box-shadow:0 8px 24px rgba(20,43,74,.07)!important;
+}
+html body .hero{
+  background:linear-gradient(120deg,#e1f2ff,#d9f8ed)!important;
+  color:#142b4a!important;
+  border:1px solid #cfe6e3!important;
+}
+html body .hero *,
+html body .balance-card *,
+html body .bonus-card *,
+html body .hello *{
+  color:#142b4a!important;
+}
+html body .bonus-card{
+  background:linear-gradient(120deg,#eaf8f1,#f5fbff)!important;
+}
+html body .stat .label,
+html body .muted,
+html body .product-meta small{
+  color:#718096!important;
+}
+html body .stat .value,
+html body .product-meta strong{
+  color:#142b4a!important;
+}
+html body .stat .symbol{
+  background:#eaf8f1!important;color:#15966b!important;
+}
+html body .product-meta div{
+  background:#f3f6fa!important;border:1px solid #e6ebf0!important;
+}
+html body .bottom-nav{
+  background:rgba(255,255,255,.97)!important;
+  color:#617085!important;
+}
+html body .bottom-nav .nav-btn,
+html body .bottom-nav .nav-btn span{
+  color:#617085!important;
+}
+html body .bottom-nav .nav-btn.active,
+html body .bottom-nav .nav-btn.active span{
+  color:#08784f!important;
+}
+html body .bottom-nav .wallet-shortcut,
+html body .bottom-nav .wallet-shortcut span:last-child{
+  color:#08784f!important;
+}
+html body .toast{color:#fff!important}
