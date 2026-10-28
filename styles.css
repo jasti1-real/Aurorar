@@ -510,3 +510,90 @@ body .card .value,body .card .amount,body .card .number{color:#fff!important;opa
 #page-home .card[style*="border-color:#bfe8d5"] strong{color:#f1fff9!important}
 #page-home .card[style*="border-color:#bfe8d5"] .muted{color:#c6d8d6!important}
 #page-home .actions .btn.secondary{background:#17263a!important;color:#f0f6ff!important;border:1px solid rgba(180,203,232,.2)!important}
+
+
+/* Aurorar bottom navigation — high-clarity iPhone glass dock */
+@media(max-width:800px){
+  .bottom-nav{
+    display:grid!important;
+    grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    align-items:center!important;
+    gap:7px!important;
+    padding:9px 10px calc(9px + env(safe-area-inset-bottom))!important;
+    background:rgba(7,15,27,.94)!important;
+    border-top:1px solid rgba(170,198,225,.20)!important;
+    box-shadow:0 -12px 36px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.055)!important;
+    backdrop-filter:blur(28px) saturate(165%)!important;
+    -webkit-backdrop-filter:blur(28px) saturate(165%)!important;
+  }
+  .bottom-nav .nav-btn{
+    position:relative!important;
+    display:flex!important;
+    flex-direction:column!important;
+    justify-content:center!important;
+    align-items:center!important;
+    gap:5px!important;
+    min-width:0!important;
+    min-height:62px!important;
+    padding:8px 3px!important;
+    border:1px solid transparent!important;
+    border-radius:17px!important;
+    background:transparent!important;
+    color:#b9c7da!important;
+    font-size:11px!important;
+    line-height:1.15!important;
+    font-weight:750!important;
+    letter-spacing:.1px!important;
+    white-space:nowrap!important;
+    text-align:center!important;
+    opacity:1!important;
+    box-shadow:none!important;
+    -webkit-tap-highlight-color:transparent!important;
+  }
+  .bottom-nav .nav-icon{
+    display:grid!important;
+    place-items:center!important;
+    width:31px!important;
+    height:29px!important;
+    border-radius:10px!important;
+    font-size:23px!important;
+    line-height:1!important;
+    color:inherit!important;
+    text-align:center!important;
+    transition:transform .18s ease,background .18s ease!important;
+  }
+  .bottom-nav .nav-btn.active{
+    color:#75f0c6!important;
+    background:linear-gradient(145deg,rgba(31,190,139,.20),rgba(23,123,103,.12))!important;
+    border-color:rgba(83,233,183,.22)!important;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.07),0 5px 16px rgba(0,0,0,.12)!important;
+  }
+  .bottom-nav .nav-btn.active .nav-icon{
+    color:#80f7d0!important;
+    background:rgba(44,211,157,.13)!important;
+    transform:translateY(-1px)!important;
+    text-shadow:0 0 15px rgba(64,237,181,.18)!important;
+  }
+  .bottom-nav .nav-btn.active:before{
+    content:""!important;
+    position:absolute!important;
+    top:4px!important;
+    left:50%!important;
+    transform:translateX(-50%)!important;
+    width:18px!important;
+    height:3px!important;
+    border-radius:99px!important;
+    background:#52e6b2!important;
+    box-shadow:0 0 10px rgba(82,230,178,.45)!important;
+  }
+  .bottom-nav .nav-btn:focus-visible{
+    outline:2px solid #75f0c6!important;
+    outline-offset:2px!important;
+  }
+  .bottom-nav .nav-btn:active{transform:scale(.96)!important}
+}
+@media(max-width:360px){
+  .bottom-nav{gap:4px!important;padding-left:7px!important;padding-right:7px!important}
+  .bottom-nav .nav-btn{font-size:10px!important;min-height:59px!important}
+  .bottom-nav .nav-icon{font-size:21px!important}
+}
