@@ -2,6 +2,7 @@ export interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
   SESSION_SECRET: string;
+  ADMIN_PHONES?: string;
 }
 
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
@@ -143,6 +144,35 @@ export default {
             ORDER BY r.created_at DESC LIMIT 100
           `).bind(userId).all();
           return json({ referrals: rows.results || [] });
+        }
+        if (url.pathname.startsWith("/api/admin/")) {
+          const adminUserId = await sessionUser(request, env);
+          if (!adminUserId) return json({ error: "Log in with your account first." }, 401);
+          const adminConfig = (env.ADMIN_PHONES || "").split(",").map(v => normalizePhone(v.trim())).filter(Boolean);
+          if (!adminConfig.length) return json({ error: "Admin access is not configured yet." }, 503);
+          const adminUser = await env.DB.prepare("SELECT phone FROM users WHERE id = ? AND status = 'active'").bind(adminUserId).first<{phone:string}>();
+          if (!adminUser || !adminConfig.includes(adminUser.phone)) return json({ error: "This account is not authorized for administration." }, 403);
+          if (url.pathname === "/api/admin/overview" && request.method === "GET") {
+            const [users, products, deposits, withdrawals, pending, balances] = await Promise.all([
+              env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active FROM users").first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS active FROM user_products WHERE status='active'").first<any>(),
+              env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='deposit' AND status='completed'").first<any>(),
+              env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='withdrawal' AND status='completed'").first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS total FROM transactions WHERE status IN ('pending','processing')").first<any>(),
+              env.DB.prepare("SELECT COALESCE(SUM(available_balance),0) AS total FROM wallets").first<any>()
+            ]);
+            return json({ users: users || {}, activeProducts: products?.active || 0, depositsUgx: deposits?.total || 0, withdrawalsUgx: withdrawals?.total || 0, pendingTransactions: pending?.total || 0, walletBalancesUgx: balances?.total || 0 });
+          }
+          if (url.pathname === "/api/admin/users" && request.method === "GET") {
+            const q = (url.searchParams.get("q") || "").trim().slice(0, 40);
+            const rows = await env.DB.prepare(`SELECT u.id, u.phone, u.referral_code, u.status, u.created_at, COALESCE(w.available_balance,0) AS balance, COALESCE(w.total_deposited,0) AS total_deposited, COALESCE(w.total_withdrawn,0) AS total_withdrawn FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE (? = '' OR u.phone LIKE ? OR u.referral_code LIKE ?) ORDER BY u.created_at DESC LIMIT 100`).bind(q, "%" + q + "%", "%" + q + "%").all();
+            return json({ users: rows.results || [] });
+          }
+          if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
+            const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
+            return json({ transactions: rows.results || [] });
+          }
+          return json({ error: "Not found" }, 404);
         }
         if (url.pathname === "/api/products/purchase" && request.method === "POST") {
           const userId = await sessionUser(request, env);
