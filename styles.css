@@ -1639,3 +1639,12 @@ body:has(#authView:not(.hidden)) .bottom-nav{display:none!important}
 #authView .auth-tabs button.active{color:#087b5c!important;background:#fff!important}
 #authView .bottom-nav{display:none!important}
 @media(max-width:480px){#authView .auth-card{padding:24px 20px!important}#authView .auth-card h1{font-size:30px!important;line-height:1.2!important}#authView #togglePassword{min-width:88px!important}}
+
+/* Critical visibility state: never show login and dashboard together */
+.hidden,
+#authView.hidden,
+#appView.hidden,
+section.hidden,
+div.hidden{display:none!important;visibility:hidden!important;pointer-events:none!important}
+#authView:not(.hidden),
+#appView:not(.hidden){visibility:visible}
