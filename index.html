@@ -263,25 +263,49 @@ async function logout(){try{await fetch('/api/auth/logout',{method:'POST',creden
 $('sidebarLogout').onclick=logout;$('accountLogout').onclick=logout;
 $('changePassword').onclick=async()=>{if(!state.phone){toast('Please log in first.');return}const currentPassword=await appPrompt('Enter your current password to continue.','Change password','Current password','','password');if(currentPassword===null)return;const newPassword=await appPrompt('Choose a new password with 8–128 characters.','Change password','New password','','password');if(newPassword===null)return;const confirmPassword=await appPrompt('Enter the new password one more time.','Confirm password','Confirm new password','','password');if(confirmPassword===null)return;if(newPassword.length<8||newPassword.length>128){toast('New password must be 8–128 characters.');return}if(newPassword!==confirmPassword){toast('The new passwords do not match.');return}const b=$('changePassword');b.disabled=true;b.textContent='Updating…';try{const response=await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({currentPassword,newPassword})});const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'Could not change password.');toast(data.message||'Password changed successfully.')}catch(error){toast(error.message||'Could not change password.')}finally{b.disabled=false;b.textContent='Change'}};
 const installButton=$('installApp');
-function updateInstallButton(){if(!installButton)return;installButton.textContent=deferredPrompt?'Install':'How to install';installButton.setAttribute('aria-label',deferredPrompt?'Install Aurorar app':'Instructions to install Aurorar');}
-installButton.onclick=async()=>{
- if(deferredPrompt){
-  deferredPrompt.prompt();
-  const choice=await deferredPrompt.userChoice.catch(()=>({outcome:'dismissed'}));
-  deferredPrompt=null;updateInstallButton();
-  if(choice.outcome==='accepted')installButton.textContent='Installing…';
-  return;
+function updateInstallButton(){if(!installButton)return;installButton.textContent=deferredPrompt?'Install app':'Install app';installButton.setAttribute('aria-label','Install Aurorar app');}
+async function showInstallHelp(message){
+ if(typeof appDialog==='function'){
+  await appDialog({title:'Install Aurorar',message,label:'',confirmOnly:true,confirmText:'Got it'});
+ }else{
+  toast(message);
  }
+}
+installButton.onclick=async()=>{
+ if(!installButton||installButton.disabled)return;
  const isStandalone=window.matchMedia('(display-mode: standalone)').matches||window.navigator.standalone===true;
  if(isStandalone){installButton.textContent='App installed';return;}
+ if(deferredPrompt){
+  const promptEvent=deferredPrompt;
+  installButton.disabled=true;
+  installButton.textContent='Opening…';
+  try{
+   await promptEvent.prompt();
+   const choice=await promptEvent.userChoice;
+   deferredPrompt=null;
+   if(choice&&choice.outcome==='accepted'){
+    installButton.textContent='Installing…';
+    toast('Follow the browser prompt to finish installing Aurorar.');
+   }else{
+    updateInstallButton();
+    toast('Installation was cancelled. Tap Install app to try again.');
+   }
+  }catch(error){
+   console.error('PWA install prompt failed',error);
+   deferredPrompt=null;
+   updateInstallButton();
+   await showInstallHelp('The browser did not open the install prompt. In Chrome, open ⋮ and choose “Install app” or “Add to Home screen”.');
+  }finally{installButton.disabled=false;}
+  return;
+ }
  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
  const isAndroid=/android/i.test(navigator.userAgent);
- const instructions=isIOS?'To install Aurorar: tap Share in Safari, then choose “Add to Home Screen”.':isAndroid?'To install Aurorar: open this page in Chrome, tap ⋮, then choose “Install app” or “Add to Home screen”.':'To install Aurorar, open your browser menu and choose “Install app” or “Create shortcut”.';
- const label=installButton;const old=label.textContent;label.textContent=instructions;label.title=instructions;label.setAttribute('aria-label',instructions);
- setTimeout(()=>{label.textContent=old==='Install'?'How to install':old;},7000);
+ const isChrome=/chrome|chromium/i.test(navigator.userAgent)&&!/edg|opr/i.test(navigator.userAgent);
+ const instructions=isIOS?'To install Aurorar, open this site in Safari, tap Share, then choose “Add to Home Screen”.':isAndroid&&isChrome?'Chrome has not offered the one-tap install prompt yet. Open ⋮ in Chrome and choose “Install app” or “Add to Home screen”. If that option is missing, reload the site after the page finishes loading.':'Open the browser menu and choose “Install app” or “Add to Home screen”.';
+ await showInstallHelp(instructions);
 };
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;updateInstallButton()});
-window.addEventListener('appinstalled',()=>{deferredPrompt=null;installButton.textContent='App installed';});
+window.addEventListener('appinstalled',()=>{deferredPrompt=null;if(installButton)installButton.textContent='App installed';});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
 updateInstallButton();
 renderProducts();
