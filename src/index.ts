@@ -46,16 +46,6 @@ async function sessionUser(request: Request, env: Env): Promise<string | null> {
     return data.exp > Date.now() && typeof data.sub === "string" ? data.sub : null;
   } catch { return null; }
 }
-const cookie = request.headers.get("Cookie") || "";
-  const token = cookie.split(";").map(s => s.trim()).find(s => s.startsWith("aurorar_session="))?.slice("aurorar_session=".length);
-  if (!token || !env.SESSION_SECRET) return null;
-  const [payload, signature] = token.split(".");
-  if (!payload || !signature || !(await hmac(payload, env.SESSION_SECRET)).split("").every((c, i) => c === signature[i])) return null;
-  try {
-    const data = JSON.parse(atob(payload));
-    return data.exp > Date.now() && typeof data.sub === "string" ? data.sub : null;
-  } catch { return null; }
-}
 const cookie = (token: string, maxAge: number) => `aurorar_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
 async function readJson(request: Request): Promise<any> {
   try { return await request.json(); } catch { return null; }
