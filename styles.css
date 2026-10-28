@@ -923,3 +923,68 @@ article.product-card.card .product-meta strong {font-size:13px!important;line-he
   body .bottom-nav>.wallet-shortcut .wallet-logo-orbit,
   body .bottom-nav>.wallet-shortcut .wallet-logo-orbit img{animation:none!important}
 }
+
+/* Final override: force five tabs into a single horizontal row on phones */
+@media screen and (max-width:800px){
+  html body nav.bottom-nav{
+    display:flex!important;
+    flex-direction:row!important;
+    flex-wrap:nowrap!important;
+    justify-content:space-between!important;
+    align-items:center!important;
+    gap:0!important;
+    width:100%!important;
+    min-width:0!important;
+    padding:7px 5px calc(7px + env(safe-area-inset-bottom))!important;
+    overflow-x:hidden!important;
+  }
+  html body nav.bottom-nav > button.nav-btn{
+    flex:1 1 20%!important;
+    width:20%!important;
+    max-width:20%!important;
+    min-width:0!important;
+    margin:0!important;
+    padding:7px 0!important;
+    display:flex!important;
+    flex-direction:column!important;
+    flex-wrap:nowrap!important;
+    align-items:center!important;
+    justify-content:center!important;
+    gap:5px!important;
+    text-align:center!important;
+    white-space:nowrap!important;
+    font-size:9px!important;
+    line-height:1.1!important;
+    transform:none!important;
+  }
+  html body nav.bottom-nav > button.nav-btn > span{
+    flex-shrink:0!important;
+    white-space:nowrap!important;
+  }
+  html body nav.bottom-nav > button.nav-btn .nav-icon{
+    width:auto!important;
+    font-size:19px!important;
+    line-height:1!important;
+  }
+  html body nav.bottom-nav > button.wallet-shortcut{
+    flex:1 1 20%!important;
+    max-width:20%!important;
+    min-width:0!important;
+    margin:0!important;
+  }
+  html body nav.bottom-nav > button.wallet-shortcut .wallet-logo-orbit{
+    width:36px!important;height:36px!important;min-width:36px!important;
+    display:grid!important;place-items:center!important;
+    margin:0 auto!important;border-radius:50%!important;
+    background:radial-gradient(circle at 30% 25%,#fff,#d9fff1 38%,#17b98b 73%,#08784f)!important;
+    box-shadow:0 0 0 3px #14b88a26,0 0 16px #14b88a99,inset 0 0 8px #fff!important;
+    animation:aurorarGlobeSpin 5s linear infinite,aurorarGlobeGlow 2s ease-in-out infinite alternate!important;
+  }
+  html body nav.bottom-nav > button.wallet-shortcut .wallet-logo-orbit img{
+    display:block!important;width:26px!important;height:26px!important;object-fit:contain!important;
+    animation:aurorarLogoCounterSpin 5s linear infinite!important;
+  }
+  html body nav.bottom-nav > button.wallet-shortcut > span:last-child{
+    display:block!important;font-size:9px!important;font-weight:850!important;color:#08784f!important;
+  }
+}
