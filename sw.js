@@ -1,5 +1,5 @@
-const CACHE='aurorar-shell-v3';
-const SHELL=['/','/index.html','/styles.css?v=20261028-dashboardcontrast10','/manifest.webmanifest','/icon.svg'];
+const CACHE='aurorar-shell-v4';
+const SHELL=['/','/index.html','/styles.css?v=20261028-lighttheme4','/manifest.webmanifest','/icon.svg'];
 self.addEventListener('install',event=>{
  event.waitUntil((async()=>{
   const cache=await caches.open(CACHE);
