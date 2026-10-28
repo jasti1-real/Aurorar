@@ -107,6 +107,20 @@ export default {
           const token = await makeSession(user.id, env.SESSION_SECRET);
           return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code } }, 200, { "Set-Cookie": cookie(token, 604800) });
         }
+        if (url.pathname === "/api/auth/change-password" && request.method === "POST") {
+          const userId = await sessionUser(request, env);
+          if (!userId) return json({ error: "Please log in again before changing your password." }, 401);
+          const body = await readJson(request);
+          if (typeof body?.currentPassword !== "string" || typeof body?.newPassword !== "string" || body.newPassword.length < 8 || body.newPassword.length > 128) {
+            return json({ error: "Enter your current password and a new password of 8–128 characters." }, 400);
+          }
+          const user = await env.DB.prepare("SELECT password_hash, password_salt FROM users WHERE id = ? AND status = 'active'").bind(userId).first<any>();
+          if (!user || await passwordHash(body.currentPassword, user.password_salt) !== user.password_hash) return json({ error: "Current password is incorrect." }, 401);
+          const salt = randomHex(16);
+          const hash = await passwordHash(body.newPassword, salt);
+          await env.DB.prepare("UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?").bind(hash, salt, userId).run();
+          return json({ ok: true, message: "Password changed successfully." });
+        }
         if (url.pathname === "/api/auth/logout" && request.method === "POST") return json({ ok: true }, 200, { "Set-Cookie": cookie("", 0) });
         if (url.pathname === "/api/me" && request.method === "GET") {
           const id = await sessionUser(request, env);
