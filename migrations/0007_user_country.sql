@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN country TEXT NOT NULL DEFAULT 'UG' CHECK (country IN ('UG','RW','ZM'));
