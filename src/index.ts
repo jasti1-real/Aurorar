@@ -123,8 +123,10 @@ export default {
         }
         return json({ error: "Not found" }, 404);
       } catch (error) {
-        console.error("Aurorar API error:", error instanceof Error ? error.message : String(error));
-        return json({ error: "Registration failed because of a server/database configuration issue. Please retry after the administrator checks the Worker logs." }, 500);
+        const detail = error instanceof Error ? error.message : String(error);
+        console.error("Aurorar API error:", detail);
+        // Return a useful diagnostic without exposing credentials or stack traces.
+        return json({ error: "Account creation failed.", diagnostic: detail.slice(0, 240) }, 500);
       }
     }
     return env.ASSETS.fetch(request);
