@@ -45,7 +45,9 @@ async function sessionUser(request: Request, env: Env): Promise<string | null> {
   if (mismatch !== 0) return null;
   try {
     const data = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
-    return data.exp > Date.now() && typeof data.sub === "string" ? data.sub : null;
+    if (!(data.exp > Date.now()) || typeof data.sub !== "string") return null;
+    const account = await env.DB.prepare("SELECT id FROM users WHERE id = ? AND status = 'active'").bind(data.sub).first();
+    return account ? data.sub : null;
   } catch { return null; }
 }
 const cookie = (token: string, maxAge: number) => `aurorar_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
