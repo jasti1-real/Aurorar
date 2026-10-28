@@ -222,6 +222,14 @@ document.addEventListener('click',async e=>{
  }catch(error){toast(error.message||'Could not check payment status.');}
  finally{button.disabled=false;button.textContent='Check status';}
 });
+const walletShortcut=$('walletShortcut'),walletShortcutDialog=$('walletShortcutDialog');
+function closeWalletShortcut(){walletShortcutDialog?.classList.add('hidden');document.body.classList.remove('modal-open')}
+walletShortcut?.addEventListener('click',()=>{walletShortcutDialog?.classList.remove('hidden');document.body.classList.add('modal-open')});
+$('walletShortcutClose')?.addEventListener('click',closeWalletShortcut);
+walletShortcutDialog?.addEventListener('click',e=>{if(e.target===walletShortcutDialog)closeWalletShortcut()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeWalletShortcut()});
+$('walletQuickDeposit')?.addEventListener('click',()=>{closeWalletShortcut();document.querySelector('[data-action="deposit"]')?.click()});
+$('walletQuickWithdraw')?.addEventListener('click',()=>{closeWalletShortcut();document.querySelector('[data-action="withdraw"]')?.click()});
 document.querySelectorAll('[data-action]').forEach(button=>button.addEventListener('click',async()=>{
  const action=button.dataset.action;
  if(action!=='deposit'&&action!=='withdraw')return;
