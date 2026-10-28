@@ -132,6 +132,18 @@ export default {
           const transactions = await env.DB.prepare("SELECT type, amount_ugx, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50").bind(id).all();
           return json({ user, wallet: wallet || {}, products: products.results || [], transactions: transactions.results || [] });
         }
+        if (url.pathname === "/api/referrals" && request.method === "GET") {
+          const userId = await sessionUser(request, env);
+          if (!userId) return json({ error: "Please log in." }, 401);
+          const rows = await env.DB.prepare(`
+            SELECT u.phone, r.level, r.created_at,
+              COALESCE((SELECT SUM(t.amount_ugx) FROM transactions t WHERE t.user_id = u.id AND t.type = 'deposit' AND t.status = 'completed' AND t.amount_ugx > 0), 0) AS confirmed_deposit
+            FROM referrals r JOIN users u ON u.id = r.referred_user_id
+            WHERE r.referrer_user_id = ?
+            ORDER BY r.created_at DESC LIMIT 100
+          `).bind(userId).all();
+          return json({ referrals: rows.results || [] });
+        }
         if (url.pathname === "/api/products/purchase" && request.method === "POST") {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before purchasing a machine." }, 401);
