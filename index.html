@@ -37,6 +37,7 @@
     <section id="page-home" class="page">
      <div class="hello"><div><h1>Welcome back<span id="helloName"></span> 👋</h1><p class="muted">Here’s an overview of your Aurorar account.</p></div><span class="pill">Account preview</span></div>
      <div class="hero"><div><h2>Account balance</h2><div class="balance" id="balanceHero">UGX 0</div><div class="small" style="opacity:.75;margin-top:5px">Available balance · preview</div></div><div style="display:grid;gap:9px"><button class="btn" data-action="deposit">＋ Deposit</button><button class="btn" data-action="withdraw">↗ Withdraw</button></div></div>
+     <div class="card" style="margin:0 0 18px;border-color:#bfe8d5;background:linear-gradient(110deg,#eaf8f1,#ffffff);display:flex;align-items:center;justify-content:space-between;gap:14px"><div><div style="font-weight:800;color:#08784f">🎁 Welcome bonus</div><div class="muted small">UGX 5,000 one-time bonus · subject to account eligibility and terms</div></div><strong style="font-size:20px;color:#08784f;white-space:nowrap">UGX 5,000</strong></div>
      <div class="stats">
       <div class="card stat"><span class="symbol">↗</span><div class="label">Total deposited</div><div class="value" id="totalDeposited">UGX 0</div></div>
       <div class="card stat"><span class="symbol">◷</span><div class="label">Today's earnings</div><div class="value" id="todayEarnings">UGX 0</div></div>
@@ -79,7 +80,7 @@ const plans=[
 [1,15000,5000,60],[2,30000,10000,45],[3,60000,20000,30],[4,120000,30000,15],[5,250000,62500,15],[6,500000,125000,15],[7,1000000,250000,10],[8,1500000,500000,10],[9,2000000,750000,10],[10,1000000,250000,30]
 ];
 const money=n=>'UGX '+Number(n||0).toLocaleString('en-UG');
-const state={phone:'',refCode:'',products:[],deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[]};
+const state={phone:'',refCode:'',products:[],balance:0,welcomeBonus:0,deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[]};
 let mode='login',deferredPrompt=null;
 const $=id=>document.getElementById(id);
 function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),3000)}
@@ -90,12 +91,14 @@ async function loadAccount(){
  const w=data.wallet||{};
  state.phone=data.user?.phone||state.phone;
  state.refCode=data.user?.referral_code||data.user?.referralCode||state.refCode;
+ state.balance=Number(w.available_balance||0);
+ state.welcomeBonus=Number(data.user?.welcome_bonus||0);
  state.deposit=Number(w.total_deposited||0);
  state.earned=Number(w.total_earned||0);
  state.withdrawn=Number(w.total_withdrawn||0);
  state.referrals=Number(w.referral_earnings||0);
  state.today=0;
- state.products=(data.products||[]).map(p=>({id:p.id,name:p.name,price:Number(p.price||0),days:Number(p.days||0)}));
+ state.products=(data.products||[]).map(p=>({id:p.id,n:Number(p.product_number||p.id||0),name:p.name,price:Number(p.price_ugx||p.price||0),days:Number(p.duration_days||p.days||0)}));
  state.ledger=(data.transactions||[]).map(t=>({type:t.type,amount:Number(t.amount_ugx||0),status:t.status,created_at:t.created_at}));
 }
 function setMode(next){mode=next;const reg=mode==='register';$('loginTab').classList.toggle('active',!reg);$('registerTab').classList.toggle('active',reg);$('authTitle').textContent=reg?'Create your Aurorar account':'Welcome back';$('authSub').textContent=reg?'Register with your mobile number to get started.':'Log in to access your account.';$('submitAuth').textContent=reg?'Create account':'Log in';$('confirmWrap').classList.toggle('hidden',!reg);$('termsWrap').classList.toggle('hidden',!reg);$('confirmPassword').required=reg;$('terms').required=reg;$('password').autocomplete=reg?'new-password':'current-password'}
@@ -106,8 +109,8 @@ document.getElementById('previewBtn').addEventListener('click',()=>{state.phone=
 function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!=='page-'+page));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
 function renderProducts(){$('productsGrid').innerHTML=plans.map(([n,price,daily,days])=>'<article class="card product-card"><div class="machine-art" aria-hidden="true">⚙️</div><div class="product-body"><div class="section-head"><h3>Machine '+n+'</h3><span class="pill">Plan '+n+'</span></div><div class="product-meta"><div><small>Price</small><strong>'+money(price)+'</strong></div><div><small>Daily income*</small><strong>'+money(daily)+'</strong></div><div><small>Duration</small><strong>'+days+' days</strong></div><div><small>Total listed return*</small><strong>'+money(daily*days)+'</strong></div></div><button class="btn outline full" data-buy="'+n+'">View details</button></div></article>').join('');document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>toast('Purchases will be enabled after secure payment integration.') )}
-function render(){const total=state.products.reduce((s,p)=>s+p.price,0);$('balanceHero').textContent=money(0);$('totalDeposited').textContent=money(state.deposit);$('todayEarnings').textContent=money(state.today);$('referralEarnings').textContent=money(state.referrals);$('totalEarned').textContent=money(state.earned);$('totalWithdrawn').textContent=money(state.withdrawn);$('activeCount').textContent=state.products.length;$('accountBalance').textContent=money(0);$('accountEarned').textContent=money(state.earned);$('profilePhone').textContent=state.phone||'Guest preview';$('accountNumber').textContent=state.phone||'Not signed in';$('avatar').textContent=(state.phone||'A').slice(-1);$('refCode').textContent=state.refCode||'Sign in to generate';$('inviteLink').value=state.refCode?location.origin+location.pathname+'?ref='+state.refCode:'';$('helloName').textContent=state.phone?'':'';
-$('activeProducts').innerHTML=state.products.length?state.products.map(p=>'<div class="row"><div><strong>Machine '+p.n+'</strong><div class="muted small">'+p.days+' day plan</div></div><strong>'+money(p.price)+'</strong></div>').join(''):'<div class="empty">You haven’t purchased a product yet.</div>'}
+function render(){const total=state.products.reduce((s,p)=>s+p.price,0);$('balanceHero').textContent=money(state.balance);$('totalDeposited').textContent=money(state.deposit);$('todayEarnings').textContent=money(state.today);$('referralEarnings').textContent=money(state.referrals);$('totalEarned').textContent=money(state.earned);$('totalWithdrawn').textContent=money(state.withdrawn);$('activeCount').textContent=state.products.length;$('accountBalance').textContent=money(state.balance);$('accountEarned').textContent=money(state.earned);$('profilePhone').textContent=state.phone||'Guest preview';$('accountNumber').textContent=state.phone||'Not signed in';$('avatar').textContent=(state.phone||'A').slice(-1);$('refCode').textContent=state.refCode||'Sign in to generate';$('inviteLink').value=state.refCode?location.origin+location.pathname+'?ref='+state.refCode:'';$('helloName').textContent=state.phone?'':'';
+$('activeProducts').innerHTML=state.products.length?state.products.map(p=>'<div class="row"><div><strong>'+(p.name||('Machine '+p.n))+'</strong><div class="muted small">'+p.days+' day plan</div></div><strong>'+money(p.price)+'</strong></div>').join(''):'<div class="empty">You haven’t purchased a product yet.</div>'}
 $('copyInvite').onclick=async()=>{if(!$('inviteLink').value){toast('Sign in after secure authentication is enabled to get your invite link.');return}try{await navigator.clipboard.writeText($('inviteLink').value);toast('Invitation link copied.')}catch{toast('Copy is unavailable in this browser.')}};
 document.querySelectorAll('[data-action]').forEach(b=>b.addEventListener('click',()=>{const a=b.dataset.action;if(a==='deposit'||a==='withdraw')toast('Payments are not enabled until Marzpay credentials and server-side verification are configured.');else if(a==='telegram-channel'||a==='telegram-support')toast('Official Telegram links have not been supplied yet.')})); 
 function logout(){state.phone='';$('appView').classList.add('hidden');$('authView').classList.remove('hidden');$('password').value='';toast('Preview session ended.')}
