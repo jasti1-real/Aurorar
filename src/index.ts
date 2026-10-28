@@ -152,7 +152,7 @@ export default {
         const detail = error instanceof Error ? error.message : String(error);
         console.error("Aurorar API error:", detail);
         // Return a useful diagnostic without exposing credentials or stack traces.
-        return json({ error: "Account service failed. Please retry shortly.", diagnostic: detail.slice(0, 240) }, 500);
+        return json({ error: "Account service failed. Please retry shortly." }, 500);
       }
     }
     return env.ASSETS.fetch(request);
