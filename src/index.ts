@@ -206,10 +206,14 @@ export default {
         }
         if (url.pathname === "/api/auth/register" && request.method === "POST") {
           const body = await readJson(request);
+          const country = typeof body?.country === "string" ? body.country.toUpperCase() : "UG";
+          const countryConfig: Record<string, {prefix:string;name:string}> = { UG:{prefix:"+256",name:"Uganda"}, RW:{prefix:"+250",name:"Rwanda"}, ZM:{prefix:"+260",name:"Zambia"} };
+          const config = countryConfig[country];
           const phone = normalizePhone(body?.phone);
           const password = body?.password;
           const refCode = typeof body?.referralCode === "string" ? body.referralCode.trim().slice(0, 40) : "";
-          if (!phone) return json({ error: "Enter a valid phone number, including Uganda's country code if needed." }, 400);
+          if (!config) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
+          if (!phone || !phone.startsWith(config.prefix)) return json({ error: "Enter a valid " + config.name + " phone number starting with " + config.prefix + "." }, 400);
           if (typeof password !== "string" || password.length < 8 || password.length > 128) return json({ error: "Password must be 8–128 characters." }, 400);
           const exists = await env.DB.prepare("SELECT id FROM users WHERE phone = ?").bind(phone).first();
           if (exists) return json({ error: "An account with this phone number already exists. Please log in." }, 409);
@@ -220,7 +224,7 @@ export default {
           const referrer = refCode ? await env.DB.prepare("SELECT id FROM users WHERE referral_code = ? AND status = 'active'").bind(refCode).first<{id:string}>() : null;
           // Insert the user first, then dependent rows separately so the failing
           // operation is isolated in Worker logs and account creation is recoverable.
-          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status) VALUES (?, ?, ?, ?, ?, ?, 5000, 'active')").bind(id, phone, hash, salt, referralCode, referrer?.id || null).run();
+          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status, country) VALUES (?, ?, ?, ?, ?, ?, 5000, 'active', ?)").bind(id, phone, hash, salt, referralCode, referrer?.id || null, country).run();
           try {
             await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
             if (referrer) {
@@ -263,7 +267,7 @@ export default {
         if (url.pathname === "/api/me" && request.method === "GET") {
           const id = await sessionUser(request, env);
           if (!id) return json({ error: "Please log in." }, 401);
-          const user = await env.DB.prepare("SELECT phone, referral_code, welcome_bonus FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
+          const user = await env.DB.prepare("SELECT phone, referral_code, welcome_bonus, country FROM users WHERE id = ? AND status = 'active'").bind(id).first<any>();
           if (!user) return json({ error: "Account not found." }, 401);
           const wallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
           const products = await env.DB.prepare("SELECT up.id, p.id AS product_id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days, up.starts_at, up.ends_at, up.status FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.purchased_at DESC").bind(id).all();
