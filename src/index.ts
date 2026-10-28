@@ -92,14 +92,19 @@ export default {
           const reference = typeof tx?.reference === "string" ? tx.reference : "";
           const eventType = typeof event?.event_type === "string" ? event.event_type : "";
           if (!reference || !tx?.uuid || !eventType.startsWith("collection.")) return json({ received: true, ignored: true });
-          const local = await env.DB.prepare("SELECT id, user_id, amount_ugx, status FROM transactions WHERE external_reference=? AND type='deposit'").bind(reference).first<any>();
+          const local = await env.DB.prepare("SELECT id, user_id, amount_ugx, currency, status FROM transactions WHERE external_reference=? AND type='deposit'").bind(reference).first<any>();
           if (!local) return json({ received: true, ignored: true });
-          if (Number(tx?.amount?.raw) !== Number(local.amount_ugx) || tx?.amount?.currency !== "UGX") return json({ error: "Payment amount or currency mismatch." }, 409);
+          const localCurrency = String(local.currency || "UGX").toUpperCase();
+          const providerCurrency = String(tx?.amount?.currency || "").toUpperCase();
+          if (Number(tx?.amount?.raw) !== Number(local.amount_ugx) || providerCurrency !== localCurrency) return json({ error: "Payment amount or currency mismatch." }, 409);
           if (tx.status === "completed" && eventType === "collection.completed") {
             const changed = await env.DB.prepare("UPDATE transactions SET status='completed', completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(local.id).run();
             if (Number(changed.meta?.changes || 0) === 1) {
+              const ledgerUpdate = localCurrency === "UGX"
+                ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx), Number(local.amount_ugx), local.user_id)
+                : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(Number(local.amount_ugx), Number(local.amount_ugx), local.user_id, localCurrency);
               await env.DB.batch([
-                env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx), Number(local.amount_ugx), local.user_id),
+                ledgerUpdate,
                 env.DB.prepare("INSERT OR IGNORE INTO payment_events (id,provider,provider_event_id,user_id,transaction_id,event_type,verified,payload_json) VALUES (?,?,?,?,?,?,1,?)").bind(crypto.randomUUID(),"marzpay",String(tx.uuid),local.user_id,local.id,eventType,rawBody)
               ]);
             }
@@ -130,7 +135,7 @@ export default {
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
           const reference = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
-          await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,'pending',?,?,?)").bind(transactionId,userId,amount,reference,phone,"MarzPay mobile money deposit").run();
+          await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,?,'pending',?,?,?)").bind(transactionId,userId,amount,market.currency,reference,phone,"MarzPay mobile money deposit").run();
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let providerResponse: any;
           try {
