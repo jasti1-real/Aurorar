@@ -483,6 +483,7 @@ export default {
             const product = await env.DB.prepare("SELECT id,name,price,daily_income,duration_days,active FROM regional_products WHERE id=? AND currency=?").bind(productId,currency).first<any>();
             if (!product || product.active !== 1) return json({ error: "This " + currency + " machine is not configured and enabled yet. No money was deducted." }, 409);
             const price = Number(product.price);
+            if (!Number.isSafeInteger(price) || price <= 0) return json({ error: "This regional machine has an invalid price. No money was deducted." }, 409);
             const debit = await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=?").bind(price,userId,currency,price).run();
             if (Number(debit.meta?.changes || 0) !== 1) return json({ error: "Insufficient " + currency + " wallet balance. No money was deducted." }, 409);
             const purchaseId = crypto.randomUUID();
@@ -501,6 +502,7 @@ export default {
           const product = await env.DB.prepare("SELECT id, name, price_ugx, active FROM products WHERE id = ?").bind(productId).first<any>();
           if (!product || product.active !== 1) return json({ error: "This machine is not currently available." }, 404);
           const price = Number(product.price_ugx);
+          if (!Number.isSafeInteger(price) || price <= 0) return json({ error: "This machine has an invalid price. No money was deducted." }, 409);
           const purchaseId = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
           const debit = await env.DB.prepare("UPDATE wallets SET available_balance = available_balance - ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id = ? AND available_balance >= ?").bind(price, userId, price).run();
