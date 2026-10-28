@@ -146,8 +146,12 @@ async function loadAccount(){
  $('catalogueCountry').textContent=countryInfo.flag+' '+countryInfo.name+' — '+countryInfo.currency;
  $('productCurrency').value=countryInfo.currency;
  $('regionalProductNotice').classList.toggle('hidden',state.country==='UG');
- $('regionalProductNotice').textContent=state.country==='RW'?'Rwanda market: prices are for reference only. RWF deposits, purchases, and withdrawals are not enabled yet. No wallet will be charged.':state.country==='ZM'?'Zambia market: prices are for reference only. ZMW deposits, purchases, and withdrawals are not enabled yet. No wallet will be charged.':'';
- $('regionalWalletSection').classList.add('hidden'); // Keep other countries' wallets and market cards off the home dashboard; show only the registered country's account.
+ $('regionalProductNotice').textContent=state.country==='RW'?'Rwanda market: product prices are shown in RWF. Purchases are available only when regional purchasing is enabled on the server and your RWF wallet has sufficient funds.':state.country==='ZM'?'Zambia market: product prices are shown in ZMW. Purchases are available only when regional purchasing is enabled on the server and your ZMW wallet has sufficient funds.':'';
+ $('regionalWalletSection').classList.toggle('hidden',state.country==='UG');
+ const regionalWalletHeading=$('regionalWalletSection')?.querySelector('.section-head h2');
+ const regionalWalletPill=$('regionalWalletSection')?.querySelector('.section-head .pill');
+ if(regionalWalletHeading)regionalWalletHeading.textContent=state.country==='RW'?'Rwanda wallet overview':state.country==='ZM'?'Zambia wallet overview':'Regional currency wallets';
+ if(regionalWalletPill)regionalWalletPill.textContent=state.country==='RW'?'RWF account':state.country==='ZM'?'ZMW account':'Regional markets';
  state.refCode=data.user?.referral_code||data.user?.referralCode||state.refCode;
  state.balance=Number(w.available_balance||0);
  state.welcomeBonus=Number(data.user?.welcome_bonus||0);
