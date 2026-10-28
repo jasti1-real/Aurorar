@@ -271,7 +271,7 @@ export default {
             env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id),
             env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id)
           ]);
-          const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn FROM currency_wallets WHERE user_id = ? ORDER BY currency").bind(id).all();
+          const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? ORDER BY currency").bind(id).all();
           const transactions = await env.DB.prepare("SELECT type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? ORDER BY created_at DESC LIMIT 50").bind(id).all();
           return json({ user, wallet: wallet || {}, currencyWallets: currencyWallets.results || [], products: products.results || [], transactions: transactions.results || [] });
         }
