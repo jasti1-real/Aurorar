@@ -136,6 +136,50 @@ export default {
           }
           return json({ received: true });
         }
+        if (url.pathname === "/api/payments/check" && request.method === "POST") {
+          const userId = await sessionUser(request, env);
+          if (!userId) return json({ error: "Please log in to check your deposit." }, 401);
+          if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET) return json({ error: "Payment status checking is not configured." }, 503);
+          const body = await readJson(request);
+          const transactionId = typeof body?.transactionId === "string" ? body.transactionId : "";
+          if (!transactionId) return json({ error: "Select a deposit transaction to check." }, 400);
+          const local = await env.DB.prepare("SELECT id,user_id,amount_ugx,currency,status,external_reference,provider_transaction_uuid FROM transactions WHERE id=? AND user_id=? AND type='deposit'").bind(transactionId,userId).first<any>();
+          if (!local) return json({ error: "Deposit transaction not found." }, 404);
+          if (local.status === "completed") return json({ ok: true, status: "completed", message: "This deposit is already credited." });
+          if (["failed","reversed"].includes(local.status)) return json({ ok: true, status: local.status, message: "This deposit was not completed." });
+          const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
+          let provider: any = null;
+          try {
+            const path = local.provider_transaction_uuid
+              ? "https://wallet.wearemarz.com/api/v1/transactions/" + encodeURIComponent(local.provider_transaction_uuid)
+              : "https://wallet.wearemarz.com/api/v1/transactions?type=collection&reference=" + encodeURIComponent(local.external_reference || "");
+            const response = await fetch(path, { headers: { "Authorization": "Basic " + auth, "Accept": "application/json" } });
+            const data: any = await response.json().catch(() => ({}));
+            if (!response.ok || data?.status === "error") return json({ error: data?.message || "MarzPay could not verify this payment yet. Please try again later." }, 502);
+            provider = data?.transaction || data?.data?.transaction || (Array.isArray(data?.data?.transactions) ? data.data.transactions.find((t: any) => t.reference === local.external_reference) : null);
+          } catch {
+            return json({ error: "Could not contact MarzPay to verify this payment. Please try again later." }, 502);
+          }
+          if (!provider) return json({ ok: true, status: "processing", message: "MarzPay has not returned a matching transaction yet." });
+          const providerStatus = String(provider.status || "").toLowerCase();
+          const providerAmount = Number(provider.amount?.raw ?? provider.amount);
+          const providerCurrency = String(provider.amount?.currency || local.currency || "UGX").toUpperCase();
+          if (providerAmount !== Number(local.amount_ugx) || providerCurrency !== String(local.currency || "UGX").toUpperCase()) {
+            return json({ error: "Provider transaction details do not match this deposit. Contact support before retrying." }, 409);
+          }
+          if (["completed","successful","succeeded"].includes(providerStatus)) {
+            const changed = await env.DB.prepare("UPDATE transactions SET status='completed',completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'),description='MarzPay payment verified by status check' WHERE id=? AND user_id=? AND type='deposit' AND status IN ('pending','processing')").bind(local.id,userId).run();
+            if (Number(changed.meta?.changes || 0) === 1) {
+              await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId).run();
+            }
+            return json({ ok: true, status: "completed", message: "MarzPay confirmed this deposit. Refresh your account balance." });
+          }
+          if (["failed","cancelled"].includes(providerStatus)) {
+            await env.DB.prepare("UPDATE transactions SET status='failed',description='MarzPay reports payment '||? WHERE id=? AND status IN ('pending','processing')").bind(providerStatus,local.id).run();
+            return json({ ok: true, status: "failed", message: "MarzPay reports this payment did not complete." });
+          }
+          return json({ ok: true, status: "processing", message: "MarzPay still reports this payment as processing. No balance has been added." });
+        }
         if (url.pathname === "/api/payments/deposit" && request.method === "POST") {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before depositing." }, 401);
