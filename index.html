@@ -81,7 +81,7 @@
 const plans=[
 [1,15000,5000,60],[2,30000,10000,45],[3,60000,20000,30],[4,120000,30000,15],[5,250000,62500,15],[6,500000,125000,15],[7,1000000,250000,10],[8,1500000,500000,10],[9,2000000,750000,10],[10,1000000,250000,30]
 ];
-const money=n=>'UGX '+Number(n||0).toLocaleString('en-UG');
+const money=n=>{const c=({UG:'UGX',RW:'RWF',ZM:'ZMW'})[state.country||'UG']||'UGX';const locale=({UG:'en-UG',RW:'en-RW',ZM:'en-ZM'})[state.country||'UG']||'en-UG';return c+' '+Number(n||0).toLocaleString(locale)};
 const state={phone:'',country:'UG',refCode:'',products:[],balance:0,welcomeBonus:0,deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[],referralRows:[],currencyWallets:[]};
 let mode='login',deferredPrompt=null;
 const $=id=>document.getElementById(id);
