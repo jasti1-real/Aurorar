@@ -17,7 +17,7 @@ const randomHex = (length = 16) => {
 };
 async function passwordHash(password: string, saltHex: string): Promise<string> {
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: hexToBytes(saltHex), iterations: 210000, hash: "SHA-256" }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: hexToBytes(saltHex), iterations: 100000, hash: "SHA-256" }, key, 256);
   return bytesToHex(new Uint8Array(bits));
 }
 async function hmac(value: string, secret: string): Promise<string> {
