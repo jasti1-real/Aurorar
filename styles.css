@@ -144,3 +144,11 @@ button,a,input,select{-webkit-tap-highlight-color:transparent}
   .machine-image-wrap { min-height: 150px; padding: 8px; border-radius: 18px; }
   .machine-image { max-height: 190px; }
 }
+
+/* Fix machine photos bleeding behind product details */
+.product-card{position:relative;isolation:isolate}
+.product-card>.machine-image-wrap{position:relative!important;display:grid!important;width:100%!important;height:190px!important;min-height:190px!important;max-height:190px!important;aspect-ratio:auto!important;padding:10px!important;overflow:hidden!important;background:linear-gradient(145deg,#fff 0%,#f1f5f7 100%)!important;border:0!important;border-bottom:1px solid rgba(20,43,74,.08)!important;border-radius:0!important}
+.product-card>.machine-image-wrap>.machine-image{position:relative!important;display:block!important;width:100%!important;height:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important;border-radius:10px!important}
+.product-card>.product-body{position:relative!important;z-index:1!important;padding:17px!important;background:rgba(255,255,255,.98)!important}
+.product-card .product-meta>div{background:#f4f7fa!important;border:1px solid rgba(215,225,233,.7)!important}
+@media(max-width:480px){.product-card>.machine-image-wrap{height:165px!important;min-height:165px!important;max-height:165px!important;padding:8px!important}}
