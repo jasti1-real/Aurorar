@@ -303,7 +303,20 @@ export default {
               env.DB.prepare("SELECT COUNT(*) AS total FROM transactions WHERE status IN ('pending','processing')").first<any>(),
               env.DB.prepare("SELECT COALESCE(SUM(available_balance),0) AS total FROM wallets").first<any>()
             ]);
-            return json({ users: users || {}, activeProducts: products?.active || 0, depositsUgx: deposits?.total || 0, withdrawalsUgx: withdrawals?.total || 0, pendingTransactions: pending?.total || 0, walletBalancesUgx: balances?.total || 0 });
+            const [regionalWallets, regionalTransactions] = await Promise.all([
+              env.DB.prepare("SELECT currency, COALESCE(SUM(available_balance),0) AS available_balance, COALESCE(SUM(total_deposited),0) AS total_deposited, COALESCE(SUM(total_earned),0) AS total_earned, COALESCE(SUM(total_withdrawn),0) AS total_withdrawn, COALESCE(SUM(referral_earnings),0) AS referral_earnings FROM currency_wallets GROUP BY currency ORDER BY currency").all(),
+              env.DB.prepare("SELECT currency, type, status, COUNT(*) AS count, COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE currency IN ('RWF','ZMW') GROUP BY currency, type, status ORDER BY currency, type, status").all()
+            ]);
+            return json({
+              users: users || {},
+              activeProducts: products?.active || 0,
+              depositsUgx: deposits?.total || 0,
+              withdrawalsUgx: withdrawals?.total || 0,
+              pendingTransactions: pending?.total || 0,
+              walletBalancesUgx: balances?.total || 0,
+              regionalWalletAccounting: regionalWallets.results || [],
+              regionalTransactionSummary: regionalTransactions.results || []
+            });
           }
           if (url.pathname === "/api/admin/users" && request.method === "GET") {
             const q = (url.searchParams.get("q") || "").trim().slice(0, 40);
