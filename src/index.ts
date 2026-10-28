@@ -383,6 +383,9 @@ export default {
           if (!Number.isSafeInteger(productId) || productId < 1 || productId > 10) return json({ error: "Select a valid machine." }, 400);
           if (!["UGX","RWF","ZMW"].includes(currency)) return json({ error: "Choose a supported wallet currency." }, 400);
           if (currency !== "UGX") {
+            return json({ error: "Purchases in " + currency + " are not enabled yet. Regional prices are for reference only; no money was deducted." }, 409);
+          }
+          if (currency !== "UGX") {
             const product = await env.DB.prepare("SELECT id,name,price,daily_income,duration_days,active FROM regional_products WHERE id=? AND currency=?").bind(productId,currency).first<any>();
             if (!product || product.active !== 1) return json({ error: "This " + currency + " machine is not configured and enabled yet. No money was deducted." }, 409);
             const price = Number(product.price);
