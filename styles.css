@@ -1705,3 +1705,47 @@ html body #appView #page-referrals td{color:#344b61!important;-webkit-text-fill-
 @keyframes walletRingSpin{to{transform:rotate(360deg)}}@keyframes walletLogoSpin{to{transform:rotate(360deg)}}@keyframes walletSparkle{0%,100%{transform:scale(.82) rotate(0);opacity:.8}50%{transform:scale(1.1) rotate(30deg);opacity:1}}
 @keyframes walletFlagOrbit{from{transform:rotate(var(--flag-angle,0deg)) translateY(-39px) rotate(calc(-1 * var(--flag-angle,0deg)))}to{transform:rotate(calc(var(--flag-angle,0deg) + 360deg)) translateY(-39px) rotate(calc(-1 * (var(--flag-angle,0deg) + 360deg)))}}
 @media(prefers-reduced-motion:reduce){html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit,html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit:before,html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit:after,html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit img,.wallet-country-flag{animation:none!important}}
+
+
+/* Account wallet actions: clear, equal-width deposit and withdraw buttons */
+html body #page-account > .actions{
+  display:grid!important;
+  grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:12px!important;
+  margin:18px 0 22px!important;
+  align-items:stretch!important;
+}
+html body #page-account > .actions > button{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:62px!important;
+  padding:15px 12px!important;
+  border-radius:18px!important;
+  font-size:clamp(15px,4vw,18px)!important;
+  line-height:1.25!important;
+  font-weight:800!important;
+  letter-spacing:.1px!important;
+  white-space:normal!important;
+  opacity:1!important;
+  visibility:visible!important;
+  text-shadow:none!important;
+  box-shadow:0 8px 20px rgba(30,80,91,.09)!important;
+}
+html body #page-account > .actions > button.primary{
+  background:linear-gradient(115deg,#39d9b0 0%,#13b98e 100%)!important;
+  color:#063c32!important;
+  border:1px solid #29cda4!important;
+}
+html body #page-account > .actions > button.outline{
+  background:linear-gradient(115deg,#e7faf3 0%,#d4f4e9 100%)!important;
+  color:#087b59!important;
+  border:1px solid #9be5cc!important;
+}
+html body #page-account > .actions > button:active{transform:scale(.98)!important}
+@media(max-width:360px){
+ html body #page-account > .actions{gap:8px!important}
+ html body #page-account > .actions > button{padding:12px 7px!important;font-size:14px!important}
+}
