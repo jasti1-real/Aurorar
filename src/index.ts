@@ -242,12 +242,12 @@ export default {
           const body = await readJson(request);
           const phone = normalizePhone(body?.phone);
           if (!phone || typeof body?.password !== "string") return json({ error: "Enter your phone number and password." }, 400);
-          const user = await env.DB.prepare("SELECT id, phone, password_hash, password_salt, referral_code, status FROM users WHERE phone = ?").bind(phone).first<any>();
+          const user = await env.DB.prepare("SELECT id, phone, password_hash, password_salt, referral_code, status, country FROM users WHERE phone = ?").bind(phone).first<any>();
           if (!user || user.status !== "active") return json({ error: "Phone number or password is incorrect." }, 401);
           const candidate = await passwordHash(body.password, user.password_salt);
           if (candidate !== user.password_hash) return json({ error: "Phone number or password is incorrect." }, 401);
           const token = await makeSession(user.id, env.SESSION_SECRET);
-          return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code } }, 200, { "Set-Cookie": cookie(token, 604800) });
+          return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 604800) });
         }
         if (url.pathname === "/api/auth/change-password" && request.method === "POST") {
           const userId = await sessionUser(request, env);
