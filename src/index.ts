@@ -118,8 +118,11 @@ export default {
           if (!userId) return json({ error: "Please log in before depositing." }, 401);
           if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) return json({ error: "Payments are not fully configured yet. Contact support." }, 503);
           const body = await readJson(request);
+          const account = await env.DB.prepare("SELECT country FROM users WHERE id = ? AND status = 'active'").bind(userId).first<{country:string}>();
+          if (!account) return json({ error: "Active account not found." }, 401);
+          const country = account.country || "UG";
+          if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Payment country must match your registered account country." }, 403);
           const amount = Number(body?.amount);
-          const country = typeof body?.country === "string" ? body.country.toUpperCase() : "UG";
           const markets: Record<string, { prefix: string; currency: string; name: string; min: number; max: number }> = {
             UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 500, max: 10000000 },
             RW: { prefix: "+250", currency: "RWF", name: "Rwanda", min: 100, max: 10000000 },
@@ -173,7 +176,10 @@ export default {
             return json({ requests: rows.results || [] });
           }
           const body = await readJson(request);
-          const country = typeof body?.country === "string" ? body.country.toUpperCase() : "";
+          const account = await env.DB.prepare("SELECT country FROM users WHERE id = ? AND status = 'active'").bind(userId).first<{country:string}>();
+          if (!account) return json({ error: "Active account not found." }, 401);
+          const country = account.country || "UG";
+          if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Withdrawal country must match your registered account country." }, 403);
           const markets: Record<string, {currency:string; prefix:string; min:number; name:string}> = {
             UG: { currency:"UGX", prefix:"+256", min:3000, name:"Uganda" },
             RW: { currency:"RWF", prefix:"+250", min:100, name:"Rwanda" },
