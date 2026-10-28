@@ -3,6 +3,9 @@ export interface Env {
   DB: D1Database;
   SESSION_SECRET: string;
   ADMIN_PHONES?: string;
+  MARZPAY_API_KEY?: string;
+  MARZPAY_API_SECRET?: string;
+  MARZPAY_WEBHOOK_SECRET?: string;
 }
 
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
@@ -69,6 +72,74 @@ export default {
       if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: { "Access-Control-Allow-Origin": url.origin, "Access-Control-Allow-Credentials": "true", "Access-Control-Allow-Headers": "Content-Type", "Access-Control-Allow-Methods": "GET,POST,OPTIONS" } });
       if (!env.DB || !env.SESSION_SECRET) return json({ error: "Account service is not configured. Contact the site administrator." }, 503);
       try {
+        if (url.pathname === "/api/payments/marzpay/callback" && request.method === "POST") {
+          const rawBody = await request.text();
+          const signingSecret = env.MARZPAY_WEBHOOK_SECRET;
+          const timestamp = request.headers.get("X-MarzPay-Timestamp") || "";
+          const signatureHeader = request.headers.get("X-MarzPay-Signature") || "";
+          const signature = signatureHeader.split(",").map(v => v.trim()).find(v => v.startsWith("v1="))?.slice(3) || "";
+          if (!signingSecret || !timestamp || !signature || !/^\\d{10,13}$/.test(timestamp)) return json({ error: "Webhook signature required." }, 401);
+          const timestampMs = Number(timestamp) * (timestamp.length === 13 ? 1 : 1000);
+          if (!Number.isFinite(timestampMs) || Math.abs(Date.now() - timestampMs) > 5 * 60 * 1000) return json({ error: "Webhook timestamp expired." }, 401);
+          const expected = await hmac(timestamp + "." + rawBody, signingSecret);
+          if (signature.length !== expected.length) return json({ error: "Invalid webhook signature." }, 401);
+          let diff = 0;
+          for (let i = 0; i < expected.length; i++) diff |= expected.charCodeAt(i) ^ (signature.charCodeAt(i) || 0);
+          if (diff !== 0) return json({ error: "Invalid webhook signature." }, 401);
+          let event: any;
+          try { event = JSON.parse(rawBody); } catch { return json({ error: "Invalid webhook JSON." }, 400); }
+          const tx = event?.transaction;
+          const reference = typeof tx?.reference === "string" ? tx.reference : "";
+          const eventType = typeof event?.event_type === "string" ? event.event_type : "";
+          if (!reference || !tx?.uuid || !eventType.startsWith("collection.")) return json({ received: true, ignored: true });
+          const local = await env.DB.prepare("SELECT id, user_id, amount_ugx, status FROM transactions WHERE external_reference=? AND type='deposit'").bind(reference).first<any>();
+          if (!local) return json({ received: true, ignored: true });
+          if (Number(tx?.amount?.raw) !== Number(local.amount_ugx)) return json({ error: "Payment amount mismatch." }, 409);
+          if (tx.status === "completed" && eventType === "collection.completed") {
+            const changed = await env.DB.prepare("UPDATE transactions SET status='completed', completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(local.id).run();
+            if (Number(changed.meta?.changes || 0) === 1) {
+              await env.DB.batch([
+                env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(local.amount_ugx), Number(local.amount_ugx), local.user_id),
+                env.DB.prepare("INSERT OR IGNORE INTO payment_events (id,provider,provider_event_id,user_id,transaction_id,event_type,verified,payload_json) VALUES (?,?,?,?,?,?,1,?)").bind(crypto.randomUUID(),"marzpay",String(tx.uuid),local.user_id,local.id,eventType,rawBody)
+              ]);
+            }
+          } else if (["failed","cancelled"].includes(tx.status) && ["collection.failed","collection.cancelled"].includes(eventType)) {
+            await env.DB.prepare("UPDATE transactions SET status='failed', description=? WHERE id=? AND status IN ('pending','processing')").bind("MarzPay collection " + tx.status, local.id).run();
+          }
+          return json({ received: true });
+        }
+        if (url.pathname === "/api/payments/deposit" && request.method === "POST") {
+          const userId = await sessionUser(request, env);
+          if (!userId) return json({ error: "Please log in before depositing." }, 401);
+          if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) return json({ error: "Payments are not fully configured yet. Contact support." }, 503);
+          const body = await readJson(request);
+          const amount = Number(body?.amount);
+          const phone = normalizePhone(body?.phone);
+          if (!Number.isSafeInteger(amount) || amount < 500 || amount > 10000000) return json({ error: "Deposit amount must be between UGX 500 and UGX 10,000,000." }, 400);
+          if (!phone || !phone.startsWith("+256")) return json({ error: "Enter a valid Ugandan mobile money number starting with +256." }, 400);
+          const reference = crypto.randomUUID();
+          const transactionId = crypto.randomUUID();
+          await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,'pending',?,?,?)").bind(transactionId,userId,amount,reference,phone,"MarzPay mobile money deposit").run();
+          const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
+          let providerResponse: any;
+          try {
+            const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money", {
+              method: "POST",
+              headers: { "Authorization": "Basic " + auth, "Content-Type": "application/json" },
+              body: JSON.stringify({ amount, phone_number: phone, country: "UG", reference, description: "Aurorar account deposit", callback_url: new URL("/api/payments/marzpay/callback", url.origin).toString(), metadata: [{ transactionId }] })
+            });
+            providerResponse = await response.json().catch(() => ({}));
+            if (!response.ok || providerResponse?.status === "error") {
+              await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay rejected collection request' WHERE id=? AND status='pending'").bind(transactionId).run();
+              return json({ error: providerResponse?.message || "MarzPay could not start this payment. Please try again." }, 502);
+            }
+          } catch {
+            await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay connection failed' WHERE id=? AND status='pending'").bind(transactionId).run();
+            return json({ error: "Could not connect to MarzPay. Please try again." }, 502);
+          }
+          await env.DB.prepare("UPDATE transactions SET status='processing', description='MarzPay payment request sent' WHERE id=? AND status='pending'").bind(transactionId).run();
+          return json({ ok: true, message: providerResponse?.message || "Payment request sent. Approve it on your phone and wait for confirmation.", reference, status: "processing" }, 201);
+        }
         if (url.pathname === "/api/auth/register" && request.method === "POST") {
           const body = await readJson(request);
           const phone = normalizePhone(body?.phone);
