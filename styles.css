@@ -1601,3 +1601,25 @@ input,select,textarea{color:#20354a}
  .btn,.card,.stat,.nav-btn{transition:transform .18s ease,box-shadow .18s ease,background-color .18s ease!important}
  .btn:active{transform:scale(.985)!important}
 }
+
+
+/* Aurorar light-login readability and mobile auth layout repair */
+:root{color-scheme:light!important}
+html body:has(#authView:not(.hidden)){background:#f3f6fa!important;color:#182434!important}
+body:has(#authView:not(.hidden)) #authView{background:radial-gradient(circle at 12% 8%,#d9f8eb 0,transparent 34%),#f3f6fa!important}
+body:has(#authView:not(.hidden)) #authView .auth-card{background:rgba(255,255,255,.97)!important;color:#182434!important;border:1px solid #e1e8ef!important;box-shadow:0 20px 55px rgba(20,43,74,.12)!important}
+body:has(#authView:not(.hidden)) #authView .brand{color:#142b4a!important}
+body:has(#authView:not(.hidden)) #authView h1,
+body:has(#authView:not(.hidden)) #authView h2{color:#142b4a!important}
+body:has(#authView:not(.hidden)) #authView p,
+body:has(#authView:not(.hidden)) #authView .muted,
+body:has(#authView:not(.hidden)) #authView .small{color:#52657b!important;opacity:1!important}
+body:has(#authView:not(.hidden)) #authView label{color:#34445a!important;opacity:1!important}
+body:has(#authView:not(.hidden)) #authView input{background:#fff!important;color:#182434!important;border:1px solid #cbd7e3!important;opacity:1!important}
+body:has(#authView:not(.hidden)) #authView input::placeholder{color:#78879a!important;opacity:1!important}
+body:has(#authView:not(.hidden)) #authView .auth-tabs{background:#edf2f7!important;border:1px solid #e0e7ef!important}
+body:has(#authView:not(.hidden)) #authView .auth-tabs button{color:#52657b!important;opacity:1!important}
+body:has(#authView:not(.hidden)) #authView .auth-tabs button.active{background:#fff!important;color:#142b4a!important;border:1px solid #dce5ed!important}
+body:has(#authView:not(.hidden)) #authView #togglePassword{min-width:74px;white-space:nowrap;overflow:visible;flex-shrink:0;color:#142b4a!important;background:#edf4f8!important;border:1px solid #d5e0e8!important}
+body:has(#authView:not(.hidden)) #authView #authFeedback{color:#b42318!important}
+body:has(#authView:not(.hidden)) .bottom-nav{display:none!important}
