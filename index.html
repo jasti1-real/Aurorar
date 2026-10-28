@@ -87,7 +87,7 @@ const state={phone:'',country:'UG',refCode:'',products:[],regionalProducts:[],ba
 let mode='login',deferredPrompt=null;
 const $=id=>document.getElementById(id);
 function chooseCountry(){return new Promise(resolve=>{const modal=$('countryPicker');const finish=value=>{modal.classList.add('hidden');modal.removeEventListener('click',onClick);document.removeEventListener('keydown',onKey);resolve(value)};const onClick=e=>{if(e.target===modal||e.target.closest('#cancelCountry'))finish(null);const option=e.target.closest('[data-country]:not(:disabled)');if(option)finish(option.dataset.country)};const onKey=e=>{if(e.key==='Escape')finish(null)};modal.addEventListener('click',onClick);document.addEventListener('keydown',onKey);modal.classList.remove('hidden');modal.querySelector('[data-country="UG"]').focus()})}
-function toast(s){$('toast').textContent=s;$('toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),3000)}
+function toast(s){const feedback=$('authFeedback');if(feedback&&!$('authView').classList.contains('hidden')){feedback.textContent=s;feedback.style.display='block'}$('toast').textContent=s;$('toast').classList.remove('hidden');clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>$('toast').classList.add('hidden'),6000)}
 async function loadAccount(){
  const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
  const data=await response.json().catch(()=>({}));
