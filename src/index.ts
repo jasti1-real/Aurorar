@@ -309,8 +309,18 @@ export default {
           const eligibility = await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM user_products WHERE user_id=? AND status='active') AS has_machine").bind(userId,userId).first<any>();
           if (!Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock withdrawals, first complete a successful deposit and then purchase a machine." }, 403);
           if (!Number(eligibility?.has_machine || 0)) return json({ error:"To unlock withdrawals, purchase a machine after your successful deposit." }, 403);
-          const wallet = await env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>();
-          if (!wallet || Number(wallet.available_balance || 0) < amount) return json({ error:"Your available UGX balance is not enough for this withdrawal. No money was deducted." }, 400);
+          const [wallet, pendingWithdrawals] = await Promise.all([
+            env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>(),
+            // Requests are not deducted at submission, so count outstanding requests
+            // against spendable funds to prevent users requesting the same balance twice.
+            env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS reserved FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND status IN ('requested','approved','processing')").bind(userId).first<any>()
+          ]);
+          const availableBalance = Number(wallet?.available_balance || 0);
+          const reservedBalance = Number(pendingWithdrawals?.reserved || 0);
+          const spendableBalance = Math.max(0, availableBalance - reservedBalance);
+          if (!wallet || spendableBalance < amount) {
+            return json({ error: "Your spendable UGX balance is not enough for this withdrawal. Available balance: " + availableBalance.toLocaleString("en-US") + " UGX; already requested and awaiting resolution: " + reservedBalance.toLocaleString("en-US") + " UGX. No money was deducted." }, 400);
+          }
           const id = crypto.randomUUID();
           try {
             await env.DB.prepare("INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key) VALUES (?,?,?, ?,?,?, 'requested',?)").bind(id,userId,country,market.currency,amount,phone,idempotencyKey).run();
