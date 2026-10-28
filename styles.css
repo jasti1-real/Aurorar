@@ -1623,3 +1623,19 @@ body:has(#authView:not(.hidden)) #authView .auth-tabs button.active{background:#
 body:has(#authView:not(.hidden)) #authView #togglePassword{min-width:74px;white-space:nowrap;overflow:visible;flex-shrink:0;color:#142b4a!important;background:#edf4f8!important;border:1px solid #d5e0e8!important}
 body:has(#authView:not(.hidden)) #authView #authFeedback{color:#b42318!important}
 body:has(#authView:not(.hidden)) .bottom-nav{display:none!important}
+
+/* High-contrast auth screen: avoid faded text and squeezed controls */
+#authView,#authView *{opacity:1!important;filter:none!important}
+#authView{background:#f2f6fb!important;color:#1b2b40!important}
+#authView .auth-card{background:#fff!important;color:#1b2b40!important}
+#authView .auth-card h1,#authView .auth-card h2,#authView .auth-card .brand{color:#172d49!important}
+#authView .auth-card p,#authView .auth-card label,#authView .auth-card small,#authView .auth-card .muted{color:#52657a!important}
+#authView .auth-card label{font-weight:750!important}
+#authView .auth-card input{background:#f4f8fc!important;color:#182b40!important;border:1px solid #cfdae6!important}
+#authView .auth-card input::placeholder{color:#75879b!important}
+#authView #togglePassword{width:auto!important;min-width:88px!important;padding:0 14px!important;white-space:nowrap!important;word-break:normal!important;overflow:visible!important;color:#17324b!important;background:#eaf2f8!important;border:1px solid #cedce7!important;font-size:15px!important}
+#authView .auth-tabs{background:#edf2f7!important}
+#authView .auth-tabs button{color:#455b70!important}
+#authView .auth-tabs button.active{color:#087b5c!important;background:#fff!important}
+#authView .bottom-nav{display:none!important}
+@media(max-width:480px){#authView .auth-card{padding:24px 20px!important}#authView .auth-card h1{font-size:30px!important;line-height:1.2!important}#authView #togglePassword{min-width:88px!important}}
