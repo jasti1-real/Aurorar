@@ -312,12 +312,12 @@ export default {
             if (!user) return json({ error: "User not found." }, 404);
             const [products, transactions] = await Promise.all([
               env.DB.prepare("SELECT up.id, p.name, up.purchase_price_ugx AS price, up.purchased_at, up.starts_at, up.ends_at, up.status FROM user_products up JOIN products p ON p.id=up.product_id WHERE up.user_id=? ORDER BY up.purchased_at DESC LIMIT 50").bind(targetId).all(),
-              env.DB.prepare("SELECT type, amount_ugx, status, external_reference, description, created_at FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(targetId).all()
+              env.DB.prepare("SELECT type, amount_ugx, currency, status, external_reference, description, created_at FROM transactions WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(targetId).all()
             ]);
             return json({ user, products: products.results || [], transactions: transactions.results || [] });
           }
           if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
-            const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
+            const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.currency, t.status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
             return json({ transactions: rows.results || [] });
           }
           return json({ error: "Not found" }, 404);
