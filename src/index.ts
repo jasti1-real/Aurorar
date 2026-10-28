@@ -499,6 +499,8 @@ export default {
             }
             return json({ok:true,message:product.name+" purchased using "+currency+".",purchase:{id:purchaseId,productId,name:product.name,price,currency}},201);
           }
+          const account = await env.DB.prepare("SELECT country FROM users WHERE id=? AND status='active'").bind(userId).first<{country:string}>();
+          if (!account || (account.country || "UG") !== "UG") return json({ error: "This account is registered outside Uganda. UGX machine purchases are not available for your market. No money was deducted." }, 403);
           const product = await env.DB.prepare("SELECT id, name, price_ugx, active FROM products WHERE id = ?").bind(productId).first<any>();
           if (!product || product.active !== 1) return json({ error: "This machine is not currently available." }, 404);
           const price = Number(product.price_ugx);
@@ -506,7 +508,7 @@ export default {
           const purchaseId = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
           const debit = await env.DB.prepare("UPDATE wallets SET available_balance = available_balance - ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id = ? AND available_balance >= ?").bind(price, userId, price).run();
-          if ((debit.meta?.changes || 0) !== 1) return json({ error: "Insufficient available balance. Deposit funds through a verified payment method before purchasing." }, 409);
+          if (Number(debit.meta?.changes || 0) !== 1) return json({ error: "Your UGX wallet does not have enough available funds for this machine. Deposit funds through a verified payment method, then try again. No money was deducted." }, 409);
           try {
             await env.DB.batch([
               env.DB.prepare("INSERT INTO user_products (id, user_id, product_id, purchase_price_ugx, starts_at, ends_at, status) VALUES (?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), datetime('now', '+' || (SELECT duration_days FROM products WHERE id = ?) || ' days'), 'active')").bind(purchaseId, userId, product.id, price, product.id),
