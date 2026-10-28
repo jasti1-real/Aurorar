@@ -27,7 +27,7 @@ jobs:
           const vm = require('node:vm');
           for (const file of ['index.html', 'admin.html']) {
             const html = fs.readFileSync(file, 'utf8');
-            const scripts = [...html.matchAll(/<script\\b[^>]*>([\\s\\S]*?)<\\/script>/gi)];
+            const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
             if (!scripts.length) throw new Error(`No inline scripts found in ${file}`);
             scripts.forEach((match, index) => new vm.Script(match[1], { filename: `${file}:script-${index + 1}` }));
             console.log(`Validated ${scripts.length} inline script(s) in ${file}`);
