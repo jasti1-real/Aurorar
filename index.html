@@ -98,7 +98,7 @@ async function loadAccount(){
  $('accountCountryPill').textContent=countryInfo.flag+' '+countryInfo.name+' · '+countryInfo.currency;
  $('catalogueCountry').textContent=countryInfo.flag+' '+countryInfo.name+' — '+countryInfo.currency;
  $('productCurrency').value=countryInfo.currency;
- $('regionalWalletSection').classList.toggle('hidden',state.country!=='UG');
+ $('regionalWalletSection').classList.add('hidden'); // Keep other countries' wallets and market cards off the home dashboard; show only the registered country's account.
  state.refCode=data.user?.referral_code||data.user?.referralCode||state.refCode;
  state.balance=Number(w.available_balance||0);
  state.welcomeBonus=Number(data.user?.welcome_bonus||0);
