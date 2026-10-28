@@ -168,6 +168,18 @@ export default {
             const rows = await env.DB.prepare(`SELECT u.id, u.phone, u.referral_code, u.status, u.created_at, COALESCE(w.available_balance,0) AS balance, COALESCE(w.total_deposited,0) AS total_deposited, COALESCE(w.total_withdrawn,0) AS total_withdrawn FROM users u LEFT JOIN wallets w ON w.user_id=u.id WHERE (? = '' OR u.phone LIKE ? OR u.referral_code LIKE ?) ORDER BY u.created_at DESC LIMIT 100`).bind(q, "%" + q + "%", "%" + q + "%").all();
             return json({ users: rows.results || [] });
           }
+          if (url.pathname.startsWith("/api/admin/users/") && url.pathname.endsWith("/status") && request.method === "POST") {
+            const targetId = decodeURIComponent(url.pathname.slice("/api/admin/users/".length, -"/status".length)).trim();
+            if (!targetId || targetId.length > 100) return json({ error: "Invalid user id." }, 400);
+            if (targetId === adminUserId) return json({ error: "You cannot suspend or change the status of the administrator account you are using." }, 409);
+            const body = await readJson(request);
+            const status = body?.status;
+            if (status !== "active" && status !== "suspended") return json({ error: "Choose active or suspended." }, 400);
+            const target = await env.DB.prepare("SELECT id, phone FROM users WHERE id=?").bind(targetId).first<{id:string;phone:string}>();
+            if (!target) return json({ error: "User not found." }, 404);
+            await env.DB.prepare("UPDATE users SET status=? WHERE id=?").bind(status, targetId).run();
+            return json({ ok: true, message: status === "suspended" ? "Account suspended. The user will be unable to log in." : "Account reactivated. The user can log in again.", status });
+          }
           if (url.pathname.startsWith("/api/admin/users/") && request.method === "DELETE") {
             const targetId = decodeURIComponent(url.pathname.slice("/api/admin/users/".length)).trim();
             if (!targetId || targetId.length > 100) return json({ error: "Invalid user id." }, 400);
