@@ -491,3 +491,22 @@ body .btn.secondary,body button.secondary{color:#edf5ff!important}
 body .bottom-nav a,body .mobile-nav a,body .tabbar a{color:#d0dbea!important;opacity:1!important}
 body .bottom-nav a.active,body .mobile-nav a.active,body .tabbar a.active{color:#73efc4!important}
 body .card .value,body .card .amount,body .card .number{color:#fff!important;opacity:1!important}
+
+/* Dashboard contrast fix targeting the exact markup used by Aurorar */
+#page-home .stats .stat .label,
+#page-home .stats .stat .muted,
+#page-home .stats .stat p{color:#c8d5e6!important;opacity:1!important}
+#page-home .stats .stat .value{color:#f4f8ff!important;opacity:1!important;text-shadow:none!important;font-weight:800!important}
+#page-home .hero h2,#page-home .hero .small{color:#e8f0fb!important;opacity:1!important}
+#page-home .hero .balance{color:#ffffff!important}
+#page-home .hello h1{color:#ffffff!important}
+#page-home .hello p{color:#d3deed!important}
+#page-home .hello .pill{color:#7df5ce!important;background:rgba(28,190,139,.13)!important;border-color:rgba(78,232,183,.2)!important}
+#page-home .card[style*="border-color:#bfe8d5"]{
+ color:#f4f8ff!important;background:linear-gradient(120deg,#14283a,#102b30)!important;
+ border:1px solid rgba(87,221,177,.2)!important;
+}
+#page-home .card[style*="border-color:#bfe8d5"] div,
+#page-home .card[style*="border-color:#bfe8d5"] strong{color:#f1fff9!important}
+#page-home .card[style*="border-color:#bfe8d5"] .muted{color:#c6d8d6!important}
+#page-home .actions .btn.secondary{background:#17263a!important;color:#f0f6ff!important;border:1px solid rgba(180,203,232,.2)!important}
