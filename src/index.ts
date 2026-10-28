@@ -121,6 +121,11 @@ export default {
           const providerCurrency = String(tx?.amount?.currency || "").toUpperCase();
           if (Number(tx?.amount?.raw) !== Number(local.amount_ugx) || providerCurrency !== localCurrency) return json({ error: "Payment amount or currency mismatch." }, 409);
           if (tx.status === "completed" && eventType === "collection.completed") {
+            // Regional users may not have a wallet row until their first confirmed payment.
+            // Ensure the matching currency wallet exists before attempting to credit it.
+            if (localCurrency !== "UGX") {
+              await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(local.user_id, localCurrency).run();
+            }
             const changed = await env.DB.prepare("UPDATE transactions SET status='completed', completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'), description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(local.id).run();
             if (Number(changed.meta?.changes || 0) === 1) {
               const ledgerUpdate = localCurrency === "UGX"
