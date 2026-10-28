@@ -1749,3 +1749,36 @@ html body #page-account > .actions > button:active{transform:scale(.98)!importan
  html body #page-account > .actions{gap:8px!important}
  html body #page-account > .actions > button{padding:12px 7px!important;font-size:14px!important}
 }
+
+
+/* Aurorar in-site status messages: polished, readable, and clear of mobile navigation */
+html body #toast.toast{
+  position:fixed!important;
+  z-index:100100!important;
+  left:50%!important;
+  right:auto!important;
+  bottom:calc(100px + env(safe-area-inset-bottom))!important;
+  width:max-content!important;
+  max-width:min( calc(100vw - 32px), 440px)!important;
+  padding:14px 18px!important;
+  border:1px solid rgba(255,255,255,.24)!important;
+  border-radius:18px!important;
+  background:rgba(20,43,74,.94)!important;
+  color:#fff!important;
+  box-shadow:0 16px 42px rgba(8,25,45,.25),inset 0 1px 0 rgba(255,255,255,.12)!important;
+  backdrop-filter:blur(22px) saturate(150%)!important;
+  -webkit-backdrop-filter:blur(22px) saturate(150%)!important;
+  font-size:14px!important;
+  font-weight:650!important;
+  line-height:1.5!important;
+  text-align:left!important;
+  overflow-wrap:anywhere!important;
+  transform:translateX(-50%)!important;
+  animation:aurorarToastIn .2s ease-out both;
+}
+html body #toast.toast.hidden{display:none!important}
+@keyframes aurorarToastIn{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@media(max-width:800px){
+  html body #toast.toast{bottom:calc(112px + env(safe-area-inset-bottom))!important;max-width:calc(100vw - 28px)!important}
+}
+@media(prefers-reduced-motion:reduce){html body #toast.toast{animation:none!important}}
