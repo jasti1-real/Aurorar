@@ -152,3 +152,36 @@ button,a,input,select{-webkit-tap-highlight-color:transparent}
 .product-card>.product-body{position:relative!important;z-index:1!important;padding:17px!important;background:rgba(255,255,255,.98)!important}
 .product-card .product-meta>div{background:#f4f7fa!important;border:1px solid rgba(215,225,233,.7)!important}
 @media(max-width:480px){.product-card>.machine-image-wrap{height:165px!important;min-height:165px!important;max-height:165px!important;padding:8px!important}}
+
+/* FINAL mobile product-card layout: photos must never become card backgrounds */
+article.product-card.card{
+  padding:0!important; overflow:hidden!important; background:#fff!important;
+  background-image:none!important; display:flex!important; flex-direction:column!important;
+}
+article.product-card.card>.machine-art.machine-image-wrap{
+  flex:0 0 165px!important; width:100%!important; height:165px!important;
+  min-height:165px!important; max-height:165px!important; aspect-ratio:auto!important;
+  margin:0!important; padding:8px!important; position:relative!important;
+  inset:auto!important; transform:none!important; background:#f4f7f9!important;
+  background-image:linear-gradient(145deg,#fff,#eef2f5)!important;
+  border:0!important; border-radius:0!important; overflow:hidden!important;
+  display:flex!important; align-items:center!important; justify-content:center!important;
+}
+article.product-card.card>.machine-art.machine-image-wrap>.machine-image{
+  position:static!important; inset:auto!important; flex:none!important;
+  width:100%!important; height:100%!important; max-width:100%!important;
+  max-height:100%!important; object-fit:contain!important; object-position:center!important;
+  transform:none!important; opacity:1!important; mix-blend-mode:normal!important;
+}
+article.product-card.card>.product-body{
+  flex:0 0 auto!important; position:relative!important; inset:auto!important;
+  width:100%!important; z-index:2!important; margin:0!important;
+  padding:16px!important; color:#172b45!important; background:#fff!important;
+  background-image:none!important; opacity:1!important;
+}
+article.product-card.card .product-meta>div{
+  background:#f3f7fa!important; background-image:none!important;
+}
+@media(min-width:801px){
+ article.product-card.card>.machine-art.machine-image-wrap{flex-basis:190px!important;height:190px!important;max-height:190px!important}
+}
