@@ -15,9 +15,10 @@ const randomHex = (length = 16) => {
   crypto.getRandomValues(b);
   return bytesToHex(b);
 };
+const PBKDF2_ITERATIONS = 100000; // Cloudflare Web Crypto supports at most 100,000 iterations here.
 async function passwordHash(password: string, saltHex: string): Promise<string> {
   const key = await crypto.subtle.importKey("raw", encoder.encode(password), "PBKDF2", false, ["deriveBits"]);
-  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: hexToBytes(saltHex), iterations: 100000, hash: "SHA-256" }, key, 256);
+  const bits = await crypto.subtle.deriveBits({ name: "PBKDF2", salt: hexToBytes(saltHex), iterations: PBKDF2_ITERATIONS, hash: "SHA-256" }, key, 256);
   return bytesToHex(new Uint8Array(bits));
 }
 async function hmac(value: string, secret: string): Promise<string> {
@@ -126,7 +127,7 @@ export default {
         const detail = error instanceof Error ? error.message : String(error);
         console.error("Aurorar API error:", detail);
         // Return a useful diagnostic without exposing credentials or stack traces.
-        return json({ error: "Account creation failed.", diagnostic: detail.slice(0, 240) }, 500);
+        return json({ error: "Account service failed. Please retry shortly.", diagnostic: detail.slice(0, 240) }, 500);
       }
     }
     return env.ASSETS.fetch(request);
