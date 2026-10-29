@@ -2061,3 +2061,67 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
  .ledger-table{min-width:650px}
  .ledger-table th,.ledger-table td{padding:12px 10px!important}
 }
+
+
+/* Machine cards: premium compact glass styling, without changing product data or purchase handlers */
+#page-products .product-card{
+  max-width:100%;min-width:0;overflow:hidden!important;
+  padding:14px!important;border-radius:28px!important;
+  background:linear-gradient(160deg,#101d33 0%,#0b1329 100%)!important;
+  color:#f8fafc!important;border:1px solid rgba(148,163,184,.22)!important;
+  box-shadow:0 18px 38px rgba(11,19,41,.18)!important;
+}
+#page-products .product-card .machine-image-wrap{
+  position:relative;overflow:hidden;border-radius:19px!important;
+  margin-bottom:15px;background:linear-gradient(180deg,#1f2937,#111827)!important;
+  border:1px solid rgba(148,163,184,.22)!important;
+}
+#page-products .product-card .machine-image{
+  display:block;width:100%;height:clamp(210px,58vw,320px);object-fit:contain;
+  background:#fff;opacity:.98;transition:transform .45s ease;
+}
+@media(hover:hover){#page-products .product-card .machine-image-wrap:hover .machine-image{transform:scale(1.035)}}
+#page-products .product-card .product-body{padding:0!important;background:transparent!important;color:#f8fafc!important}
+#page-products .product-card .section-head{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  margin:0 0 15px;padding:0 2px;background:transparent!important;border:0!important;
+}
+#page-products .product-card .section-head h3{
+  color:#f8fafc!important;font-size:clamp(19px,5vw,25px);font-weight:800;
+  letter-spacing:-.025em;line-height:1.2;margin:0;
+}
+#page-products .product-card .pill{
+  flex:0 0 auto;max-width:58%;white-space:normal;text-align:center;
+  background:rgba(16,185,129,.14)!important;color:#a7f3d0!important;
+  border:1px solid rgba(52,211,153,.28)!important;border-radius:999px;
+  padding:8px 11px;font-size:12px;font-weight:750;
+}
+#page-products .product-card .product-meta{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 17px;
+}
+#page-products .product-card .product-meta div{
+  min-width:0;padding:14px 12px!important;border-radius:18px!important;
+  background:rgba(255,255,255,.045)!important;
+  border:1px solid rgba(148,163,184,.15)!important;
+}
+#page-products .product-card .product-meta small{
+  display:block;color:#aebdce!important;font-size:12px;line-height:1.4;margin-bottom:7px;
+}
+#page-products .product-card .product-meta strong{
+  display:block;color:#f8fafc!important;font-size:clamp(14px,3.8vw,17px);
+  line-height:1.4;font-weight:800;overflow-wrap:anywhere;
+}
+#page-products .product-card .btn.primary.full{
+  width:100%;min-height:58px;border:0;border-radius:17px!important;
+  background:linear-gradient(110deg,#34d399,#10b981)!important;color:#062b26!important;
+  font-size:16px;font-weight:850;box-shadow:0 10px 24px rgba(16,185,129,.18);
+}
+#page-products .product-card .btn.primary.full:disabled{opacity:.7;cursor:wait}
+#page-products .product-card .product-body>.small,
+#page-products .product-card .product-body>.muted{color:#b6c4d4!important}
+@media(max-width:360px){
+ #page-products .product-card{padding:10px!important;border-radius:22px!important}
+ #page-products .product-card .product-meta{gap:8px}
+ #page-products .product-card .product-meta div{padding:11px 9px!important}
+ #page-products .product-card .pill{font-size:11px;padding:7px 8px}
+}
