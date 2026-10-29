@@ -408,11 +408,18 @@ export default {
           // and machine purchase and remain review-only (never an instant payout).
           const requestType = body?.requestType === "welcome_bonus" ? "welcome_bonus" : "standard";
           if (requestType === "standard") {
-            // Standard withdrawals remain limited to 10:00 AM–5:00 PM Uganda time.
-            const nowUtc = new Date();
-            const eatMinutes = (((nowUtc.getUTCHours() + 3) % 24) * 60) + nowUtc.getUTCMinutes();
-            if (eatMinutes < 10 * 60 || eatMinutes >= 17 * 60) {
-              return json({ error: "Standard withdrawals are open from 10:00 AM to 5:00 PM Uganda time (EAT). Welcome-bonus requests have a separate eligibility check. No request was recorded and no money was deducted." }, 409);
+            // Standard withdrawals are open for one hour from midnight in the user's registered country's timezone.
+            const withdrawalTimeZones: Record<string, string> = { UG: "Africa/Kampala", RW: "Africa/Kigali", ZM: "Africa/Lusaka" };
+            const timeZone = withdrawalTimeZones[country];
+            if (!timeZone) return json({ error: "We could not determine your country's withdrawal time zone. Please contact support." }, 400);
+            const localParts = new Intl.DateTimeFormat("en-GB", {
+              timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+            }).formatToParts(new Date());
+            const localHour = Number(localParts.find(part => part.type === "hour")?.value);
+            const localMinute = Number(localParts.find(part => part.type === "minute")?.value);
+            const localMinutes = localHour * 60 + localMinute;
+            if (localMinutes >= 60) {
+              return json({ error: "Standard withdrawals are open from 12:00 AM to 1:00 AM in your country's local time. No request was recorded and no money was deducted." }, 409);
             }
           }
           const amount = Number(body?.amount);
