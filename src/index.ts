@@ -178,12 +178,13 @@ export default {
           // withdrawal. The wallet was reserved by debiting it before submission, so a
           // completed callback must not debit it a second time.
           if (eventType === "disbursement.completed" || eventType === "disbursement.failed") {
-            const payout = await env.DB.prepare("SELECT id,user_id,currency,amount,country,status,provider_transaction_uuid,wallet_debited_at,wallet_refunded_at FROM withdrawal_requests WHERE provider_reference=?").bind(reference).first<any>();
+            const payout = await env.DB.prepare("SELECT id,user_id,currency,amount,net_amount,country,status,provider_transaction_uuid,wallet_debited_at,wallet_refunded_at FROM withdrawal_requests WHERE provider_reference=?").bind(reference).first<any>();
             if (!payout) return json({ received: true, ignored: true });
             const providerCurrency = String(tx?.amount?.currency || "").toUpperCase();
             const providerAmount = Number(tx?.amount?.raw);
-            if (providerCurrency !== String(payout.currency).toUpperCase() || providerAmount !== Number(payout.amount)) {
-              console.error("MarzPay disbursement callback amount/currency mismatch", { reference, requestId: payout.id });
+            const expectedProviderAmount = Number(payout.net_amount) > 0 ? Number(payout.net_amount) : Number(payout.amount); // Legacy in-flight requests have no saved net amount.
+            if (providerCurrency !== String(payout.currency).toUpperCase() || providerAmount !== expectedProviderAmount) {
+              console.error("MarzPay disbursement callback amount/currency mismatch", { reference, requestId: payout.id, expectedProviderAmount, receivedAmount: providerAmount });
               return json({ error: "Disbursement amount or currency mismatch." }, 409);
             }
             const providerUuid = String(tx.uuid);
