@@ -278,11 +278,22 @@ export default {
             return json({ error: "Could not contact MarzPay to verify this payment. Please try again later." }, 502);
           }
           if (!provider) return json({ ok: true, status: "processing", message: "MarzPay has not returned a matching transaction yet." });
+          // Never trust a status response unless it is the exact MarzPay collection
+          // created for this deposit. UUID lookups can return a different transaction;
+          // amount/currency alone are not proof that this customer's payment succeeded.
           const providerStatus = String(provider.status || "").toLowerCase();
+          const providerReference = String(provider.reference || provider.external_reference || "");
+          const providerType = String(provider.type || provider.transaction_type || "").toLowerCase();
           const providerAmount = Number(provider.amount?.raw ?? provider.amount);
-          const providerCurrency = String(provider.amount?.currency || local.currency || "UGX").toUpperCase();
-          if (providerAmount !== Number(local.amount_ugx) || providerCurrency !== String(local.currency || "UGX").toUpperCase()) {
-            return json({ error: "Provider transaction details do not match this deposit. Contact support before retrying." }, 409);
+          const providerCurrency = String(provider.amount?.currency || "").toUpperCase();
+          if (
+            !providerReference ||
+            providerReference !== String(local.external_reference || "") ||
+            (providerType && !["collection", "collect", "deposit"].includes(providerType)) ||
+            providerAmount !== Number(local.amount_ugx) ||
+            providerCurrency !== String(local.currency || "UGX").toUpperCase()
+          ) {
+            return json({ error: "MarzPay could not verify an exact matching deposit. No wallet credit was made; contact support if you already paid." }, 409);
           }
           if (["completed","successful","succeeded"].includes(providerStatus)) {
             const currency = String(local.currency || "UGX").toUpperCase();
