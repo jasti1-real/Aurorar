@@ -593,7 +593,8 @@ export default {
           if (!userId) return json({ error: "Please log in." }, 401);
           const rows = await env.DB.prepare(`
             SELECT u.phone, r.level, r.created_at,
-              COALESCE((SELECT SUM(t.amount_ugx) FROM transactions t WHERE t.user_id = u.id AND t.type = 'deposit' AND t.status = 'completed' AND t.amount_ugx > 0), 0) AS confirmed_deposit
+              CASE u.country WHEN 'RW' THEN 'RWF' WHEN 'ZM' THEN 'ZMW' ELSE 'UGX' END AS currency,
+              COALESCE((SELECT SUM(t.amount_ugx) FROM transactions t WHERE t.user_id = u.id AND t.type = 'deposit' AND t.status = 'completed' AND t.amount_ugx > 0 AND t.currency = CASE u.country WHEN 'RW' THEN 'RWF' WHEN 'ZM' THEN 'ZMW' ELSE 'UGX' END), 0) AS confirmed_deposit
             FROM referrals r JOIN users u ON u.id = r.referred_user_id
             WHERE r.referrer_user_id = ?
             ORDER BY r.created_at DESC LIMIT 100
