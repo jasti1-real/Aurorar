@@ -80,6 +80,19 @@ export default {
     const dateRow = await env.DB.prepare("SELECT date(datetime('now','+3 hours')) AS earning_date").first<{earning_date:string}>();
     const earningDate = dateRow?.earning_date;
     if (!earningDate) throw new Error("Could not determine EAT earning date.");
+
+    // Uganda machines use the UGX wallet and need their own idempotent daily ledger.
+    // The unique (user_product_id, earning_date) key prevents repeat credits on retries.
+    const ugEligible = await env.DB.prepare("SELECT up.id AS product_id, up.user_id, p.daily_income_ugx AS daily_income FROM user_products up JOIN products p ON p.id=up.product_id WHERE up.status='active' AND p.daily_income_ugx>0 AND datetime(up.starts_at)<=datetime('now') AND datetime(up.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM ugx_earning_ledger el WHERE el.user_product_id=up.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;daily_income:number}>();
+    for (const p of ugEligible.results || []) {
+      const ledgerId = crypto.randomUUID();
+      await env.DB.batch([
+        env.DB.prepare("INSERT OR IGNORE INTO ugx_earning_ledger (id,user_product_id,user_id,earning_date,amount,status) VALUES (?,?,?,?,?,'pending')").bind(ledgerId,p.product_id,p.user_id,earningDate,Math.trunc(Number(p.daily_income))),
+        env.DB.prepare("UPDATE wallets SET available_balance=available_balance+(SELECT amount FROM ugx_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending'),total_earned=total_earned+(SELECT amount FROM ugx_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending'),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM ugx_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending')").bind(p.product_id,earningDate,p.product_id,earningDate,p.user_id,p.product_id,earningDate),
+        env.DB.prepare("UPDATE ugx_earning_ledger SET status='credited',credited_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_product_id=? AND earning_date=? AND status='pending' AND EXISTS (SELECT 1 FROM wallets WHERE user_id=?)").bind(p.product_id,earningDate,p.user_id,p.user_id)
+      ]);
+    }
+
     const eligible = await env.DB.prepare("SELECT rup.id AS product_id, rup.user_id, rup.currency, rup.daily_income FROM regional_user_products rup WHERE rup.status='active' AND rup.currency IN ('RWF','ZMW') AND rup.daily_income>0 AND datetime(rup.starts_at)<=datetime('now') AND datetime(rup.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM regional_earning_ledger el WHERE el.user_product_id=rup.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;currency:string;daily_income:number}>();
     for (const p of eligible.results || []) {
       const ledgerId = crypto.randomUUID();
@@ -90,7 +103,7 @@ export default {
         env.DB.prepare("UPDATE regional_earning_ledger SET status='credited',credited_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_product_id=? AND earning_date=? AND status='pending' AND EXISTS (SELECT 1 FROM currency_wallets WHERE user_id=? AND currency=?)").bind(p.product_id,earningDate,p.user_id,p.currency)
       ]);
     }
-    console.log("Regional earnings run completed.", { earningDate, eligibleMachines: eligible.results?.length || 0 });
+    console.log("Daily earnings run completed.", { earningDate, ugxMachines: ugEligible.results?.length || 0, regionalMachines: eligible.results?.length || 0 });
   },
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
