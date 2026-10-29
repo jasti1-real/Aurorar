@@ -1930,3 +1930,7 @@ html body #accountCountryPill{letter-spacing:0!important}
 @keyframes aurorarWalletSpin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 @media(max-width:380px){html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit{width:66px!important;height:66px!important;min-width:66px!important;min-height:66px!important}html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit img{width:53px!important;height:53px!important}}
 @media(prefers-reduced-motion:reduce){html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit,html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit img{animation:none!important}}
+
+/* Preserve readable country text while enlarging the flag in the country pill */
+html body #accountCountryPill{font-size:15px!important;}
+html body #accountCountryPill::first-letter{font-size:26px!important;}
