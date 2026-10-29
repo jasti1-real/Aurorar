@@ -101,7 +101,7 @@ async function creditReferralCommissions(env: Env, depositTransactionId: string)
         await env.DB.batch([
           env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description) SELECT ?,?,'referral_commission',?,?, 'pending',?,? WHERE EXISTS (SELECT 1 FROM transactions WHERE id=? AND type='deposit' AND status='completed')").bind(commissionId,ancestor.id,amount,currency,commissionRef,"Level "+level+" referral commission from confirmed deposit",deposit.id),
           walletCredit,
-          env.DB.prepare("UPDATE transactions SET status='completed',completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE external_reference=? AND user_id=? AND type='referral_commission' AND status='pending'").bind(commissionRef,ancestor.id)
+          env.DB.prepare("UPDATE transactions SET status='completed',completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE external_reference=? AND user_id=? AND type='referral_commission' AND status='pending' AND changes()=1").bind(commissionRef,ancestor.id)
         ]);
       }
     }
