@@ -251,8 +251,12 @@ const UGX_DISPLAY_RATES={UGX:1,RWF:0.3395,ZMW:0.004494};
 function displayCurrencyAmount(ugx,currency){return Math.round(Number(ugx||0)*(UGX_DISPLAY_RATES[currency]||1))}
 async function renderProducts(){
  const grid=$('productsGrid');
- // Refresh the signed-in account's market before choosing the catalogue or purchase currency.
- if(state.phone){try{await loadAccount()}catch(e){/* keep the current page usable; the API still enforces the account market */}}
+ // Always refresh the signed-in session before selecting a market. A fresh page
+ // can have a valid session cookie while state.phone is still empty; skipping /api/me
+ // in that case incorrectly defaults regional users to Uganda/UGX.
+ try{await loadAccount()}catch(e){
+  if(!state.phone){grid.innerHTML='<div class="card"><h3>Please sign in to view your local catalogue</h3><p class="muted">Sign in so Aurorar can load your registered country and the correct currency.</p></div>';return}
+ }
  state.country=String(state.country||'UG').toUpperCase();
  const currency=({UG:'UGX',RW:'RWF',ZM:'ZMW'})[state.country]||'UGX';
  grid.innerHTML='<div class="card">Loading '+currency+' product catalogue…</div>';
