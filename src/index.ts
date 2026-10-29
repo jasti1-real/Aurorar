@@ -104,7 +104,7 @@ export default {
           const timestamp = request.headers.get("X-MarzPay-Timestamp") || "";
           const signatureHeader = request.headers.get("X-MarzPay-Signature") || "";
           const signature = signatureHeader.split(",").map(v => v.trim()).find(v => v.startsWith("v1="))?.slice(3) || "";
-          if (!signingSecret || !timestamp || !signature || !/^\\d{10,13}$/.test(timestamp)) return json({ error: "Webhook signature required." }, 401);
+          if (!signingSecret || !timestamp || !signature || !/^\d{10,13}$/.test(timestamp)) return json({ error: "Webhook signature required." }, 401);
           const timestampMs = Number(timestamp) * (timestamp.length === 13 ? 1 : 1000);
           if (!Number.isFinite(timestampMs) || Math.abs(Date.now() - timestampMs) > 5 * 60 * 1000) return json({ error: "Webhook timestamp expired." }, 401);
           const expected = await hmac(timestamp + "." + rawBody, signingSecret);
