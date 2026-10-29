@@ -2038,3 +2038,26 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
 .ledger-status.status-processing{background:#fff0d0!important;color:#794a00!important;border-color:#f2d18b!important}
 .ledger-status.status-pending{background:#e4efff!important;color:#214f91!important;border-color:#b6d0fb!important}
 @media(max-width:600px){.ledger-type-icon{width:26px;height:26px;flex-basis:26px;margin-right:6px}.ledger-type-label{font-size:13px}.ledger-amount{font-size:14px}.ledger-status{font-size:11px!important;padding:6px 8px!important}}
+
+
+/* Keep the transaction ledger as one conventional table; avoid clipped columns */
+.transaction-ledger-card{width:100%;max-width:100%;box-sizing:border-box;overflow:hidden}
+.ledger-table-wrap{display:block;width:100%;max-width:100%;overflow-x:auto;overflow-y:hidden;border-radius:14px}
+.ledger-table{width:100%;min-width:650px;table-layout:auto;white-space:normal!important}
+.ledger-table th,.ledger-table td{white-space:normal;overflow-wrap:normal;word-break:normal}
+.ledger-table th:first-child,.ledger-table td:first-child{min-width:155px}
+.ledger-table th:nth-child(2),.ledger-table td:nth-child(2){min-width:125px}
+.ledger-table th:nth-child(3),.ledger-table td:nth-child(3){min-width:125px}
+.ledger-table th:nth-child(4),.ledger-table td:nth-child(4){min-width:145px}
+.ledger-type-icon{width:25px;height:25px;flex-basis:25px;font-size:14px;margin-right:6px}
+.ledger-type-label{font-size:13px}
+.ledger-date{font-size:13px}
+.ledger-amount{font-size:14px}
+.ledger-status{white-space:normal!important;max-width:140px}
+@media(max-width:600px){
+ .transaction-ledger-card{padding:15px!important}
+ .ledger-heading{display:flex;flex-wrap:wrap;align-items:flex-start}
+ .ledger-heading>div{flex:1 1 180px;min-width:0}
+ .ledger-table{min-width:650px}
+ .ledger-table th,.ledger-table td{padding:12px 10px!important}
+}
