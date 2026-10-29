@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f3f7fb"><meta name="description" content="Aurorar account dashboard"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/icon.svg"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Aurorar">
 <title>Aurorar — Account</title>
-<link rel="stylesheet" href="/styles.css?v=logo-flag-wallet-20261029">
+<link rel="stylesheet" href="/styles.css?v=regional-country-layout-20261029">
 
 </head>
 <body>
@@ -198,6 +198,18 @@ async function loadAccount(){
  const regionalWalletPill=$('regionalWalletSection')?.querySelector('.section-head .pill');
  if(regionalWalletHeading)regionalWalletHeading.textContent=state.country==='RW'?'Rwanda wallet overview':state.country==='ZM'?'Zambia wallet overview':'Regional currency wallets';
  if(regionalWalletPill)regionalWalletPill.textContent=state.country==='RW'?'RWF account':state.country==='ZM'?'ZMW account':'Regional markets';
+  // Keep each regional market focused on its own country's wallet and guidance.
+  const regionalSection=$('regionalWalletSection');
+  if(regionalSection){
+   const regionalIds={RW:['rwfBalance','rwfDeposited','rwfEarned','rwfWithdrawn','rwfReferral'],ZM:['zmwBalance','zmwDeposited','zmwEarned','zmwWithdrawn','zmwReferral']};
+   Object.entries(regionalIds).forEach(([country,ids])=>ids.forEach(id=>{const node=$(id);if(node?.closest('.stat'))node.closest('.stat').classList.toggle('regional-stat-hidden',state.country!==country)}));
+   const marketGrid=regionalSection.querySelector('.market-grid');
+   if(marketGrid)marketGrid.querySelectorAll('.card').forEach(card=>{const t=card.textContent||'';const isUG=t.includes('Uganda'),isRW=t.includes('Rwanda'),isZM=t.includes('Zambia');card.classList.toggle('regional-market-hidden',!(state.country==='RW'?isRW:state.country==='ZM'?isZM:isUG))});
+   const marketNotice=regionalSection.querySelector('.notice');
+   if(marketNotice){marketNotice.querySelectorAll('strong').forEach(label=>{const country=label.textContent.trim();const keep=state.country==='RW'?country==='Rwanda':state.country==='ZM'?country==='Zambia':false;label.classList.toggle('regional-guidance-hidden',!keep);const next=label.nextElementSibling;if(next&&next.tagName==='P')next.classList.toggle('regional-guidance-hidden',!keep)});const ps=marketNotice.querySelectorAll('p');if(ps.length)ps[ps.length-1].classList.toggle('regional-guidance-hidden',state.country==='UG')}
+   const intro=regionalSection.querySelector(':scope > p.muted.small');if(intro)intro.textContent=state.country==='RW'?'Rwanda wallet · RWF balances stay separate from other currencies. Local payments and withdrawals are not yet enabled.':state.country==='ZM'?'Zambia wallet · ZMW balances stay separate from other currencies. Local payments and withdrawals are not yet enabled.':'Regional wallets are shown separately. Balances are never converted between currencies.';
+  }
+
  state.refCode=data.user?.referral_code||data.user?.referralCode||state.refCode;
  state.balance=Number(w.available_balance||0);
  state.welcomeBonus=Number(data.user?.welcome_bonus||0);
