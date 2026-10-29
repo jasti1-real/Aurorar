@@ -391,21 +391,37 @@ export default {
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           // All markets create review-only requests. This endpoint never initiates a payout.
           // Regional requests use their own currency wallet and local-currency ledger.
-          // Enforce the Uganda withdrawal window on the server, not just in the UI.
-          // EAT is UTC+3; allow requests from 10:00 through 16:59 EAT.
-          const nowUtc = new Date();
-          const eatMinutes = (((nowUtc.getUTCHours() + 3) % 24) * 60) + nowUtc.getUTCMinutes();
-          if (eatMinutes < 10 * 60 || eatMinutes >= 17 * 60) {
-            return json({ error: "Withdrawals are open from 10:00 AM to 5:00 PM Uganda time (EAT). Please try again during that window. No request was recorded and no money was deducted." }, 409);
+          // Welcome bonus withdrawals are a separate, exact-value request. They are
+          // exempt from the standard time window/minimum, but still require deposit
+          // and machine purchase and remain review-only (never an instant payout).
+          const requestType = body?.requestType === "welcome_bonus" ? "welcome_bonus" : "standard";
+          if (requestType === "welcome_bonus" && country !== "UG") {
+            return json({ error: "Welcome-bonus withdrawal requests are not enabled for this country yet." }, 400);
+          }
+          if (requestType === "standard") {
+            // Standard withdrawals remain limited to 10:00 AM–5:00 PM Uganda time.
+            const nowUtc = new Date();
+            const eatMinutes = (((nowUtc.getUTCHours() + 3) % 24) * 60) + nowUtc.getUTCMinutes();
+            if (eatMinutes < 10 * 60 || eatMinutes >= 17 * 60) {
+              return json({ error: "Standard withdrawals are open from 10:00 AM to 5:00 PM Uganda time (EAT). Welcome-bonus requests have a separate eligibility check. No request was recorded and no money was deducted." }, 409);
+            }
           }
           const amount = Number(body?.amount);
-          if (!Number.isSafeInteger(amount) || amount < market.min) return json({ error: "The minimum withdrawal is " + market.min + " " + market.currency + "." }, 400);
+          if (!Number.isSafeInteger(amount) || amount <= 0 || (requestType === "standard" && amount < market.min)) return json({ error: requestType === "welcome_bonus" ? "Enter a valid welcome-bonus amount." : "The minimum withdrawal is " + market.min + " " + market.currency + ".", status:400 }, 400);
           const phone = normalizePhone(body?.phone);
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
           const idempotencyKey = typeof body?.idempotencyKey === "string" ? body.idempotencyKey.slice(0,80) : "";
           if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
           const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
           if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+          if (requestType === "welcome_bonus") {
+            const bonus = await env.DB.prepare("SELECT amount_ugx FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency='UGX' AND status='completed' ORDER BY created_at ASC LIMIT 1").bind(userId).first<any>();
+            if (!bonus || Number(bonus.amount_ugx) <= 0 || amount !== Number(bonus.amount_ugx)) {
+              return json({ error: "The requested amount must exactly match your credited welcome bonus." }, 400);
+            }
+            const priorBonusRequest = await env.DB.prepare("SELECT id,status FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed') LIMIT 1").bind(userId).first<any>();
+            if (priorBonusRequest) return json({ error: "Your welcome bonus already has a withdrawal request or has been withdrawn. Check withdrawal history before trying again." }, 409);
+          }
           // Withdrawal eligibility: require both a confirmed deposit and an active machine purchase.
           // The welcome bonus is visible in the balance immediately, but remains withdrawal-locked
           // until these two account milestones are satisfied.
@@ -435,8 +451,8 @@ export default {
             // display check and reserve the same funds.
             const inserted = country === "UG"
               ? await env.DB.prepare(`
-                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key)
-                  SELECT ?,?,?,?, ?,?, 'requested',?
+                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key,request_type)
+                  SELECT ?,?,?,?, ?,?, 'requested',?,?
                   WHERE EXISTS (
                     SELECT 1 FROM wallets w
                     WHERE w.user_id=?
@@ -445,10 +461,10 @@ export default {
                         WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
                       ),0) >= ?
                   )
-                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,userId,userId,market.currency,amount).run()
+                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,requestType,userId,userId,market.currency,amount).run()
               : await env.DB.prepare(`
-                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key)
-                  SELECT ?,?,?,?, ?,?, 'requested',?
+                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key,request_type)
+                  SELECT ?,?,?,?, ?,?, 'requested',?,?
                   WHERE EXISTS (
                     SELECT 1 FROM currency_wallets w
                     WHERE w.user_id=? AND w.currency=?
@@ -457,7 +473,7 @@ export default {
                         WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
                       ),0) >= ?
                   )
-                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,userId,market.currency,userId,market.currency,amount).run();
+                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,requestType,userId,market.currency,userId,market.currency,amount).run();
             if (Number(inserted.meta?.changes || 0) !== 1) {
               const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
               if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
