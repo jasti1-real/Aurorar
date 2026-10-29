@@ -27,6 +27,7 @@ $('closeDetail').onclick=()=>$('userDetail').classList.add('hidden');
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 $('searchForm').addEventListener('submit',async e=>{e.preventDefault();try{await loadUsers()}catch(e){$('dashError').textContent=e.message}});$('refreshUsers').onclick=()=>loadUsers().catch(e=>$('dashError').textContent=e.message);
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=async()=>{tab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));$('usersPanel').classList.toggle('hidden',tab!=='users');$('transactionsPanel').classList.toggle('hidden',tab!=='transactions');$('withdrawalsPanel').classList.toggle('hidden',tab!=='withdrawals');if(tab==='transactions')try{await loadTransactions()}catch(e){$('dashError').textContent=e.message}if(tab==='withdrawals')try{await loadWithdrawals()}catch(e){$('dashError').textContent=e.message}});
-$('refreshWithdrawals').onclick=()=>loadWithdrawals().catch(e=>$('dashError').textContent=e.message);$('withdrawalStatusFilter').onchange=()=>loadWithdrawals().catch(e=>$('dashError').textContent=e.message);\n$('logout').onclick=async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'})}finally{location.reload()}};
+$('refreshWithdrawals').onclick=()=>loadWithdrawals().catch(e=>$('dashError').textContent=e.message);$('withdrawalStatusFilter').onchange=()=>loadWithdrawals().catch(e=>$('dashError').textContent=e.message);
+$('logout').onclick=async()=>{try{await api('/api/auth/logout',{method:'POST',body:'{}'})}finally{location.reload()}};
 loadAdmin();
 </script></body></html>
