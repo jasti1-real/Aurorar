@@ -1,4 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#111a39"/><stop offset="1" stop-color="#071329"/></linearGradient><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d4faff"/><stop offset=".48" stop-color="#a18bff"/><stop offset="1" stop-color="#54f4d2"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>
-<rect width="512" height="512" rx="112" fill="url(#bg)"/><circle cx="256" cy="256" r="193" fill="none" stroke="url(#g)" stroke-opacity=".55" stroke-width="7"/><circle cx="256" cy="256" r="166" fill="none" stroke="#a9c9ff" stroke-opacity=".22" stroke-width="2"/>
-<g fill="url(#g)" stroke="#e7fbff" stroke-width="3" stroke-linejoin="round" filter="url(#glow)"><path d="M256 57 286 202 411 111 328 235 463 256 328 277 411 401 286 310 256 455 226 310 101 401 184 277 49 256 184 235 101 111 226 202Z"/><path d="M256 182 278 234 330 256 278 278 256 330 234 278 182 256 234 234Z" fill="#f4ffff"/></g><circle cx="256" cy="256" r="15" fill="#fff"/><path d="M170 155 214 204M342 155 298 204M170 357 214 308M342 357 298 308" stroke="#fff" stroke-opacity=".8" stroke-width="6" stroke-linecap="round"/></svg>
+<defs>
+ <linearGradient id="aurora" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#a92edb"/><stop offset=".38" stop-color="#6b8cff"/><stop offset=".7" stop-color="#25e8d1"/><stop offset="1" stop-color="#00e8f5"/></linearGradient>
+ <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="13" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>
+<rect width="512" height="512" rx="96" fill="#020a10"/>
+<g fill="none" stroke="url(#aurora)" stroke-width="23" stroke-linecap="square" stroke-linejoin="round" filter="url(#glow)">
+ <path d="M112 355 226 94 300 94 220 278"/>
+ <path d="M268 149 337 286 Q350 316 315 329 L167 361 Q129 372 109 414 L177 414 Q207 414 222 381 L237 354"/>
+ <path d="M287 112 353 236 Q372 273 345 306 Q324 330 286 333 L185 342"/>
+ <path d="M338 345 380 414 435 414 382 307"/>
+</g>
+</svg>
