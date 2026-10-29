@@ -2432,3 +2432,17 @@ button:focus-visible,a:focus-visible{outline:3px solid rgba(180,35,53,.45);outli
 .welcome-ad-points span{color:#f2fffb}
 .welcome-ad-note{color:rgba(239,250,249,.72)!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+
+/* Targeted visibility fixes for account identity and wallet page headings */
+.account-number,.account-number-label,.account-number-value,[class*="account-number"],[id*="account-number"]{color:#a51f32!important;-webkit-text-fill-color:#a51f32!important;opacity:1!important;text-shadow:none!important}
+.account-number-card,.account-identity,.profile-summary{color:#202938!important}
+.account-number-card :is(span,strong,b,p,small,div),.account-identity :is(span,strong,b,p,small,div),.profile-summary :is(span,strong,b,p,small,div){opacity:1!important;text-shadow:none!important}
+.account-number-card :is(.label,.muted,.helper),.account-identity :is(.label,.muted,.helper),.profile-summary :is(.label,.muted,.helper){color:#a51f32!important;-webkit-text-fill-color:#a51f32!important}
+body :is(.page-title,.section-title,.account-title,.section-heading){color:#a51f32!important;-webkit-text-fill-color:#a51f32!important;opacity:1!important}
+body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger){color:#f8fafc}
+body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(h1,h2,h3,h4,p,span,strong,b,small,label,th,td){opacity:1}
+body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(h1,h2,h3,h4){color:#ff6978!important;-webkit-text-fill-color:#ff6978!important}
+body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(p,span,strong,b,small,label,th,td){color:#f4f7fb}
+body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(.muted,.helper,.description,.subtext){color:#ffd8dc!important;-webkit-text-fill-color:#ffd8dc!important}
+body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(.account-number,.account-number-label,.account-number-value,[class*="account-number"],[id*="account-number"]){color:#ff6978!important;-webkit-text-fill-color:#ff6978!important}
