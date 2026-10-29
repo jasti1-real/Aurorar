@@ -30,8 +30,10 @@ async function hmac(value: string, secret: string): Promise<string> {
   const key = await crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   return bytesToHex(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(value))));
 }
-async function makeSession(userId: string, secret: string): Promise<string> {
-  const payload = btoa(JSON.stringify({ sub: userId, exp: Date.now() + 7 * 86400000 })).replace(/=/g, "");
+async function makeSession(userId: string, secret: string, passwordSalt: string): Promise<string> {
+  // Binding the token to the current password salt revokes every previous session
+  // as soon as the account password is changed.
+  const payload = btoa(JSON.stringify({ sub: userId, exp: Date.now() + 7 * 86400000, ver: passwordSalt })).replace(/=/g, "");
   return payload + "." + await hmac(payload, secret);
 }
 async function sessionUser(request: Request, env: Env): Promise<string | null> {
@@ -50,8 +52,9 @@ async function sessionUser(request: Request, env: Env): Promise<string | null> {
   try {
     const data = JSON.parse(atob(payload.replace(/-/g, "+").replace(/_/g, "/")));
     if (!(data.exp > Date.now()) || typeof data.sub !== "string") return null;
-    const account = await env.DB.prepare("SELECT id FROM users WHERE id = ? AND status = 'active'").bind(data.sub).first();
-    return account ? data.sub : null;
+    if (typeof data.ver !== "string" || !data.ver) return null;
+    const account = await env.DB.prepare("SELECT id, password_salt FROM users WHERE id = ? AND status = 'active'").bind(data.sub).first<{id:string;password_salt:string}>();
+    return account && account.password_salt === data.ver ? data.sub : null;
   } catch { return null; }
 }
 const cookie = (token: string, maxAge: number) => `aurorar_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
@@ -382,7 +385,7 @@ export default {
             await env.DB.prepare("DELETE FROM users WHERE id = ?").bind(id).run();
             throw dependentInsertError;
           }
-          const token = await makeSession(id, env.SESSION_SECRET);
+          const token = await makeSession(id, env.SESSION_SECRET, salt);
           return json({ ok: true, user: { phone, referralCode }, message: "Account created." }, 201, { "Set-Cookie": cookie(token, 604800) });
         }
         if (url.pathname === "/api/auth/login" && request.method === "POST") {
@@ -409,7 +412,7 @@ export default {
             return json({ error: "Phone number or password is incorrect." }, 401);
           }
           await env.DB.prepare("DELETE FROM login_attempts WHERE phone=?").bind(phone).run();
-          const token = await makeSession(user.id, env.SESSION_SECRET);
+          const token = await makeSession(user.id, env.SESSION_SECRET, user.password_salt);
           return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 604800) });
         }
         if (url.pathname === "/api/auth/change-password" && request.method === "POST") {
@@ -424,7 +427,10 @@ export default {
           const salt = randomHex(16);
           const hash = await passwordHash(body.newPassword, salt);
           await env.DB.prepare("UPDATE users SET password_hash = ?, password_salt = ? WHERE id = ?").bind(hash, salt, userId).run();
-          return json({ ok: true, message: "Password changed successfully." });
+          // Keep this device signed in with the new password version. All other
+          // sessions carry the old salt and will be rejected by sessionUser().
+          const token = await makeSession(userId, env.SESSION_SECRET, salt);
+          return json({ ok: true, message: "Password changed successfully. Other active sessions have been signed out." }, 200, { "Set-Cookie": cookie(token, 604800) });
         }
         if (url.pathname === "/api/auth/logout" && request.method === "POST") return json({ ok: true }, 200, { "Set-Cookie": cookie("", 0) });
         if (url.pathname === "/api/me" && request.method === "GET") {
