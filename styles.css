@@ -2596,3 +2596,46 @@ body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-le
  #productsGrid>article.product-card.card>.product-body{padding:9px 7px!important}
  #productsGrid>article.product-card.card .section-head .pill{font-size:9px!important}
 }
+
+
+/* Typography and contrast polish for the top brand/hero and Products heading */
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=Manrope:wght@500;600;700;800&display=swap');
+html body{font-family:'DM Sans',Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+#authView .auth-hero{background:linear-gradient(128deg,#071d2b 0%,#103747 52%,#087765 100%)!important}
+#authView .auth-hero-brand span{color:#fff!important;-webkit-text-fill-color:#fff!important;font-family:'Manrope','DM Sans',sans-serif!important;font-weight:900!important;letter-spacing:1.6px!important;text-shadow:0 2px 12px rgba(0,0,0,.18)!important}
+#authView .auth-hero-kicker{color:#a8e8dc!important;-webkit-text-fill-color:#a8e8dc!important;font-size:clamp(11px,3vw,14px)!important;font-weight:900!important;letter-spacing:2.4px!important;line-height:1.5!important}
+#authView .auth-hero h2{color:#fff!important;-webkit-text-fill-color:#fff!important;font-family:'Manrope','DM Sans',sans-serif!important;font-size:clamp(30px,7.3vw,43px)!important;font-weight:900!important;letter-spacing:-1.2px!important;line-height:1.13!important;text-shadow:0 3px 20px rgba(0,0,0,.22)!important}
+#authView .auth-hero h2 span{color:#c9fff0!important;-webkit-text-fill-color:#c9fff0!important}
+#authView .auth-hero-subtitle{color:#e1f4f4!important;-webkit-text-fill-color:#e1f4f4!important;font-size:clamp(15px,4vw,19px)!important;font-weight:500!important;line-height:1.55!important}
+#authView .auth-social-button{color:#fff!important;-webkit-text-fill-color:#fff!important;background:rgba(255,255,255,.10)!important;border:1px solid rgba(211,255,246,.24)!important;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)!important}
+#authView .auth-social-button span,#authView .auth-social-button b{color:#fff!important;-webkit-text-fill-color:#fff!important;font-weight:800!important}
+#authView .auth-social-button svg{fill:#65d9ff!important}
+#page-products>.hello{
+ background:linear-gradient(120deg,#fff 0%,#f1f8ff 100%)!important;
+ border:1px solid #e1eaf4!important;box-shadow:0 10px 28px rgba(28,56,83,.08)!important;
+ border-radius:24px!important;padding:24px!important;
+}
+#page-products>.hello h1{
+ color:#173653!important;-webkit-text-fill-color:#173653!important;
+ font-family:'Manrope','DM Sans',sans-serif!important;font-size:clamp(27px,6.4vw,36px)!important;
+ font-weight:900!important;letter-spacing:-1.1px!important;line-height:1.16!important;
+ text-shadow:none!important;margin-bottom:8px!important;
+}
+#page-products>.hello p{
+ color:#63768b!important;-webkit-text-fill-color:#63768b!important;
+ font-size:clamp(15px,3.8vw,18px)!important;font-weight:500!important;line-height:1.5!important;
+}
+#page-products>.card[style*="margin-bottom:14px"]{
+ color:#08785f!important;-webkit-text-fill-color:#08785f!important;
+ background:linear-gradient(110deg,#d9fbf0,#edfffa)!important;
+ border:1px solid #bcefe0!important;border-radius:18px!important;
+ box-shadow:0 5px 16px rgba(9,120,95,.07)!important;
+ font-family:'DM Sans',sans-serif!important;font-weight:800!important;
+}
+#page-products #catalogueCountry{color:#08785f!important;-webkit-text-fill-color:#08785f!important;font-weight:900!important}
+@media(max-width:480px){
+ #authView .auth-hero{min-height:0!important}
+ #authView .auth-hero h2{font-size:clamp(29px,7.6vw,36px)!important;letter-spacing:-.9px!important}
+ #authView .auth-hero-kicker{letter-spacing:1.8px!important}
+ #page-products>.hello{padding:21px!important}
+}
