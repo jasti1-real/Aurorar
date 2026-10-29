@@ -375,7 +375,7 @@ export default {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before requesting a withdrawal." }, 401);
           if (request.method === "GET") {
-            const rows = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, provider_reference, provider_transaction_uuid, provider_status, payout_submitted_at, completed_at, failure_reason, created_at, updated_at FROM withdrawal_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(userId).all();
+            const rows = await env.DB.prepare("SELECT id, country, currency, amount, request_type, tax_amount, net_amount, phone_number, status, provider_reference, provider_transaction_uuid, provider_status, payout_submitted_at, completed_at, failure_reason, created_at, updated_at FROM withdrawal_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(userId).all();
             return json({ requests: rows.results || [] });
           }
           const body = await readJson(request);
