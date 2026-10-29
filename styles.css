@@ -1815,3 +1815,45 @@ html body .product-load-error .btn{min-height:48px!important;border-radius:15px!
 .payment-notice-foot{margin:12px 0 0!important;color:#788698;font-size:11px!important;line-height:1.4!important;}
 @media(max-width:380px){.payment-notice-card{padding:25px 16px 17px;border-radius:25px}.payment-notice-check{width:65px;height:65px;font-size:37px}.payment-notice-copy{font-size:14px}.payment-reference{padding:12px}.payment-reference strong{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.payment-notice,.payment-notice-card{animation:none}}
+
+
+/* FINAL ACCESSIBILITY OVERRIDES — prevent washed-out text on every screen */
+html body #paymentNotice.payment-notice{opacity:1!important;filter:none!important}
+html body #paymentNotice .payment-notice-card{color:#142b3b!important;opacity:1!important;background:#f8fffc!important}
+html body #paymentNotice .payment-notice-card h2,
+html body #paymentNotice #paymentNoticeTitle{color:#102b2a!important;opacity:1!important;text-shadow:none!important}
+html body #paymentNotice .payment-notice-copy{color:#405469!important;opacity:1!important}
+html body #paymentNotice .payment-reference,
+html body #paymentNotice .payment-reference *{opacity:1!important;text-shadow:none!important}
+html body #paymentNotice .payment-reference span{color:#285c50!important}
+html body #paymentNotice .payment-reference strong{color:#123c35!important;font-weight:850!important}
+html body #paymentNotice .payment-notice-tip,
+html body #paymentNotice .payment-notice-tip p,
+html body #paymentNotice .payment-notice-tip strong{color:#663b08!important;opacity:1!important}
+html body #paymentNotice .payment-notice-foot{color:#42566a!important;opacity:1!important}
+html body #paymentNotice #paymentNoticeDone{color:#ffffff!important;opacity:1!important;text-shadow:none!important}
+html body #paymentNotice .payment-notice-close{color:#263c52!important;opacity:1!important}
+html body #paymentNotice .payment-notice-check{color:#ffffff!important;opacity:1!important}
+
+/* Keep dashboard typography crisp: no faded text or low-opacity balance figures. */
+html body #appView h1,html body #appView h2,html body #appView h3,
+html body #appView h4,html body #appView strong,html body #appView b{
+ opacity:1!important;text-shadow:none!important
+}
+html body #appView p,html body #appView label,html body #appView small,
+html body #appView .muted,html body #appView .helper-text,
+html body #appView .description,html body #appView .label{
+ opacity:1!important;text-shadow:none!important
+}
+html body #appView .balance,html body #appView .value,
+html body #appView .amount,html body #appView .number,
+html body #appView .stat .value,html body #appView .stat .label{
+ opacity:1!important;text-shadow:none!important;font-weight:750
+}
+html body #appView input,html body #appView select,html body #appView textarea{
+ opacity:1!important;color:#f7faff!important;background:#101d2c!important
+}
+html body #appView input::placeholder,html body #appView textarea::placeholder{
+ color:#b9c8da!important;opacity:1!important
+}
+html body #appView button,html body #appView a{opacity:1!important}
