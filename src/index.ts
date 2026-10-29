@@ -666,9 +666,16 @@ export default {
             const providerTx = providerResponse?.transaction || providerResponse?.data?.transaction || providerResponse?.data || {};
             const providerUuid = providerTx?.uuid || providerTx?.transaction_uuid || providerTx?.id || providerResponse?.transaction_uuid || providerResponse?.uuid || null;
             const providerStatus = String(providerTx?.status || providerResponse?.status || "").toLowerCase();
+            const explicitProviderRejection = providerResponse?.status === "error" ||
+              (response.status >= 400 && response.status < 500 && providerResponse?.success === false);
             if (!response.ok || providerResponse?.status === "error") {
-              // A provider-declared rejection is visible, so mark it failed and release the
-              // exact debit once. Ambiguous HTTP/network outcomes stay processing above.
+              // Only a clearly explicit provider rejection may release the reserved funds.
+              // A timeout, 5xx, or unclear response may have been accepted upstream; keep
+              // those funds reserved until the MarzPay dashboard/callback reconciles them.
+              if (!explicitProviderRejection) {
+                await env.DB.prepare("UPDATE withdrawal_requests SET provider_status='submission_unknown',failure_reason='MarzPay returned an ambiguous response; reconcile in provider dashboard before retrying',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing'").bind(requestId).run();
+                return json({ error: "MarzPay returned an uncertain result. The request remains processing and funds stay reserved. Check MarzPay before any retry." }, 502);
+              }
               const failure = String(providerResponse?.message || "MarzPay rejected the disbursement request").slice(0,300);
               const walletRefund = payout.currency === "UGX"
                 ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM withdrawal_requests WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL)").bind(Number(payout.amount),Number(payout.amount),payout.user_id,requestId)
