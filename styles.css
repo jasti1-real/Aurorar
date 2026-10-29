@@ -2226,3 +2226,109 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
 @media(prefers-reduced-motion:reduce){
  #authView *{transition:none!important}
 }
+
+
+/* Aurorar neon-glass authentication theme inspired by the approved reference */
+#authView.auth{
+ min-height:100svh;display:flex;align-items:center;justify-content:center;
+ box-sizing:border-box;padding:28px 16px!important;
+ color:#f7fbff!important;
+ background:
+  radial-gradient(ellipse at 15% 8%,rgba(0,235,255,.11),transparent 35%),
+  radial-gradient(ellipse at 88% 88%,rgba(205,0,255,.09),transparent 35%),
+  linear-gradient(145deg,#10141c 0%,#171a20 50%,#10151e 100%)!important;
+ font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+}
+#authView .auth-card{
+ width:min(100%,680px)!important;max-width:680px!important;box-sizing:border-box;
+ margin:auto!important;padding:clamp(24px,5vw,36px)!important;
+ color:#f6f8ff!important;background:linear-gradient(145deg,rgba(24,29,38,.97),rgba(19,23,31,.98))!important;
+ border:1px solid rgba(72,181,255,.8)!important;border-radius:28px!important;
+ box-shadow:0 0 0 1px rgba(62,153,255,.13),0 0 25px rgba(0,174,255,.17),
+ 0 0 48px rgba(0,174,255,.08),0 24px 70px rgba(0,0,0,.48)!important;
+}
+#authView .brand{
+ display:flex;align-items:center;gap:13px;margin:0 0 28px!important;
+ color:#fff!important;font-size:clamp(25px,5vw,34px)!important;
+ font-weight:850!important;letter-spacing:-.035em;
+}
+#authView .brand-logo{
+ width:82px!important;height:82px!important;object-fit:contain;border-radius:20px;
+ filter:drop-shadow(0 0 8px rgba(0,211,255,.75)) drop-shadow(0 0 18px rgba(0,155,255,.35));
+}
+#authView #authTitle{
+ margin:0 0 8px!important;color:#fff!important;
+ font-size:clamp(30px,6vw,42px)!important;line-height:1.16!important;
+ font-weight:850!important;letter-spacing:-.04em;
+ text-shadow:0 0 18px rgba(185,91,255,.25);
+}
+#authView #authSub{margin:0 0 28px!important;color:#aeb9c8!important;font-size:clamp(15px,3.2vw,19px)!important;line-height:1.5}
+#authView .auth-tabs{
+ display:grid!important;grid-template-columns:1fr 1fr;gap:4px!important;
+ padding:6px!important;margin:0 0 26px!important;border-radius:18px!important;
+ background:#242a33!important;border:1px solid #343c48!important;
+ box-shadow:inset 0 2px 8px rgba(0,0,0,.3)!important;
+}
+#authView .auth-tabs button{
+ position:relative;min-height:58px;padding:12px!important;border:0!important;border-radius:13px!important;
+ background:transparent!important;color:#b8c3d1!important;box-shadow:none!important;
+ font:750 clamp(14px,3.4vw,18px)/1.2 Inter,ui-sans-serif,system-ui,sans-serif!important;
+}
+#authView .auth-tabs button.active{
+ color:#35f4ff!important;background:#171c24!important;
+ text-shadow:0 0 12px rgba(0,238,255,.65)!important;
+ box-shadow:inset 0 -4px 0 #20e9f5,0 0 14px rgba(0,230,255,.12)!important;
+}
+#authView #authForm{display:flex;flex-direction:column;gap:19px}
+#authView #authForm .field{display:flex;flex-direction:column;gap:9px;margin:0!important;min-width:0}
+#authView #authForm .field label,#authView #authForm label:not(.check){
+ color:#f0f4fb!important;font-size:clamp(14px,3.3vw,17px)!important;font-weight:750!important;line-height:1.35
+}
+#authView #authForm input:not([type=checkbox]),#authView #authForm select{
+ width:100%;min-width:0;box-sizing:border-box;min-height:64px;padding:15px 18px!important;
+ border:1.5px solid #36dce8!important;border-radius:18px!important;
+ background:linear-gradient(145deg,#252d37,#202730)!important;color:#f6fbff!important;
+ font:500 clamp(15px,3.6vw,19px)/1.4 Inter,ui-sans-serif,system-ui,sans-serif!important;
+ box-shadow:inset 0 0 18px rgba(0,221,237,.09),0 0 9px rgba(0,225,255,.11)!important;
+ outline:none;transition:border-color .18s ease,box-shadow .18s ease;
+}
+#authView #authForm input::placeholder{color:#8396a8!important;opacity:1}
+#authView #authForm input:not([type=checkbox]):focus,#authView #authForm select:focus{
+ border-color:#42f6ff!important;box-shadow:inset 0 0 20px rgba(0,221,237,.12),0 0 0 3px rgba(0,230,255,.12),0 0 18px rgba(0,225,255,.24)!important
+}
+#authView #authForm .field>div:has(#password){display:flex!important;gap:12px!important;align-items:stretch}
+#authView #password{flex:1 1 auto}
+#authView #togglePassword{
+ flex:0 0 auto;min-width:110px;padding:0 18px!important;min-height:64px;border-radius:18px!important;
+ border:1.5px solid #36dce8!important;background:linear-gradient(145deg,#252d37,#202730)!important;
+ color:#35f4ff!important;box-shadow:inset 0 0 16px rgba(0,221,237,.09),0 0 10px rgba(0,225,255,.1)!important;
+ font-size:clamp(14px,3.5vw,18px)!important;font-weight:800!important;text-shadow:0 0 10px rgba(0,238,255,.35)
+}
+#authView #togglePassword:hover{background:#263641!important}
+#authView #submitAuth{
+ min-height:68px;margin-top:3px!important;padding:16px 20px!important;border:0!important;border-radius:19px!important;
+ background:linear-gradient(105deg,#00f0d5 0%,#31b8ff 42%,#ec00ed 100%)!important;
+ color:#101528!important;font-size:clamp(16px,3.8vw,20px)!important;font-weight:850!important;
+ box-shadow:0 0 18px rgba(0,234,255,.27),0 0 34px rgba(213,0,255,.16)!important;
+ transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;
+}
+#authView #submitAuth:hover{filter:brightness(1.08);box-shadow:0 0 22px rgba(0,234,255,.36),0 0 40px rgba(213,0,255,.22)!important}
+#authView #submitAuth:active{transform:scale(.99)}
+#authView #submitAuth:disabled{opacity:.72;cursor:wait}
+#authView #termsWrap{display:flex;align-items:flex-start;gap:9px;color:#aab7c7!important;font-size:13px!important;line-height:1.5}
+#authView #termsWrap input{margin-top:3px;accent-color:#1de9ee}
+#authView #authFeedback{padding:12px 14px;border-radius:12px;background:#351e29;color:#ffb6c0!important;border:1px solid #743343;line-height:1.5}
+#authView .auth-card>p.muted.small{
+ padding-top:0!important;margin-top:25px!important;border-top:0!important;
+ color:#91a4b6!important;font-size:clamp(12px,2.8vw,15px)!important;line-height:1.65!important;
+}
+@media(max-width:420px){
+ #authView.auth{padding:16px 12px!important}
+ #authView .auth-card{padding:24px 20px!important;border-radius:25px!important}
+ #authView .brand-logo{width:64px!important;height:64px!important}
+ #authView .auth-tabs button{min-height:52px}
+ #authView #authForm input:not([type=checkbox]),#authView #authForm select,#authView #togglePassword{min-height:58px;border-radius:15px!important}
+ #authView #togglePassword{min-width:84px;padding:0 12px!important}
+ #authView #submitAuth{min-height:60px;border-radius:16px!important}
+}
+@media(prefers-reduced-motion:reduce){#authView *{transition:none!important}}
