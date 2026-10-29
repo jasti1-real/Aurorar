@@ -384,7 +384,7 @@ export default {
           const country = account.country || "UG";
           if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Withdrawal country must match your registered account country." }, 403);
           const markets: Record<string, {currency:string; prefix:string; min:number; name:string}> = {
-            UG: { currency:"UGX", prefix:"+256", min:5000, name:"Uganda" },
+            UG: { currency:"UGX", prefix:"+256", min:3000, name:"Uganda" },
             RW: { currency:"RWF", prefix:"+250", min:2000, name:"Rwanda" },
             ZM: { currency:"ZMW", prefix:"+260", min:28, name:"Zambia" }
           };
