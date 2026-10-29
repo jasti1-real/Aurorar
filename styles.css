@@ -1790,3 +1790,11 @@ html body .product-load-error h3{font-size:18px!important;margin:0!important;col
 html body .product-load-error p{margin:0 0 5px!important;line-height:1.55!important}
 html body .product-load-icon{width:46px!important;height:46px!important;display:grid!important;place-items:center!important;border-radius:15px!important;background:#e7f9f1!important;color:#087b59!important;font-size:27px!important;font-weight:800!important}
 html body .product-load-error .btn{min-height:48px!important;border-radius:15px!important}
+
+
+/* Clear, readable withdrawal request states */
+.pill.status-pending{background:#fff4d6;color:#805500}
+.pill.status-approved{background:#e8edff;color:#2948a3}
+.pill.status-processing{background:#e6f3ff;color:#075985}
+.pill.status-completed{background:#dcfce7;color:#166534}
+.pill.status-failed{background:#ffe4e6;color:#9f1239}
