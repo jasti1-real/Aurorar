@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f3f7fb"><meta name="description" content="Aurorar account dashboard"><link rel="manifest" href="/manifest.webmanifest"><link rel="icon" href="/icon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="/icon.svg"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Aurorar">
 <title>Aurorar — Account</title>
-<link rel="stylesheet" href="/styles.css?v=account-text-contrast-20261029">
+<link rel="stylesheet" href="/styles.css?v=welcome-advert-referrals-slideshow-20261029">
 
 </head>
 <body>
@@ -107,19 +107,31 @@
 </section>
 <div id="countryPicker" class="country-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="countryPickerTitle"><div class="country-dialog"><h2 id="countryPickerTitle">Choose payment country</h2><p class="muted small">Select the country where your mobile money account is registered.</p><div class="country-options"><button class="country-option" type="button" data-country="UG"><span class="flag" aria-hidden="true">🇺🇬</span><span class="country-copy"><strong>Uganda</strong><small>UGX · MTN Mobile Money and Airtel Money</small></span><span class="state">AVAILABLE</span></button><button class="country-option" type="button" data-country="RW" disabled><span class="flag" aria-hidden="true">🇷🇼</span><span class="country-copy"><strong>Rwanda</strong><small>RWF · MTN Mobile Money and Airtel Money</small></span><span class="state">SELECT</span></button><button class="country-option" type="button" data-country="ZM"><span class="flag" aria-hidden="true">🇿🇲</span><span class="country-copy"><strong>Zambia</strong><small>ZMW · MTN, Airtel and Zamtel</small></span><span class="state">SELECT</span></button></div><button class="btn outline full" id="cancelCountry" type="button">Cancel</button></div></div><div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 <div id="welcomeAdModal" class="welcome-ad-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="welcomeAdTitle" aria-describedby="welcomeAdDescription">
- <div class="welcome-ad-card">
-  <button id="welcomeAdClose" class="welcome-ad-close" type="button" aria-label="Close welcome message">×</button>
+ <div class="welcome-ad-card welcome-ad-advert">
+  <button id="welcomeAdClose" class="welcome-ad-close" type="button" aria-label="Close welcome advert">×</button>
   <div class="welcome-ad-glow"></div>
   <div class="welcome-ad-logo"><img src="/icon.svg?v=aurorar-compass" alt="Aurorar"></div>
   <div class="welcome-ad-kicker">WELCOME TO AURORAR</div>
-  <h2 id="welcomeAdTitle">Good to have<br><span>you back.</span></h2>
-  <p id="welcomeAdDescription">Your next chapter starts here. Explore the machine plans, follow your account activity and keep your goals in view.</p>
-  <div class="welcome-ad-points"><span>✦ Explore plans</span><span>◈ Track activity</span><span>♧ Grow your network</span></div>
-  <p class="welcome-ad-note">Please review each plan's terms and risks before making a decision. Earnings are not guaranteed.</p>
-  <button id="welcomeAdContinue" class="welcome-ad-continue" type="button">Let’s get started <span>→</span></button>
+  <h2 id="welcomeAdTitle">Your goals.<br><span>Your next move.</span></h2>
+  <p id="welcomeAdDescription">Explore your dashboard, discover machine plans and invite people to join your network.</p>
+  <div class="welcome-ad-referrals" aria-label="Referral commission levels">
+   <div><strong>25%</strong><span>Level 1</span></div>
+   <div><strong>2%</strong><span>Level 2</span></div>
+   <div><strong>1%</strong><span>Level 3</span></div>
+  </div>
+  <div class="welcome-ad-slider" aria-live="polite">
+   <span class="welcome-ad-slider-dot" aria-hidden="true">●</span>
+   <span id="welcomeAdSlideText">Explore machine plans and view product details</span>
+  </div>
+  <div class="welcome-ad-points"><span>✦ Browse plans</span><span>◈ Track transactions</span><span>♧ Invite friends</span></div>
+  <a class="welcome-ad-telegram" href="https://t.me/" target="_blank" rel="noopener noreferrer" aria-label="Open Telegram">
+   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.8 3.2 18.5 20c-.25 1.18-.93 1.47-1.88.92l-5.2-3.84-2.51 2.42c-.28.28-.52.52-1.07.52l.37-5.3 9.64-8.71c.42-.37-.09-.58-.65-.21L5.28 13.3.14 11.69c-1.12-.35-1.14-1.12.24-1.66L20.5 2.4c.93-.34 1.74-.23 1.3.8Z"/></svg>
+   <span>Join us on Telegram</span><b>↗</b>
+  </a>
+  <p class="welcome-ad-note">Referral rewards depend on eligible activity and the programme terms. Product earnings are not guaranteed.</p>
+  <button id="welcomeAdContinue" class="welcome-ad-continue" type="button">Explore Aurorar <span>→</span></button>
  </div>
-</div>
-<div id="paymentNotice" class="payment-notice hidden" role="dialog" aria-modal="true" aria-labelledby="paymentNoticeTitle">
+</div><div id="paymentNotice" class="payment-notice hidden" role="dialog" aria-modal="true" aria-labelledby="paymentNoticeTitle">
  <div class="payment-notice-card">
   <button id="paymentNoticeClose" class="payment-notice-close" type="button" aria-label="Close">×</button>
   <div class="payment-notice-check" aria-hidden="true">✓</div>
@@ -274,8 +286,8 @@ $('authForm').addEventListener('submit',async e=>{e.preventDefault();const rawPh
 // Explicitly route taps on the primary auth button through the form handler.
 $('submitAuth').addEventListener('click',()=>{const form=$('authForm');if(!form)return;try{form.requestSubmit?form.requestSubmit():form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));}catch(error){const feedback=$('authFeedback');if(feedback){feedback.style.display='block';feedback.textContent='Login could not start. Reload the page and try again.';}}});
 
-function showWelcomeAd(){const modal=$('welcomeAdModal');if(!modal)return;modal.classList.remove('hidden');document.body.classList.add('welcome-ad-open');setTimeout(()=>{$('welcomeAdContinue')?.focus()},60)}
-function closeWelcomeAd(){const modal=$('welcomeAdModal');if(!modal)return;modal.classList.add('hidden');document.body.classList.remove('welcome-ad-open')}
+const welcomeAdSlides=['Explore machine plans and compare their details','Check deposits, withdrawals and wallet activity','Share your referral code with friends','Review your account balance and transactions','Choose your country wallet and local currency'];let welcomeAdSlideIndex=0;let welcomeAdSlideTimer=null;function rotateWelcomeAdSlide(){const el=$('welcomeAdSlideText');if(!el)return;el.classList.add('is-changing');setTimeout(()=>{welcomeAdSlideIndex=(welcomeAdSlideIndex+1)%welcomeAdSlides.length;el.textContent=welcomeAdSlides[welcomeAdSlideIndex];el.classList.remove('is-changing')},180)}function showWelcomeAd(){const modal=$('welcomeAdModal');if(!modal)return;modal.classList.remove('hidden');document.body.classList.add('welcome-ad-open');if(welcomeAdSlideTimer)clearInterval(welcomeAdSlideTimer);welcomeAdSlideTimer=setInterval(rotateWelcomeAdSlide,3000);setTimeout(()=>{$('welcomeAdContinue')?.focus()},60)}
+function closeWelcomeAd(){const modal=$('welcomeAdModal');if(!modal)return;modal.classList.add('hidden');document.body.classList.remove('welcome-ad-open');if(welcomeAdSlideTimer){clearInterval(welcomeAdSlideTimer);welcomeAdSlideTimer=null}}
 $('welcomeAdClose')?.addEventListener('click',closeWelcomeAd);$('welcomeAdContinue')?.addEventListener('click',()=>{closeWelcomeAd();showPage('home')});$('welcomeAdModal')?.addEventListener('click',e=>{if(e.target===$('welcomeAdModal'))closeWelcomeAd()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('welcomeAdModal')&&!$('welcomeAdModal').classList.contains('hidden'))closeWelcomeAd()});
 function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!=='page-'+page));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
