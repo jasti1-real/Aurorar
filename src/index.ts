@@ -389,10 +389,26 @@ export default {
           const body = await readJson(request);
           const phone = normalizePhone(body?.phone);
           if (!phone || typeof body?.password !== "string") return json({ error: "Enter your phone number and password." }, 400);
+          // Keep failed-login throttling in D1 so it survives Worker isolate restarts.
+          await env.DB.prepare("CREATE TABLE IF NOT EXISTS login_attempts (phone TEXT PRIMARY KEY, failed_count INTEGER NOT NULL DEFAULT 0, locked_until INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))").run();
+          const now = Date.now();
+          const attempts = await env.DB.prepare("SELECT failed_count, locked_until FROM login_attempts WHERE phone=?").bind(phone).first<any>();
+          if (attempts && Number(attempts.locked_until || 0) > now) {
+            const retryMinutes = Math.max(1, Math.ceil((Number(attempts.locked_until) - now) / 60000));
+            return json({ error: "Too many unsuccessful login attempts. Please try again in " + retryMinutes + " minute(s)." }, 429, { "Retry-After": String(Math.ceil((Number(attempts.locked_until) - now) / 1000)) });
+          }
           const user = await env.DB.prepare("SELECT id, phone, password_hash, password_salt, referral_code, status, country FROM users WHERE phone = ?").bind(phone).first<any>();
-          if (!user || user.status !== "active") return json({ error: "Phone number or password is incorrect." }, 401);
-          const candidate = await passwordHash(body.password, user.password_salt);
-          if (candidate !== user.password_hash) return json({ error: "Phone number or password is incorrect." }, 401);
+          const validUser = !!user && user.status === "active";
+          const candidate = validUser ? await passwordHash(body.password, user.password_salt) : "";
+          if (!validUser || candidate !== user.password_hash) {
+            await env.DB.prepare("INSERT INTO login_attempts (phone,failed_count,locked_until,updated_at) VALUES (?,1,0,strftime('%Y-%m-%dT%H:%M:%fZ','now')) ON CONFLICT(phone) DO UPDATE SET failed_count=CASE WHEN login_attempts.locked_until> ? THEN login_attempts.failed_count ELSE login_attempts.failed_count+1 END, locked_until=CASE WHEN login_attempts.locked_until> ? THEN login_attempts.locked_until WHEN login_attempts.failed_count+1>=5 THEN ? ELSE 0 END, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')").bind(phone,now,now,now+15*60*1000).run();
+            const updated = await env.DB.prepare("SELECT failed_count,locked_until FROM login_attempts WHERE phone=?").bind(phone).first<any>();
+            if (Number(updated?.failed_count || 0) >= 5 && Number(updated?.locked_until || 0) > now) {
+              return json({ error: "Too many unsuccessful login attempts. Please try again in 15 minutes." }, 429, { "Retry-After": "900" });
+            }
+            return json({ error: "Phone number or password is incorrect." }, 401);
+          }
+          await env.DB.prepare("DELETE FROM login_attempts WHERE phone=?").bind(phone).run();
           const token = await makeSession(user.id, env.SESSION_SECRET);
           return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 604800) });
         }
