@@ -229,9 +229,7 @@ export default {
           };
           const market = markets[country];
           const phone = normalizePhone(body?.phone);
-          // The current product catalogue and wallet ledger are UGX-only. Do not collect
-          // RWF/ZMW until separate currency ledgers and country-specific product accounting exist.
-          if (country !== "UG") return json({ error: "Rwanda and Zambia payments are being prepared. Deposits for these countries will open after separate RWF/ZMW wallet accounting is enabled. No payment has been requested." }, 409);
+          // Each market is charged in its own currency. Never convert RWF/ZMW to UGX.
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
