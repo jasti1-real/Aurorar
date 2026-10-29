@@ -2944,3 +2944,19 @@ body input::placeholder,body textarea::placeholder{
   -webkit-text-fill-color:var(--aurorar-text-red)!important;
   opacity:.72;
 }
+
+
+/* PURCHASE BUTTON CONTRAST FIX */
+.product-card button,
+.product-card .purchase-btn,
+button.purchase-machine,
+.purchase-machine-btn,
+button[id*="purchase"],
+button[class*="purchase"]{
+  color:#ffffff!important;
+  -webkit-text-fill-color:#ffffff!important;
+  background:linear-gradient(135deg,#087f5b 0%,#099268 100%)!important;
+  border:1px solid #087f5b!important;
+  text-shadow:none!important;
+  opacity:1!important;
+}
