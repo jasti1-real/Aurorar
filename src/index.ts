@@ -396,9 +396,6 @@ export default {
           // exempt from the standard time window/minimum, but still require deposit
           // and machine purchase and remain review-only (never an instant payout).
           const requestType = body?.requestType === "welcome_bonus" ? "welcome_bonus" : "standard";
-          if (requestType === "welcome_bonus" && country !== "UG") {
-            return json({ error: "Welcome-bonus withdrawal requests are not enabled for this country yet." }, 400);
-          }
           if (requestType === "standard") {
             // Standard withdrawals remain limited to 10:00 AM–5:00 PM Uganda time.
             const nowUtc = new Date();
@@ -416,11 +413,11 @@ export default {
           const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
           if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
           if (requestType === "welcome_bonus") {
-            const bonus = await env.DB.prepare("SELECT amount_ugx FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency='UGX' AND status='completed' ORDER BY created_at ASC LIMIT 1").bind(userId).first<any>();
+            const bonus = await env.DB.prepare("SELECT amount_ugx FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency=? AND status='completed' ORDER BY created_at ASC LIMIT 1").bind(userId,market.currency).first<any>();
             if (!bonus || Number(bonus.amount_ugx) <= 0 || amount !== Number(bonus.amount_ugx)) {
-              return json({ error: "The requested amount must exactly match your credited welcome bonus." }, 400);
+              return json({ error: "The requested amount must exactly match your credited welcome bonus in " + market.currency + "." }, 400);
             }
-            const priorBonusRequest = await env.DB.prepare("SELECT id,status FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed') LIMIT 1").bind(userId).first<any>();
+            const priorBonusRequest = await env.DB.prepare("SELECT id,status FROM withdrawal_requests WHERE user_id=? AND currency=? AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed') LIMIT 1").bind(userId,market.currency).first<any>();
             if (priorBonusRequest) return json({ error: "Your welcome bonus already has a withdrawal request or has been withdrawn. Check withdrawal history before trying again." }, 409);
           }
           // Withdrawal eligibility: require both a confirmed deposit and an active machine purchase.
@@ -521,6 +518,7 @@ export default {
             await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
             if (country !== "UG") {
               await env.DB.prepare("INSERT INTO currency_wallets (user_id, currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, ?, ?, 0, 0, 0, 0)").bind(id, bonus.currency, bonus.amount).run();
+              await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',?,?,'completed',?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonus.amount,bonus.currency,"welcome-bonus:"+id,"One-time welcome bonus credited to "+bonus.currency+" wallet").run();
             }
             await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id).run();
             await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id).run();
