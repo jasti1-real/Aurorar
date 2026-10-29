@@ -439,7 +439,7 @@ export default {
               ZM: {currency:"ZMW", amount:22}
             };
             const bonus = bonusByCountry[country];
-            await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, ?, 0, 0, 0, 0)").bind(id, country === "UG" ? bonus.amount : 0).run();
+            await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
             if (country !== "UG") {
               await env.DB.prepare("INSERT INTO currency_wallets (user_id, currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, ?, ?, 0, 0, 0, 0)").bind(id, bonus.currency, bonus.amount).run();
             }
