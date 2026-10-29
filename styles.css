@@ -2768,3 +2768,108 @@ body .muted,body .small{line-height:1.55}
  .bottom-nav .wallet-shortcut .wallet-logo-orbit>img{width:31px!important;height:31px!important}
 }
 @media(min-width:700px){.bottom-nav{left:50%!important;right:auto!important;width:min(620px,calc(100% - 48px))!important;transform:translateX(-50%)!important}}
+
+
+/* Aurora live welcome popup inspired by the supplied poster */
+#welcomeAdModal.welcome-ad-overlay{
+ position:fixed!important;inset:0!important;z-index:12000!important;display:flex!important;
+ align-items:center!important;justify-content:center!important;overflow-y:auto!important;
+ padding:18px 12px!important;background:rgba(2,5,18,.88)!important;
+ -webkit-backdrop-filter:blur(16px)!important;backdrop-filter:blur(16px)!important;
+}
+#welcomeAdModal.welcome-ad-overlay.hidden{display:none!important}
+#welcomeAdModal .welcome-ad-card{
+ position:relative!important;isolation:isolate!important;overflow:hidden!important;
+ width:min(100%,440px)!important;max-height:calc(100dvh - 32px)!important;overflow-y:auto!important;
+ padding:28px 22px 22px!important;border-radius:30px!important;
+ border:1px solid rgba(109,255,245,.38)!important;
+ color:#f3fbff!important;background:
+ radial-gradient(ellipse at 15% 65%,rgba(35,230,208,.32),transparent 42%),
+ radial-gradient(ellipse at 86% 35%,rgba(129,58,220,.35),transparent 44%),
+ linear-gradient(155deg,#06091e 0%,#10102b 48%,#031a25 100%)!important;
+ box-shadow:0 25px 100px rgba(0,0,0,.6),0 0 40px rgba(31,220,222,.14),inset 0 1px rgba(255,255,255,.12)!important;
+ text-align:center!important;
+}
+#welcomeAdModal .welcome-ad-card:before{
+ content:""!important;position:absolute!important;z-index:-2!important;inset:-45%!important;
+ pointer-events:none!important;opacity:.72!important;
+ background:conic-gradient(from 0deg at 50% 50%,transparent 0deg,rgba(19,229,218,.03) 45deg,rgba(37,220,224,.30) 75deg,rgba(143,66,227,.30) 105deg,transparent 150deg,rgba(12,190,205,.18) 220deg,transparent 300deg);
+ filter:blur(22px)!important;animation:aurorar-live-nebula 16s linear infinite!important;
+}
+#welcomeAdModal .welcome-ad-card:after{
+ content:"✦   ·     ✧       ·  ✦       ·      ✧   ·     ✦"!important;
+ position:absolute!important;inset:0!important;z-index:-1!important;pointer-events:none!important;
+ color:rgba(214,250,255,.55)!important;font-size:17px!important;letter-spacing:12px!important;
+ line-height:74px!important;word-spacing:9px!important;opacity:.48!important;
+ mask-image:linear-gradient(180deg,#000,transparent 88%)!important;
+ animation:aurorar-star-drift 20s linear infinite!important;
+}
+#welcomeAdModal .welcome-ad-glow{
+ position:absolute!important;z-index:-1!important;left:-25%!important;right:-25%!important;top:20%!important;height:42%!important;
+ border-radius:50%!important;background:linear-gradient(105deg,transparent 8%,rgba(125,64,214,.12) 30%,rgba(24,229,211,.3) 54%,transparent 83%)!important;
+ filter:blur(22px)!important;transform:rotate(-17deg)!important;
+ animation:aurorar-live-ribbon 7s ease-in-out infinite alternate!important;pointer-events:none!important;
+}
+#welcomeAdModal .welcome-ad-close{
+ position:sticky!important;float:right!important;top:0!important;z-index:4!important;
+ width:38px!important;height:38px!important;border:1px solid rgba(255,255,255,.2)!important;border-radius:50%!important;
+ background:rgba(255,255,255,.1)!important;color:#fff!important;font-size:26px!important;
+ -webkit-backdrop-filter:blur(12px)!important;backdrop-filter:blur(12px)!important;
+}
+#welcomeAdModal .welcome-ad-logo{clear:both!important;display:flex!important;justify-content:center!important;padding:8px 0 10px!important}
+#welcomeAdModal .welcome-ad-logo img{width:86px!important;height:86px!important;object-fit:contain!important;filter:drop-shadow(0 0 16px rgba(35,239,226,.5))!important}
+#welcomeAdModal .welcome-ad-kicker{color:#6df7e8!important;font-size:11px!important;font-weight:900!important;letter-spacing:3px!important;margin:4px 0 18px!important}
+#welcomeAdModal #welcomeAdTitle{
+ margin:0 auto 18px!important;font-size:clamp(35px,9vw,48px)!important;line-height:1.1!important;
+ letter-spacing:-1.8px!important;font-weight:500!important;color:#d6d8ff!important;
+ background:linear-gradient(100deg,#bd76ff 0%,#8ad9ff 48%,#68f7d6 100%)!important;
+ -webkit-background-clip:text!important;background-clip:text!important;-webkit-text-fill-color:transparent!important;
+}
+#welcomeAdModal #welcomeAdDescription{max-width:330px!important;margin:0 auto 20px!important;color:#d4e7f8!important;font-size:15px!important;line-height:1.55!important}
+#welcomeAdModal .welcome-ad-referrals{
+ position:relative!important;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important;
+ padding:12px!important;margin:20px 0!important;border:1px solid rgba(104,241,228,.23)!important;border-radius:18px!important;
+ background:rgba(7,19,43,.5)!important;-webkit-backdrop-filter:blur(14px)!important;backdrop-filter:blur(14px)!important;
+}
+#welcomeAdModal .welcome-ad-referrals>div{display:flex!important;flex-direction:column!important;gap:4px!important}
+#welcomeAdModal .welcome-ad-referrals strong{font-size:25px!important;line-height:1.1!important;color:#68f6df!important;text-shadow:0 0 15px rgba(42,244,223,.28)!important}
+#welcomeAdModal .welcome-ad-referrals span{font-size:11px!important;color:#d7e6fa!important;font-weight:700!important}
+#welcomeAdModal .welcome-ad-slider{display:flex!important;justify-content:center!important;align-items:center!important;gap:8px!important;min-height:40px!important;color:#c9d8ee!important;font-size:12px!important}
+#welcomeAdModal .welcome-ad-slider-dot{color:#55f4df!important;text-shadow:0 0 10px #55f4df!important}
+#welcomeAdModal .welcome-ad-points{display:flex!important;justify-content:center!important;flex-wrap:wrap!important;gap:8px 12px!important;margin:12px 0 18px!important;color:#d6e7f8!important;font-size:11px!important}
+#welcomeAdModal .welcome-ad-telegram{
+ display:flex!important;align-items:center!important;justify-content:center!important;gap:12px!important;
+ width:100%!important;min-height:72px!important;padding:13px 16px!important;border-radius:24px!important;
+ border:1px solid rgba(100,255,240,.7)!important;
+ background:linear-gradient(115deg,rgba(0,170,157,.96),rgba(19,120,190,.98))!important;
+ color:white!important;text-decoration:none!important;font-size:clamp(15px,4vw,19px)!important;font-weight:900!important;
+ text-transform:uppercase!important;letter-spacing:.3px!important;
+ box-shadow:0 10px 30px rgba(0,205,195,.2),inset 0 1px rgba(255,255,255,.3)!important;
+ transition:transform .2s ease,filter .2s ease!important;
+}
+#welcomeAdModal .welcome-ad-telegram:hover{filter:brightness(1.12)!important;transform:translateY(-2px)!important}
+#welcomeAdModal .welcome-ad-telegram svg{flex:0 0 28px!important;width:28px!important;height:28px!important;fill:#c7ffff!important;filter:drop-shadow(0 2px 7px rgba(0,0,0,.2))!important}
+#welcomeAdModal .welcome-ad-telegram b{font-size:20px!important}
+#welcomeAdModal .welcome-ad-note{max-width:330px!important;margin:12px auto!important;color:#b4c8dc!important;font-size:10px!important;line-height:1.5!important}
+#welcomeAdModal .welcome-ad-continue{
+ width:100%!important;min-height:49px!important;margin-top:7px!important;border:1px solid rgba(133,255,238,.38)!important;
+ border-radius:16px!important;background:rgba(255,255,255,.09)!important;color:#fff!important;font-weight:850!important;
+ -webkit-backdrop-filter:blur(12px)!important;backdrop-filter:blur(12px)!important;
+}
+#welcomeAdModal .welcome-ad-continue span{margin-left:8px!important;color:#6ef7e2!important}
+#welcomeAdModal #welcomeAdSlideText{transition:opacity .18s ease!important}
+#welcomeAdModal #welcomeAdSlideText.is-changing{opacity:0!important}
+@keyframes aurorar-live-nebula{from{transform:rotate(0deg) scale(1)}to{transform:rotate(360deg) scale(1.08)}}
+@keyframes aurorar-live-ribbon{from{transform:translate3d(-5%,8px,0) rotate(-20deg)}to{transform:translate3d(7%,-10px,0) rotate(-7deg)}}
+@keyframes aurorar-star-drift{from{transform:translateY(0)}to{transform:translateY(-42px)}}
+@media(max-height:740px){
+ #welcomeAdModal .welcome-ad-card{padding:18px 18px 16px!important}
+ #welcomeAdModal .welcome-ad-logo img{width:62px!important;height:62px!important}
+ #welcomeAdModal #welcomeAdTitle{font-size:clamp(30px,7.5vw,39px)!important;margin-bottom:12px!important}
+ #welcomeAdModal .welcome-ad-referrals{margin:13px 0!important;padding:9px!important}
+ #welcomeAdModal .welcome-ad-referrals strong{font-size:21px!important}
+ #welcomeAdModal .welcome-ad-telegram{min-height:58px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #welcomeAdModal .welcome-ad-card:before,#welcomeAdModal .welcome-ad-card:after,#welcomeAdModal .welcome-ad-glow{animation:none!important}
+}
