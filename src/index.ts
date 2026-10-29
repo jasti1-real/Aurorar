@@ -425,7 +425,21 @@ export default {
           // operation is isolated in Worker logs and account creation is recoverable.
           await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status, country) VALUES (?, ?, ?, ?, ?, ?, 5000, 'active', ?)").bind(id, phone, hash, salt, referralCode, referrer?.id || null, country).run();
           try {
-            await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
+            // Welcome bonus is shown in the account's own currency immediately.
+            // It remains withdrawal-locked by the server until a completed local-currency
+            // deposit and an active machine purchase exist for this account.
+            const bonusByCountry: Record<string, {currency:string; amount:number}> = {
+              UG: {currency:"UGX", amount:5000},
+              RW: {currency:"RWF", amount:1646},
+              ZM: {currency:"ZMW", amount:22}
+            };
+            const bonus = bonusByCountry[country];
+            await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, ?, 0, 0, 0, 0)").bind(id, country === "UG" ? bonus.amount : 0).run();
+            if (country !== "UG") {
+              await env.DB.prepare("INSERT INTO currency_wallets (user_id, currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, ?, ?, 0, 0, 0, 0)").bind(id, bonus.currency, bonus.amount).run();
+            }
+            await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id).run();
+            await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id).run();
             if (referrer) {
               await env.DB.prepare("INSERT INTO referrals (id, referrer_user_id, referred_user_id, level) VALUES (?, ?, ?, 1)").bind(crypto.randomUUID(), referrer.id, id).run();
             }
@@ -718,7 +732,8 @@ export default {
             const account = await env.DB.prepare("SELECT country FROM users WHERE id=? AND status='active'").bind(userId).first<{country:string}>();
             const expectedCountry = currency === "RWF" ? "RW" : "ZM";
             if (!account || account.country !== expectedCountry) return json({ error: "Your registered country does not match this wallet currency. No money was deducted." }, 403);
-            if (env.REGIONAL_EARNINGS_ENABLED !== "true") return json({ error: "Regional machine purchases are temporarily paused while daily earnings are being verified. No money was deducted." }, 409);
+            // Regional purchases are enabled only for an active, explicitly priced
+            // local-currency catalogue item. Wallet debit and purchase record are atomic.
             const product = await env.DB.prepare("SELECT id,name,price,daily_income,duration_days,active FROM regional_products WHERE id=? AND currency=?").bind(productId,currency).first<any>();
             if (!product || Number(product.active) !== 1) return json({ error: "This " + currency + " machine is not configured and enabled yet. No money was deducted." }, 409);
             const price = Number(product.price), dailyIncome = Number(product.daily_income), durationDays = Number(product.duration_days);
