@@ -271,7 +271,7 @@ export default {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before requesting a withdrawal." }, 401);
           if (request.method === "GET") {
-            const rows = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at, updated_at FROM withdrawal_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(userId).all();
+            const rows = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, provider_reference, provider_transaction_uuid, provider_status, payout_submitted_at, completed_at, failure_reason, created_at, updated_at FROM withdrawal_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(userId).all();
             return json({ requests: rows.results || [] });
           }
           const body = await readJson(request);
@@ -557,8 +557,8 @@ export default {
             const allowedStatuses = ["requested", "approved", "processing", "completed", "rejected", "failed"];
             if (status && !allowedStatuses.includes(status)) return json({ error: "Invalid withdrawal status filter." }, 400);
             const rows = status
-              ? await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.phone_number, wr.status, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id WHERE wr.status=? ORDER BY wr.created_at DESC LIMIT 200").bind(status).all()
-              : await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.phone_number, wr.status, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id ORDER BY wr.created_at DESC LIMIT 200").all();
+              ? await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.phone_number, wr.status, wr.provider_reference, wr.provider_transaction_uuid, wr.provider_status, wr.payout_submitted_at, wr.completed_at, wr.failure_reason, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id WHERE wr.status=? ORDER BY wr.created_at DESC LIMIT 200").bind(status).all()
+              : await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.phone_number, wr.status, wr.provider_reference, wr.provider_transaction_uuid, wr.provider_status, wr.payout_submitted_at, wr.completed_at, wr.failure_reason, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id ORDER BY wr.created_at DESC LIMIT 200").all();
             return json({ withdrawals: rows.results || [], message: "These are withdrawal requests, not confirmed payouts. No payout is sent by this endpoint." });
           }
           if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
