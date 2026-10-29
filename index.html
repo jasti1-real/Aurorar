@@ -186,7 +186,7 @@ async function loadAccount(){
  if(!response.ok) throw new Error(data.error||'Could not load your account.');
  const w=data.wallet||{};
  state.phone=data.user?.phone||state.phone;
- state.country=data.user?.country||state.country||'UG';
+ state.country=String(data.user?.country||state.country||'UG').toUpperCase();
  const countryInfo={UG:{flag:'🇺🇬',name:'Uganda',currency:'UGX'},RW:{flag:'🇷🇼',name:'Rwanda',currency:'RWF'},ZM:{flag:'🇿🇲',name:'Zambia',currency:'ZMW'}}[state.country]||{flag:'🇺🇬',name:'Uganda',currency:'UGX'};
  $('accountCountryPill').textContent=countryInfo.flag+' '+countryInfo.name+' · '+countryInfo.currency;
  $('catalogueCountry').textContent=countryInfo.flag+' '+countryInfo.name+' — '+countryInfo.currency;
@@ -250,7 +250,11 @@ function localMoney(value,currency){return Number(value||0).toLocaleString('en-U
 const UGX_DISPLAY_RATES={UGX:1,RWF:0.3395,ZMW:0.004494};
 function displayCurrencyAmount(ugx,currency){return Math.round(Number(ugx||0)*(UGX_DISPLAY_RATES[currency]||1))}
 async function renderProducts(){
- const grid=$('productsGrid');const currency=({UG:'UGX',RW:'RWF',ZM:'ZMW'})[state.country||'UG']||'UGX';
+ const grid=$('productsGrid');
+ // Refresh the signed-in account's market before choosing the catalogue or purchase currency.
+ if(state.phone){try{await loadAccount()}catch(e){/* keep the current page usable; the API still enforces the account market */}}
+ state.country=String(state.country||'UG').toUpperCase();
+ const currency=({UG:'UGX',RW:'RWF',ZM:'ZMW'})[state.country]||'UGX';
  grid.innerHTML='<div class="card">Loading '+currency+' product catalogue…</div>';
  try{
   const response=await fetch('/api/products?currency='+encodeURIComponent(currency),{credentials:'same-origin',cache:'no-store'});
