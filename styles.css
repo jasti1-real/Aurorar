@@ -2020,3 +2020,21 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
  .ledger-table{min-width:500px}
  .ledger-table th,.ledger-table td{padding:13px 10px!important}
 }
+
+
+/* Transaction ledger visual indicators */
+.ledger-type-icon{display:inline-flex;align-items:center;justify-content:center;width:29px;height:29px;flex:0 0 29px;border-radius:10px;font-size:17px;font-weight:900;margin-right:8px;vertical-align:middle}
+.ledger-in{background:#d9f9ec;color:#08784f;border:1px solid #9be5c7}
+.ledger-out{background:#fff0d9;color:#92510b;border:1px solid #f4d29a}
+.ledger-other{background:#e3edff;color:#2356a6;border:1px solid #b9d0fa}
+.ledger-type-label{display:inline-block;vertical-align:middle;font-weight:800;color:#f5f9fc}
+.ledger-date{display:block;color:#d9e7f1;font-weight:650;line-height:1.5}
+.ledger-amount{display:inline-block;font-size:15px;font-weight:900;line-height:1.4;white-space:nowrap}
+.ledger-positive{color:#9bf0cf!important}
+.ledger-negative{color:#ffb8b8!important}
+.ledger-status{display:inline-flex!important;align-items:center;gap:5px;max-width:100%;font-weight:850!important;line-height:1.35!important;padding:7px 10px!important;border-radius:999px!important;border:1px solid transparent}
+.ledger-status.status-completed{background:#d9f9ec!important;color:#075c43!important;border-color:#8be0bd!important}
+.ledger-status.status-failed{background:#ffe5e5!important;color:#922d36!important;border-color:#f3b8bd!important}
+.ledger-status.status-processing{background:#fff0d0!important;color:#794a00!important;border-color:#f2d18b!important}
+.ledger-status.status-pending{background:#e4efff!important;color:#214f91!important;border-color:#b6d0fb!important}
+@media(max-width:600px){.ledger-type-icon{width:26px;height:26px;flex-basis:26px;margin-right:6px}.ledger-type-label{font-size:13px}.ledger-amount{font-size:14px}.ledger-status{font-size:11px!important;padding:6px 8px!important}}
