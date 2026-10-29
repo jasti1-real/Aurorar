@@ -612,8 +612,8 @@ export default {
             const [users, products, deposits, withdrawals, pending, balances] = await Promise.all([
               env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active FROM users").first<any>(),
               env.DB.prepare("SELECT COUNT(*) AS active FROM user_products WHERE status='active'").first<any>(),
-              env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='deposit' AND status='completed'").first<any>(),
-              env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='withdrawal' AND status='completed'").first<any>(),
+              env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='deposit' AND status='completed' AND COALESCE(currency,'UGX')='UGX'").first<any>(),
+              env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='withdrawal' AND status='completed' AND COALESCE(currency,'UGX')='UGX'").first<any>(),
               env.DB.prepare("SELECT COUNT(*) AS total FROM transactions WHERE status IN ('pending','processing')").first<any>(),
               env.DB.prepare("SELECT COALESCE(SUM(available_balance),0) AS total FROM wallets").first<any>()
             ]);
