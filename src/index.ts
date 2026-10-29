@@ -595,6 +595,17 @@ export default {
               env.DB.prepare("UPDATE wallets SET available_balance=available_balance+5000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1").bind(id)
             ]);
           }
+          // Backfill the audit ledger for existing regional accounts whose bonus was
+          // credited directly to the currency wallet before regional bonus ledger support.
+          // This records the existing credit only; it deliberately does not credit the wallet again.
+          const regionalBonusByCountry: Record<string, {currency:string; amount:number}> = {
+            RW: {currency:"RWF", amount:1646},
+            ZM: {currency:"ZMW", amount:22}
+          };
+          const regionalBonus = regionalBonusByCountry[String(user.country || "UG")];
+          if (regionalBonus) {
+            await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',?,?,'completed',?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,regionalBonus.amount,regionalBonus.currency,"welcome-bonus:"+id,"One-time welcome bonus recorded for "+regionalBonus.currency+" wallet").run();
+          }
           const countryCurrency: Record<string, string> = { UG: "UGX", RW: "RWF", ZM: "ZMW" };
           const currency = countryCurrency[user.country] || "UGX";
           const ugWallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
