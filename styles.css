@@ -2464,3 +2464,20 @@ body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-le
 .welcome-ad-telegram b{margin-left:auto;color:#fff}
 .welcome-ad-advert .welcome-ad-note{line-height:1.55}
 @media(max-height:760px){.welcome-ad-advert{padding-top:22px;padding-bottom:22px}.welcome-ad-referrals{margin:12px 0 8px}.welcome-ad-referrals>div{padding:9px 5px}.welcome-ad-slider{min-height:46px;padding:10px 12px}}
+
+
+/* Purchase/confirmation popup: crisp contrast and accessible Aurorar red accents */
+.app-modal{z-index:10080!important;align-items:center!important;justify-content:center!important;padding:18px!important;background:rgba(20,29,43,.60)!important;backdrop-filter:blur(10px)!important;-webkit-backdrop-filter:blur(10px)!important}
+.app-modal-card{width:min(100%,440px)!important;padding:25px!important;border:1px solid #e8d5d8!important;border-radius:28px!important;background:linear-gradient(155deg,#fff 0%,#fffafa 100%)!important;color:#202938!important;box-shadow:0 28px 85px rgba(25,35,50,.30),0 0 0 1px rgba(180,35,53,.05)!important}
+.app-modal-icon{width:58px!important;height:58px!important;display:grid!important;place-items:center!important;margin:0 0 18px!important;border-radius:18px!important;background:linear-gradient(140deg,#fff0f2,#f9dfe3)!important;border:1px solid #f1c5cc!important;color:#a51f32!important;font-size:28px!important;box-shadow:0 8px 20px rgba(180,35,53,.10)!important}
+.app-modal-card h2,#appModalTitle{margin:0 0 10px!important;color:#a51f32!important;-webkit-text-fill-color:#a51f32!important;font-size:clamp(23px,6vw,29px)!important;line-height:1.2!important;font-weight:900!important;letter-spacing:-.6px!important}
+#appModalMessage{margin:0 0 23px!important;color:#364354!important;-webkit-text-fill-color:#364354!important;font-size:16px!important;line-height:1.65!important;font-weight:550!important;opacity:1!important}
+.app-modal-label{display:block!important;margin:0 0 8px!important;color:#8f1d2c!important;-webkit-text-fill-color:#8f1d2c!important;font-weight:800!important}
+.app-modal-input{width:100%!important;min-height:52px!important;padding:13px 15px!important;border:1px solid #d9cbd0!important;border-radius:14px!important;background:#fff!important;color:#202938!important;font-size:16px!important}
+.app-modal-input:focus{outline:0!important;border-color:#b42335!important;box-shadow:0 0 0 4px rgba(180,35,53,.12)!important}
+.app-modal-actions{display:grid!important;grid-template-columns:1fr 1fr!important;gap:12px!important;margin-top:18px!important}
+.app-modal-actions .btn{min-height:56px!important;padding:12px 14px!important;border-radius:15px!important;font-size:15px!important;font-weight:850!important;white-space:normal!important}
+#appModalCancel{background:#223243!important;color:#fff!important;border:1px solid #223243!important;box-shadow:0 8px 18px rgba(34,50,67,.14)!important}
+#appModalSubmit{background:linear-gradient(115deg,#c92f45,#971b30)!important;color:#fff!important;border:1px solid transparent!important;box-shadow:0 10px 22px rgba(153,27,46,.23)!important}
+#appModalSubmit:disabled,#appModalCancel:disabled{opacity:.65!important}
+@media(max-width:360px){.app-modal{padding:12px!important}.app-modal-card{padding:20px!important;border-radius:23px!important}.app-modal-actions{gap:9px!important}.app-modal-actions .btn{min-height:52px!important;padding:10px!important;font-size:14px!important}}
