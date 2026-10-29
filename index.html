@@ -497,5 +497,52 @@ render();
   // Keep the login screen visible when the session is expired or unavailable.
  }
 })();
+
+/* Reliable referral-link copying on mobile browsers and installed PWAs */
+async function copyTextCompat(value){
+ const textValue=String(value||'').trim();
+ if(!textValue)throw new Error('There is no invitation link to copy yet.');
+ if(navigator.clipboard&&window.isSecureContext){
+  try{await navigator.clipboard.writeText(textValue);return true;}catch(_){}
+ }
+ const field=document.createElement('textarea');
+ field.value=textValue;field.setAttribute('readonly','');
+ field.style.position='fixed';field.style.left='-9999px';field.style.top='0';
+ field.style.opacity='0';document.body.appendChild(field);
+ field.focus();field.select();field.setSelectionRange(0,field.value.length);
+ let copied=false;
+ try{copied=document.execCommand('copy');}catch(_){}
+ field.remove();
+ if(copied)return true;
+ // Last-resort mobile-friendly selection so the user can copy manually.
+ const invite=$('inviteLink');
+ if(invite){invite.focus();invite.select();invite.setSelectionRange(0,invite.value.length);}
+ throw new Error('Automatic copy is blocked by this browser. The link is selected—press Copy in your phone menu.');
+}
+document.addEventListener('click',async function(e){
+ const button=e.target.closest('#copyInvite');
+ if(!button)return;
+ e.preventDefault();
+ const input=$('inviteLink');
+ const link=(input?.value||'').trim();
+ const code=state.refCode;
+ if(!link||!code){
+  toast('Your invitation link is not ready yet. Please refresh your account and try again.');
+  return;
+ }
+ const original=button.textContent;
+ button.disabled=true;
+ try{
+  await copyTextCompat(link);
+  button.textContent='Copied ✓';
+  toast('Invitation link copied successfully!');
+ }catch(err){
+  if(input){input.focus();input.select();input.setSelectionRange(0,input.value.length);}
+  toast(err.message||'Copy failed. Please select and copy the link manually.');
+ }finally{
+  setTimeout(()=>{button.textContent=original;button.disabled=false;},1800);
+ }
+});
+
 </script>
 </body></html>
