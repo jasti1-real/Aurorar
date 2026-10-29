@@ -736,7 +736,7 @@ export default {
               : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency=? AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,Number(payout.amount),payout.user_id,payout.currency,requestId,Number(payout.amount));
             const reserveResults = await env.DB.batch([
               walletDebit,
-              env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='requested' AND changes()=1").bind(reference,debitAt,requestId)
+              env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,tax_amount=?,net_amount=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='requested' AND changes()=1").bind(reference,debitAt,taxAmount,netPayoutAmount,requestId)
             ]);
             if (Number(reserveResults[0]?.meta?.changes || 0) !== 1 || Number(reserveResults[1]?.meta?.changes || 0) !== 1) {
               // If the wallet debit succeeded but the state transition did not, roll it back.
