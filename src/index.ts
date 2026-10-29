@@ -286,9 +286,8 @@ export default {
           };
           const market = markets[country];
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
-          // Foreign currency withdrawals remain locked until that country's collection/disbursement
-          // service and wallet accounting have been verified end-to-end by the operator.
-          if (country !== "UG") return json({ error: "RWF and ZMW withdrawals are not open yet. Their separate wallet balances and payout callbacks must be verified first. No payout was sent." }, 409);
+          // All markets create review-only requests. This endpoint never initiates a payout.
+          // Regional requests use their own currency wallet and local-currency ledger.
           // Enforce the Uganda withdrawal window on the server, not just in the UI.
           // EAT is UTC+3; allow requests from 10:00 through 16:59 EAT.
           const nowUtc = new Date();
@@ -307,43 +306,59 @@ export default {
           // Withdrawal eligibility: require both a confirmed deposit and an active machine purchase.
           // The welcome bonus is visible in the balance immediately, but remains withdrawal-locked
           // until these two account milestones are satisfied.
-          const eligibility = await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM user_products WHERE user_id=? AND status='active') AS has_machine").bind(userId,userId).first<any>();
+          const eligibility = country === "UG"
+            ? await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency='UGX' AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM user_products WHERE user_id=? AND status='active') AS has_machine").bind(userId,userId).first<any>()
+            : await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency=? AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM regional_user_products WHERE user_id=? AND currency=? AND status='active') AS has_machine").bind(userId,market.currency,userId,market.currency).first<any>();
           if (!Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock withdrawals, first complete a successful deposit and then purchase a machine." }, 403);
           if (!Number(eligibility?.has_machine || 0)) return json({ error:"To unlock withdrawals, purchase a machine after your successful deposit." }, 403);
           const [wallet, pendingWithdrawals] = await Promise.all([
-            env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>(),
-            // Requests are not deducted at submission, so count outstanding requests
-            // against spendable funds to prevent users requesting the same balance twice.
-            env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS reserved FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND status IN ('requested','approved','processing')").bind(userId).first<any>()
+            country === "UG"
+              ? env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>()
+              : env.DB.prepare("SELECT available_balance FROM currency_wallets WHERE user_id=? AND currency=?").bind(userId,market.currency).first<any>(),
+            // Requests are not deducted at submission, so reserve their value against
+            // the matching local-currency wallet to prevent double-requesting funds.
+            env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS reserved FROM withdrawal_requests WHERE user_id=? AND currency=? AND status IN ('requested','approved','processing')").bind(userId,market.currency).first<any>()
           ]);
           const availableBalance = Number(wallet?.available_balance || 0);
           const reservedBalance = Number(pendingWithdrawals?.reserved || 0);
           const spendableBalance = Math.max(0, availableBalance - reservedBalance);
           if (!wallet || spendableBalance < amount) {
-            return json({ error: "Your spendable UGX balance is not enough for this withdrawal. Available balance: " + availableBalance.toLocaleString("en-US") + " UGX; already requested and awaiting resolution: " + reservedBalance.toLocaleString("en-US") + " UGX. No money was deducted." }, 400);
+            return json({ error: "Your spendable " + market.currency + " balance is not enough for this withdrawal. Available balance: " + availableBalance.toLocaleString("en-US") + " " + market.currency + "; already requested and awaiting resolution: " + reservedBalance.toLocaleString("en-US") + " " + market.currency + ". No money was deducted." }, 400);
           }
           const id = crypto.randomUUID();
           try {
             // Enforce the balance reservation in the same SQL statement as the insert.
             // This closes the race where two simultaneous requests both pass the earlier
             // display check and reserve the same funds.
-            const inserted = await env.DB.prepare(`
-              INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key)
-              SELECT ?,?,?,?, ?,?, 'requested',?
-              WHERE EXISTS (
-                SELECT 1 FROM wallets w
-                WHERE w.user_id=?
-                  AND w.available_balance - COALESCE((
-                    SELECT SUM(wr.amount) FROM withdrawal_requests wr
-                    WHERE wr.user_id=? AND wr.currency='UGX'
-                      AND wr.status IN ('requested','approved','processing')
-                  ),0) >= ?
-              )
-            `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,userId,userId,amount).run();
+            const inserted = country === "UG"
+              ? await env.DB.prepare(`
+                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key)
+                  SELECT ?,?,?,?, ?,?, 'requested',?
+                  WHERE EXISTS (
+                    SELECT 1 FROM wallets w
+                    WHERE w.user_id=?
+                      AND w.available_balance - COALESCE((
+                        SELECT SUM(wr.amount) FROM withdrawal_requests wr
+                        WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
+                      ),0) >= ?
+                  )
+                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,userId,userId,market.currency,amount).run()
+              : await env.DB.prepare(`
+                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key)
+                  SELECT ?,?,?,?, ?,?, 'requested',?
+                  WHERE EXISTS (
+                    SELECT 1 FROM currency_wallets w
+                    WHERE w.user_id=? AND w.currency=?
+                      AND w.available_balance - COALESCE((
+                        SELECT SUM(wr.amount) FROM withdrawal_requests wr
+                        WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
+                      ),0) >= ?
+                  )
+                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,userId,market.currency,userId,market.currency,amount).run();
             if (Number(inserted.meta?.changes || 0) !== 1) {
               const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
               if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
-              return json({ error:"Your spendable UGX balance changed while submitting. Refresh your balance and try again. No money was deducted." }, 409);
+              return json({ error:"Your spendable " + market.currency + " balance changed while submitting. Refresh your balance and try again. No money was deducted." }, 409);
             }
           } catch (error) {
             const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
