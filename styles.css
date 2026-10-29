@@ -1952,3 +1952,27 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
 #regionalWalletSection .notice p{margin:0 0 12px!important}
 #regionalWalletSection .notice p:last-child{margin-bottom:0!important}
 @media(max-width:420px){#regionalWalletSection .stats{gap:9px}#regionalWalletSection .stat{padding:15px 12px!important}#regionalWalletSection .stat .label{font-size:12px!important}#regionalWalletSection .stat .value{font-size:20px!important}#regionalWalletSection .market-grid>.card{padding:15px!important}}
+
+
+/* Clear, branded in-app feedback */
+.toast{
+  left:50%; bottom:calc(88px + env(safe-area-inset-bottom));
+  width:max-content; max-width:min(92vw,460px);
+  padding:15px 18px; border:1px solid rgba(255,255,255,.22);
+  border-radius:18px; background:linear-gradient(135deg,#102b4b,#17466b);
+  color:#fff; font-size:15px; line-height:1.5; font-weight:750;
+  text-align:center; box-shadow:0 16px 42px rgba(5,25,48,.32);
+  overflow-wrap:anywhere; z-index:100000;
+}
+.app-modal-card{color:#142b4a}
+.app-modal-card h2{color:#102b4b;font-weight:850}
+.app-modal-card p{color:#52647a;line-height:1.65}
+.app-modal-card label{color:#263b53;font-weight:750}
+.app-modal-card input{color:#102b4b!important;background:#fff!important;border:1px solid #d5e2ec!important}
+.app-modal-card .btn{min-height:48px;border-radius:14px}
+@media(max-width:600px){
+ .app-modal{padding:14px}
+ .app-modal-card{padding:22px;border-radius:22px}
+ .app-modal-card h2{font-size:21px}
+ .toast{bottom:calc(96px + env(safe-area-inset-bottom));font-size:14px}
+}
