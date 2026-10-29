@@ -1857,3 +1857,42 @@ html body #appView input::placeholder,html body #appView textarea::placeholder{
  color:#b9c8da!important;opacity:1!important
 }
 html body #appView button,html body #appView a{opacity:1!important}
+
+/* Aurorar home welcome hero — vivid gradients, clear type, vertical ticker */
+#page-home .aurorar-welcome{position:relative;isolation:isolate;display:grid;grid-template-columns:minmax(0,1.12fr) minmax(210px,.88fr);gap:22px;align-items:center;overflow:hidden;margin:0 0 22px;padding:26px 24px 70px;border:1px solid rgba(93,223,206,.34);border-radius:30px;background:radial-gradient(ellipse at 85% 18%,rgba(14,154,216,.34),transparent 38%),radial-gradient(ellipse at 8% 100%,rgba(0,224,151,.23),transparent 40%),linear-gradient(135deg,#071c3c 0%,#092e58 52%,#064e54 100%);box-shadow:0 22px 48px rgba(4,35,64,.19);color:#fff}
+#page-home .welcome-glow{position:absolute;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(2px)}
+#page-home .welcome-glow-one{width:260px;height:260px;right:16%;top:-155px;background:rgba(22,153,255,.25)}
+#page-home .welcome-glow-two{width:210px;height:210px;left:-115px;bottom:-135px;background:rgba(0,238,164,.19)}
+#page-home .welcome-copy{position:relative;z-index:2;min-width:0}
+#page-home .welcome-brandline{display:flex;align-items:center;gap:9px;margin-bottom:23px;color:#dffcff;font-size:11px;font-weight:850;letter-spacing:1.2px}
+#page-home .welcome-brandline img{width:34px;height:34px;object-fit:contain;filter:drop-shadow(0 0 10px rgba(82,241,215,.35))}
+#page-home .welcome-brandline i{color:#48e6c2;font-style:normal}
+#page-home .welcome-eyebrow{margin:0 0 9px!important;color:#72f3d4!important;font-size:10px!important;font-weight:850;letter-spacing:1.8px;line-height:1.5}
+#page-home .aurorar-welcome h1{margin:0 0 12px;color:#fff!important;font-size:clamp(27px,4.5vw,44px);font-weight:900;letter-spacing:-1.3px;line-height:1.08;text-shadow:0 2px 18px rgba(0,0,0,.18)}
+#page-home .welcome-highlight{color:#59f0d0;background:linear-gradient(90deg,#8fffe2,#4ccaff);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+#page-home .welcome-description{max-width:470px;margin:0 0 17px!important;color:#e1efff!important;font-size:14px!important;line-height:1.65}
+#page-home .welcome-ticker{display:flex;align-items:center;gap:10px;min-height:48px;max-width:500px;padding:9px 12px;border:1px solid rgba(151,246,224,.25);border-radius:15px;background:rgba(2,15,37,.52);box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+#page-home .ticker-label{flex:0 0 auto;color:#8df7dc;font-size:9px;font-weight:900;letter-spacing:.8px}
+#page-home .ticker-window{height:24px;overflow:hidden;flex:1;min-width:0}
+#page-home .ticker-track{display:flex;flex-direction:column;animation:aurorarVerticalTicker 12s cubic-bezier(.65,0,.35,1) infinite}
+#page-home .ticker-track span{display:flex;align-items:center;height:24px;min-height:24px;color:#fff;font-size:12px;font-weight:750;white-space:nowrap}
+@keyframes aurorarVerticalTicker{0%,18%{transform:translateY(0)}23%,41%{transform:translateY(-24px)}46%,64%{transform:translateY(-48px)}69%,87%{transform:translateY(-72px)}92%,100%{transform:translateY(-96px)}}
+#page-home .welcome-actions{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:16px}
+#page-home .welcome-cta{display:inline-flex;align-items:center;justify-content:center;gap:18px;min-height:47px;padding:0 18px;border:1px solid rgba(183,255,233,.75);border-radius:15px;background:linear-gradient(105deg,#1ce2a2,#00a879);color:#042c35!important;font-size:14px;font-weight:900;box-shadow:0 8px 24px rgba(0,224,161,.23)}
+#page-home .welcome-cta span{font-size:20px}
+#page-home .welcome-note{color:#c3d8e9;font-size:10px;font-weight:650}
+#page-home .welcome-portrait-wrap{position:relative;min-height:280px;display:flex;align-items:center;justify-content:center}
+#page-home .portrait-ring{position:absolute;width:min(100%,290px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(112,255,222,.52);box-shadow:0 0 0 12px rgba(65,228,204,.06),0 0 0 27px rgba(65,228,204,.035),0 0 45px rgba(46,239,207,.15)}
+#page-home .welcome-portrait{position:relative;width:min(100%,280px);height:290px;object-fit:cover;object-position:center 35%;border-radius:46% 46% 34% 34%;border:3px solid rgba(207,255,243,.7);box-shadow:0 22px 55px rgba(0,0,0,.35);background:#143c56}
+#page-home .portrait-caption{position:absolute;left:-3px;bottom:14px;display:flex;align-items:center;gap:9px;max-width:220px;padding:10px 13px;border:1px solid rgba(255,255,255,.4);border-radius:16px;background:rgba(4,24,47,.91);box-shadow:0 12px 30px rgba(0,0,0,.2);backdrop-filter:blur(12px)}
+#page-home .portrait-caption-icon{display:grid;place-items:center;width:32px;height:32px;flex:0 0 32px;border-radius:11px;background:#d8fff3;color:#087b60;font-size:20px}
+#page-home .portrait-caption strong,#page-home .portrait-float-card strong{display:block;color:#fff!important;font-size:11px;font-weight:850;line-height:1.35}
+#page-home .portrait-caption small,#page-home .portrait-float-card small{display:block;margin-top:3px;color:#d4e9f6!important;font-size:9px;line-height:1.3}
+#page-home .portrait-float-card{position:absolute;right:-4px;top:25px;display:flex;align-items:center;gap:8px;padding:10px 12px;border:1px solid rgba(132,247,221,.4);border-radius:15px;background:rgba(6,32,60,.94);box-shadow:0 12px 30px rgba(0,0,0,.23);animation:aurorarFloat 4s ease-in-out infinite}
+#page-home .portrait-float-card>span{font-size:24px}
+@keyframes aurorarFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+#page-home .welcome-bottom-ticker{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:space-around;align-items:center;gap:8px;min-height:43px;padding:9px 12px;border-top:1px solid rgba(172,255,234,.22);background:rgba(0,12,30,.38)}
+#page-home .welcome-bottom-ticker span{color:#dffcf5;font-size:9px;font-weight:850;letter-spacing:.45px;text-align:center}
+@media(max-width:560px){#page-home .aurorar-welcome{grid-template-columns:minmax(0,1fr) 112px;gap:7px;padding:19px 15px 62px;border-radius:25px}#page-home .welcome-brandline{gap:7px;margin-bottom:19px;font-size:9px;letter-spacing:.7px}#page-home .welcome-brandline img{width:29px;height:29px}#page-home .welcome-eyebrow{font-size:8px!important;letter-spacing:1px}#page-home .aurorar-welcome h1{font-size:clamp(24px,6.4vw,33px);letter-spacing:-.8px}#page-home .welcome-description{font-size:12px!important;line-height:1.5}#page-home .welcome-ticker{display:block;padding:8px 9px;min-height:42px}#page-home .ticker-label{display:block;margin-bottom:3px;font-size:8px}#page-home .ticker-window{height:21px}#page-home .ticker-track span{height:21px;min-height:21px;font-size:10px}#page-home .ticker-track{animation-name:aurorarVerticalTickerMobile}#page-home .welcome-cta{min-height:42px;gap:8px;padding:0 11px;font-size:11px}#page-home .welcome-note{font-size:9px}#page-home .welcome-portrait-wrap{min-height:210px;align-self:center}#page-home .welcome-portrait{width:112px;height:175px;border-width:2px;border-radius:48% 48% 35% 35%}#page-home .portrait-ring{width:110px;box-shadow:0 0 0 7px rgba(65,228,204,.06),0 0 0 15px rgba(65,228,204,.035)}#page-home .portrait-caption{left:-42px;bottom:1px;gap:5px;padding:7px 8px;max-width:160px;border-radius:11px}#page-home .portrait-caption-icon{width:25px;height:25px;flex-basis:25px;font-size:15px}#page-home .portrait-caption strong{font-size:9px}#page-home .portrait-caption small{font-size:8px}#page-home .portrait-float-card{right:-7px;top:9px;gap:4px;padding:7px 8px;border-radius:11px}#page-home .portrait-float-card>span{font-size:18px}#page-home .portrait-float-card strong{font-size:8px}#page-home .portrait-float-card small{font-size:7px}#page-home .welcome-bottom-ticker{min-height:39px;gap:5px;padding:7px 5px}#page-home .welcome-bottom-ticker span{font-size:7px;letter-spacing:0}}
+@keyframes aurorarVerticalTickerMobile{0%,18%{transform:translateY(0)}23%,41%{transform:translateY(-21px)}46%,64%{transform:translateY(-42px)}69%,87%{transform:translateY(-63px)}92%,100%{transform:translateY(-84px)}}
+@media(prefers-reduced-motion:reduce){#page-home .ticker-track,#page-home .portrait-float-card{animation:none!important}#page-home .ticker-track span{display:none}#page-home .ticker-track span:first-child{display:flex}}
