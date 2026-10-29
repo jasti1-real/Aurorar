@@ -1976,3 +1976,17 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
  .app-modal-card h2{font-size:21px}
  .toast{bottom:calc(96px + env(safe-area-inset-bottom));font-size:14px}
 }
+
+
+/* High-contrast account identity on the Account tab */
+.account-profile-card{background:linear-gradient(145deg,#10243d 0%,#183b58 100%)!important;border:1px solid rgba(255,255,255,.12)!important;color:#fff!important;padding:22px!important}
+.account-profile-card .profile{align-items:center;gap:16px;margin-bottom:22px}
+.account-profile-card .avatar{flex:0 0 58px;width:58px;height:58px;background:#d9f8ed;color:#087c61;font-size:24px;border-radius:18px}
+.account-profile-card .account-identity{min-width:0;flex:1}
+.account-profile-card #profilePhone{color:#fff!important;font-size:19px!important;line-height:1.35;margin:0 0 12px!important;overflow-wrap:anywhere}
+.account-number-label{color:#aeeedd;font-size:11px;font-weight:850;letter-spacing:1.5px;margin-bottom:6px}
+.account-number-value{display:block;color:#fff!important;font-size:clamp(17px,4.5vw,23px);font-weight:850;line-height:1.45;letter-spacing:.2px;overflow-wrap:anywhere;word-break:break-word;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:12px;padding:11px 12px;min-height:46px}
+.account-profile-card .stat{background:rgba(3,17,30,.48)!important;border-color:rgba(255,255,255,.13)!important}
+.account-profile-card .stat .label{color:#c6d8e7!important}
+.account-profile-card .stat .value{color:#fff!important;overflow-wrap:anywhere}
+@media(max-width:480px){.account-profile-card{padding:17px!important}.account-profile-card .profile{gap:12px}.account-profile-card .avatar{flex-basis:48px;width:48px;height:48px;border-radius:15px}.account-profile-card #profilePhone{font-size:16px!important}}
