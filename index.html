@@ -405,7 +405,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   finally{button.disabled=false;button.textContent=label;}
  }else{
   const market=({UG:{currency:'UGX',name:'Uganda',min:5000,prefix:'+256'},RW:{currency:'RWF',name:'Rwanda',min:2000,prefix:'+250'},ZM:{currency:'ZMW',name:'Zambia',min:28,prefix:'+260'}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:5000,prefix:'+256'};
-  const bonusEligible=Number(state.welcomeBonus||0)>0;
+  const bonusEligible=(state.country||'UG')==='UG'&&Number(state.welcomeBonus||0)>0;
   const withdrawalChoice=bonusEligible?await appPrompt('Enter STANDARD for a normal withdrawal, or BONUS to request only your welcome bonus. BONUS requests can be submitted any time after a successful deposit and machine purchase; requests are still reviewed and are not instant payouts.','Choose withdrawal type','Type STANDARD or BONUS','STANDARD','text'): 'STANDARD';
   if(withdrawalChoice===null)return;
   const requestType=String(withdrawalChoice).trim().toUpperCase()==='BONUS'?'welcome_bonus':'standard';
