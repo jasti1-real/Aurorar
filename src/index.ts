@@ -572,10 +572,12 @@ export default {
           // A stable unique reference makes this safe to retry for existing accounts.
           if ((user.country || "UG") === "UG" && Number(user.welcome_bonus || 0) > 0) {
             const bonusRef = "welcome-bonus:" + id;
-            const bonusInsert = await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',5000,'UGX','completed',?,'One-time welcome bonus credited to UGX wallet',strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusRef).run();
-            if (Number(bonusInsert.meta?.changes || 0) === 1) {
-              await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+5000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(id).run();
-            }
+            // Keep the one-time bonus ledger insert and wallet credit in one atomic D1 batch.
+            // If the ledger reference already exists, changes() is zero and the wallet is not credited again.
+            await env.DB.batch([
+              env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',5000,'UGX','completed',?,'One-time welcome bonus credited to UGX wallet',strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusRef),
+              env.DB.prepare("UPDATE wallets SET available_balance=available_balance+5000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1").bind(id)
+            ]);
           }
           const countryCurrency: Record<string, string> = { UG: "UGX", RW: "RWF", ZM: "ZMW" };
           const currency = countryCurrency[user.country] || "UGX";
