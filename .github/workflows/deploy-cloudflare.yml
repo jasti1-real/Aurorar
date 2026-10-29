@@ -29,7 +29,7 @@ jobs:
             const html = fs.readFileSync(file, 'utf8');
             const scripts = html.split(/<script[^>]*>/i).slice(1).map(part => part.split('</script>', 1)[0]);
             if (!scripts.length) throw new Error(`No inline scripts found in ${file}`);
-            scripts.forEach((match, index) => new vm.Script(match[1], { filename: `${file}:script-${index + 1}` }));
+            scripts.forEach((script, index) => new vm.Script(script, { filename: `${file}:script-${index + 1}` }));
             console.log(`Validated ${scripts.length} inline script(s) in ${file}`);
           }
           NODE
