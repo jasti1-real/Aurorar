@@ -292,7 +292,12 @@ export default {
             providerResponse = await response.json().catch(() => ({}));
             if (!response.ok || providerResponse?.status === "error") {
               await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay rejected collection request' WHERE id=? AND status='pending'").bind(transactionId).run();
-              return json({ error: providerResponse?.message || "MarzPay could not start this payment. Please try again." }, 502);
+              const providerMessage = String(providerResponse?.message || providerResponse?.error || "");
+              const lowerProviderMessage = providerMessage.toLowerCase();
+              if (lowerProviderMessage.includes("no collection services available") || lowerProviderMessage.includes("service not enabled") || lowerProviderMessage.includes("market not enabled")) {
+                return json({ error: "Deposits for this country are not enabled on the MarzPay business account yet. In MarzPay, enable the " + market.name + " collection wallet and subscribe to its mobile-money collection services, then try again. No money was deducted." }, 503);
+              }
+              return json({ error: providerMessage || "MarzPay could not start this payment. Please try again." }, 502);
             }
           } catch {
             await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay connection failed' WHERE id=? AND status='pending'").bind(transactionId).run();
