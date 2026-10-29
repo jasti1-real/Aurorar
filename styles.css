@@ -109,34 +109,50 @@ button,a,input,select{-webkit-tap-highlight-color:transparent}
 @supports not ((backdrop-filter:blur(1px))){.card,.product-card,.auth-card,.stat,.bottom-nav{background:#fff}}
 
 
-/* Real machine photography for the Aurorar product cards */
+/* Clear, photo-first machine cards. Keep existing local image paths and product logic unchanged. */
 .machine-image-wrap {
-  min-height: 190px;
-  aspect-ratio: 1 / 1;
+  position: relative;
+  min-height: 210px;
+  aspect-ratio: 4 / 3;
   display: grid;
   place-items: center;
   overflow: hidden;
-  padding: 12px;
-  border-radius: 22px;
-  background:
-    radial-gradient(circle at 50% 35%, rgba(255,255,255,.98), rgba(240,244,247,.94) 65%, rgba(225,232,237,.88));
-  border: 1px solid rgba(255,255,255,.82);
+  padding: 0;
+  border-radius: 20px;
+  background: #f1f4f6;
+  border: 1px solid rgba(255,255,255,.92);
+  isolation: isolate;
+}
+.machine-image-wrap::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(145deg,#f7f9fa,#e7edf1);
 }
 .machine-image {
   display: block;
   width: 100%;
   height: 100%;
-  max-height: 240px;
-  object-fit: contain;
-  border-radius: 14px;
-  filter: drop-shadow(0 12px 12px rgba(18, 31, 45, .12));
+  min-height: 210px;
+  max-height: 300px;
+  object-fit: cover;
+  object-position: center;
+  border-radius: inherit;
+  image-rendering: auto;
+  backface-visibility: hidden;
+  transform: translateZ(0);
   transition: transform .35s ease, filter .35s ease;
 }
 .product-card:hover .machine-image {
-  transform: scale(1.035);
-  filter: drop-shadow(0 16px 16px rgba(18, 31, 45, .16));
+  transform: scale(1.025);
+  filter: saturate(1.04) contrast(1.02);
 }
 .machine-image[hidden] { display: none; }
+@media (max-width: 480px) {
+  .machine-image-wrap { min-height: 145px; aspect-ratio: 4 / 3; border-radius: 16px; }
+  .machine-image { min-height: 145px; max-height: 190px; }
+}
 .machine-image-wrap.image-missing::after {
   content: "Machine photo loading soon";
   color: var(--muted, #687789);
