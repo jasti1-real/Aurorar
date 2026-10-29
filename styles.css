@@ -2446,3 +2446,21 @@ body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-le
 body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(p,span,strong,b,small,label,th,td){color:#f4f7fb}
 body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(.muted,.helper,.description,.subtext){color:#ffd8dc!important;-webkit-text-fill-color:#ffd8dc!important}
 body :is(.account-card,.account-panel,.wallet-panel,.ledger-card,.transaction-ledger) :is(.account-number,.account-number-label,.account-number-value,[class*="account-number"],[id*="account-number"]){color:#ff6978!important;-webkit-text-fill-color:#ff6978!important}
+
+
+/* Login welcome advert: referrals, Telegram CTA and rotating activity text */
+.welcome-ad-advert{max-height:min(92dvh,900px);overflow-y:auto}
+.welcome-ad-referrals{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:20px 0 14px}
+.welcome-ad-referrals>div{display:flex;flex-direction:column;align-items:center;gap:3px;padding:13px 6px;border:1px solid rgba(148,255,229,.22);border-radius:16px;background:rgba(255,255,255,.07)}
+.welcome-ad-referrals strong{font-size:clamp(24px,6vw,32px);line-height:1.1;color:#8ef0d1}
+.welcome-ad-referrals span{font-size:12px;font-weight:750;color:#f4fffc}
+.welcome-ad-slider{min-height:56px;display:flex;align-items:center;gap:10px;margin:12px 0;padding:13px 15px;border:1px solid rgba(115,226,214,.25);border-radius:15px;background:rgba(2,16,29,.24);color:#f7fbff;font-weight:700}
+#welcomeAdSlideText{color:#f7fbff;transition:opacity .18s ease,transform .18s ease}
+#welcomeAdSlideText.is-changing{opacity:0;transform:translateY(5px)}
+.welcome-ad-slider-dot{color:#80f2d7;font-size:11px}
+.welcome-ad-telegram{display:flex;align-items:center;justify-content:center;gap:10px;min-height:52px;margin:12px 0;padding:12px 16px;border:1px solid rgba(83,166,255,.5);border-radius:16px;background:linear-gradient(115deg,#168bd2,#0876ba);box-shadow:0 8px 22px rgba(0,119,190,.2);color:#fff!important;text-decoration:none;font-weight:800}
+.welcome-ad-telegram svg{width:23px;height:23px;fill:currentColor}
+.welcome-ad-telegram span{color:#fff!important}
+.welcome-ad-telegram b{margin-left:auto;color:#fff}
+.welcome-ad-advert .welcome-ad-note{line-height:1.55}
+@media(max-height:760px){.welcome-ad-advert{padding-top:22px;padding-bottom:22px}.welcome-ad-referrals{margin:12px 0 8px}.welcome-ad-referrals>div{padding:9px 5px}.welcome-ad-slider{min-height:46px;padding:10px 12px}}
