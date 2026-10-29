@@ -77,7 +77,19 @@
  <nav class="bottom-nav" aria-label="Main navigation"><button class="nav-btn active" data-page="home"><span class="nav-icon">⌂</span><span>Home</span></button><button class="nav-btn" data-page="products"><span class="nav-icon">▦</span><span>Products</span></button><button class="nav-btn wallet-shortcut" id="walletShortcut" type="button" aria-label="Quick deposit or withdraw" aria-haspopup="dialog"><span class="wallet-logo-orbit"><img src="/icon.svg?v=aurorar-compass" alt=""><span class="wallet-country-flag flag-uganda" aria-label="Uganda">🇺🇬</span><span class="wallet-country-flag flag-rwanda" aria-label="Rwanda">🇷🇼</span><span class="wallet-country-flag flag-zambia" aria-label="Zambia">🇿🇲</span></span><span>Wallet</span></button><button class="nav-btn" data-page="referrals"><span class="nav-icon">♧</span><span>Referrals</span></button><button class="nav-btn" data-page="account"><span class="nav-icon">◎</span><span>Account</span></button></nav>
 <div id="walletShortcutDialog" class="wallet-shortcut-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="walletShortcutTitle"><div class="wallet-shortcut-card"><button type="button" class="wallet-shortcut-close" id="walletShortcutClose" aria-label="Close">×</button><div class="wallet-shortcut-brand"><img src="/icon.svg?v=aurorar-compass" alt=""> <span>Aurorar Wallet</span></div><h2 id="walletShortcutTitle">Quick actions</h2><p class="muted small">Choose what you want to do with your wallet.</p><div class="wallet-shortcut-actions"><button type="button" class="wallet-action-deposit" id="walletQuickDeposit"><span>＋</span><span><strong>Deposit</strong><small>Add funds to your wallet</small></span><b>›</b></button><button type="button" class="wallet-action-withdraw" id="walletQuickWithdraw"><span>↗</span><span><strong>Withdraw</strong><small>Request a wallet payout</small></span><b>›</b></button></div></div></div>
 </section>
-<div id="countryPicker" class="country-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="countryPickerTitle"><div class="country-dialog"><h2 id="countryPickerTitle">Choose payment country</h2><p class="muted small">Select the country where your mobile money account is registered.</p><div class="country-options"><button class="country-option" type="button" data-country="UG"><span class="flag" aria-hidden="true">🇺🇬</span><span class="country-copy"><strong>Uganda</strong><small>UGX · MTN Mobile Money and Airtel Money</small></span><span class="state">AVAILABLE</span></button><button class="country-option" type="button" data-country="RW" disabled><span class="flag" aria-hidden="true">🇷🇼</span><span class="country-copy"><strong>Rwanda</strong><small>RWF · MTN Mobile Money and Airtel Money</small></span><span class="state soon">COMING SOON</span></button><button class="country-option" type="button" data-country="ZM" disabled><span class="flag" aria-hidden="true">🇿🇲</span><span class="country-copy"><strong>Zambia</strong><small>ZMW · MTN, Airtel and Zamtel</small></span><span class="state soon">COMING SOON</span></button></div><button class="btn outline full" id="cancelCountry" type="button">Cancel</button></div></div><div id="toast" class="toast hidden" role="status" aria-live="polite"></div><div id="appModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="appModalTitle"><div class="app-modal-card"><div class="app-modal-icon" aria-hidden="true">✦</div><h2 id="appModalTitle">Aurorar</h2><p id="appModalMessage" class="muted small"></p><form id="appModalForm"><label id="appModalLabel" for="appModalInput" class="app-modal-label"></label><input id="appModalInput" class="app-modal-input" autocomplete="off"><div class="app-modal-actions"><button id="appModalCancel" type="button" class="btn outline">Cancel</button><button id="appModalSubmit" type="submit" class="btn primary">Continue</button></div></form></div></div>
+<div id="countryPicker" class="country-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="countryPickerTitle"><div class="country-dialog"><h2 id="countryPickerTitle">Choose payment country</h2><p class="muted small">Select the country where your mobile money account is registered.</p><div class="country-options"><button class="country-option" type="button" data-country="UG"><span class="flag" aria-hidden="true">🇺🇬</span><span class="country-copy"><strong>Uganda</strong><small>UGX · MTN Mobile Money and Airtel Money</small></span><span class="state">AVAILABLE</span></button><button class="country-option" type="button" data-country="RW" disabled><span class="flag" aria-hidden="true">🇷🇼</span><span class="country-copy"><strong>Rwanda</strong><small>RWF · MTN Mobile Money and Airtel Money</small></span><span class="state soon">COMING SOON</span></button><button class="country-option" type="button" data-country="ZM" disabled><span class="flag" aria-hidden="true">🇿🇲</span><span class="country-copy"><strong>Zambia</strong><small>ZMW · MTN, Airtel and Zamtel</small></span><span class="state soon">COMING SOON</span></button></div><button class="btn outline full" id="cancelCountry" type="button">Cancel</button></div></div><div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+<div id="paymentNotice" class="payment-notice hidden" role="dialog" aria-modal="true" aria-labelledby="paymentNoticeTitle">
+ <div class="payment-notice-card">
+  <button id="paymentNoticeClose" class="payment-notice-close" type="button" aria-label="Close">×</button>
+  <div class="payment-notice-check" aria-hidden="true">✓</div>
+  <h2 id="paymentNoticeTitle">Payment request sent!</h2>
+  <p class="payment-notice-copy">Check your MTN/Airtel phone and approve the prompt using your mobile-money PIN.</p>
+  <div class="payment-reference"><div><span>PAYMENT REFERENCE</span><strong id="paymentReferenceText"></strong></div><button id="copyPaymentReference" type="button" aria-label="Copy payment reference">▢</button></div>
+  <div class="payment-notice-tip"><span aria-hidden="true">📱</span><p><strong>No prompt?</strong> Check phone notifications or tap <b>Check status</b> in your transaction ledger.</p></div>
+  <button id="paymentNoticeDone" class="btn primary full" type="button">Got it <span aria-hidden="true">→</span></button>
+  <p class="payment-notice-foot">Your balance updates after payment confirmation.</p>
+ </div>
+</div><div id="appModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="appModalTitle"><div class="app-modal-card"><div class="app-modal-icon" aria-hidden="true">✦</div><h2 id="appModalTitle">Aurorar</h2><p id="appModalMessage" class="muted small"></p><form id="appModalForm"><label id="appModalLabel" for="appModalInput" class="app-modal-label"></label><input id="appModalInput" class="app-modal-input" autocomplete="off"><div class="app-modal-actions"><button id="appModalCancel" type="button" class="btn outline">Cancel</button><button id="appModalSubmit" type="submit" class="btn primary">Continue</button></div></form></div></div>
 <script>
 const plans=[
 [1,15000,5000,60],[2,30000,10000,45],[3,60000,20000,30],[4,120000,30000,15],[5,250000,62500,15],[6,500000,125000,15],[7,1000000,250000,10],[8,1500000,500000,10],[9,2000000,750000,10],[10,1000000,250000,30]
@@ -111,6 +123,24 @@ function chooseCountry(){
 function appDialog({title,message,label='',value='',type='text',confirmOnly=false,confirmText='Continue'}){return new Promise(resolve=>{const modal=$('appModal');if(modal&&modal.parentElement!==document.body)document.body.appendChild(modal);const form=$('appModalForm'),input=$('appModalInput'),cancel=$('appModalCancel'),submit=$('appModalSubmit');$('appModalTitle').textContent=title;$('appModalMessage').textContent=message;$('appModalLabel').textContent=label;input.type=type;input.value=value;input.required=!confirmOnly;input.min=type==='number'?'1':'';input.step=type==='number'?'1':'';input.placeholder=label;input.classList.toggle('hidden',confirmOnly);$('appModalLabel').classList.toggle('hidden',confirmOnly);submit.textContent=confirmText;cancel.textContent='Cancel';modal.classList.remove('hidden');document.body.classList.add('modal-open');const finish=result=>{modal.classList.add('hidden');document.body.classList.remove('modal-open');form.removeEventListener('submit',onSubmit);cancel.removeEventListener('click',onCancel);modal.removeEventListener('click',onBackdrop);document.removeEventListener('keydown',onKey);resolve(result)};const onSubmit=e=>{e.preventDefault();finish(confirmOnly?true:input.value.trim())};const onCancel=()=>finish(null);const onBackdrop=e=>{if(e.target===modal)finish(null)};const onKey=e=>{if(e.key==='Escape')finish(null)};form.addEventListener('submit',onSubmit);cancel.addEventListener('click',onCancel);modal.addEventListener('click',onBackdrop);document.addEventListener('keydown',onKey);if(!confirmOnly){input.focus();if(type!=='password')input.select()}else submit.focus()})}
 function appPrompt(message,title,label,value='',type='text'){return appDialog({title,message,label,value,type,confirmOnly:false,confirmText:'Continue'})}
 function appConfirm(message,title='Please confirm',confirmText='Confirm'){return appDialog({title,message,confirmOnly:true,confirmText})}
+function showPaymentNotice(reference){
+ const modal=$('paymentNotice');
+ $('paymentReferenceText').textContent=reference||'Reference unavailable';
+ modal.classList.remove('hidden');
+ document.body.classList.add('modal-open');
+ const close=()=>{modal.classList.add('hidden');document.body.classList.remove('modal-open')};
+ $('paymentNoticeClose').onclick=close;
+ $('paymentNoticeDone').onclick=close;
+ modal.onclick=e=>{if(e.target===modal)close()};
+ const onKey=e=>{if(e.key==='Escape'&&!modal.classList.contains('hidden')){close();document.removeEventListener('keydown',onKey)}};
+ document.addEventListener('keydown',onKey);
+ $('copyPaymentReference').onclick=async()=>{
+  try{await navigator.clipboard.writeText(reference||'');$('copyPaymentReference').textContent='✓'}
+  catch{toast('Copy unavailable. Please copy the reference manually.')}
+ };
+ $('copyPaymentReference').textContent='▢';
+ $('paymentNoticeDone').focus();
+}
 let toastTimer=null;
 function toast(s){
  const message=String(s||'');
@@ -287,8 +317,8 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||'Could not start deposit. Please try again.');
    const reference=String(data.reference||'').trim();
-   toast((data.message||'Payment request sent.')+' Check your MTN/Airtel phone for the approval prompt and enter your mobile-money PIN only on your phone. '+(reference?'Reference: '+reference+'. ':'')+'If no prompt appears, check your phone notifications and use “Check status” beside the pending deposit in your transaction ledger. Your balance updates only after provider confirmation.');
-   try{await loadAccount();render()}catch{toast('Deposit request was sent, but the ledger could not refresh. Tap Refresh in Transaction Ledger to check its status.')}
+   showPaymentNotice(reference);
+   try{await loadAccount();render()}catch{toast('Request sent. Refresh your transaction ledger to check status.')}
   }catch(error){toast(error.message||'Deposit failed.');}
   finally{button.disabled=false;button.textContent=label;}
  }else{
