@@ -337,7 +337,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
  if(action!=='deposit'&&action!=='withdraw')return;
  if(!state.phone){toast('Please log in first.');return;}
  if(action==='deposit'){
-  const market=({UG:{currency:'UGX',name:'Uganda',min:15000,max:10000000},RW:{currency:'RWF',name:'Rwanda',min:100,max:10000000},ZM:{currency:'ZMW',name:'Zambia',min:1,max:10000000}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:15000,max:10000000};
+  const market=({UG:{currency:'UGX',name:'Uganda',min:10000,max:10000000},RW:{currency:'RWF',name:'Rwanda',min:15000,max:10000000},ZM:{currency:'ZMW',name:'Zambia',min:15000,max:10000000}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:10000,max:10000000};
   const amountText=await appPrompt('Enter deposit amount in '+market.currency+' (minimum '+market.min.toLocaleString('en-US')+' '+market.currency+'):', 'Deposit funds','Amount in '+market.currency,String(market.min),'number');
   if(amountText===null)return;
   const amount=Number(amountText);
@@ -355,11 +355,12 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   }catch(error){toast(error.message||'Deposit failed.');}
   finally{button.disabled=false;button.textContent=label;}
  }else{
-  const amountText=await appPrompt('Enter the amount you want to withdraw.','Withdraw funds','Amount in UGX','3000','number');
+  const market=({UG:{currency:'UGX',name:'Uganda',min:5000,prefix:'+256'},RW:{currency:'RWF',name:'Rwanda',min:6000,prefix:'+250'},ZM:{currency:'ZMW',name:'Zambia',min:6000,prefix:'+260'}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:5000,prefix:'+256'};
+  const amountText=await appPrompt('Enter the amount you want to withdraw in '+market.currency+'. Minimum: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number');
   if(amountText===null)return;
   const amount=Number(amountText);
-  if(!Number.isSafeInteger(amount)||amount<3000){toast('Minimum withdrawal is UGX 3,000.');return;}
-  const phone=await appPrompt('Enter the Uganda mobile money number that should receive the payout.','Payout number','Phone number',state.phone,'tel');
+  if(!Number.isSafeInteger(amount)||amount<market.min){toast('Minimum withdrawal is '+market.min.toLocaleString('en-US')+' '+market.currency+'.');return;}
+  const phone=await appPrompt('Enter the '+market.name+' mobile-money number that should receive the payout.','Payout number','Phone number',state.phone,'tel');
   if(phone===null)return;
   button.disabled=true;const label=button.textContent;button.textContent='Submitting…';
   try{
