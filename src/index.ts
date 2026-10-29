@@ -575,6 +575,7 @@ export default {
             // Keep the one-time bonus ledger insert and wallet credit in one atomic D1 batch.
             // If the ledger reference already exists, changes() is zero and the wallet is not credited again.
             await env.DB.batch([
+              env.DB.prepare("INSERT OR IGNORE INTO wallets (user_id,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(id),
               env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',5000,'UGX','completed',?,'One-time welcome bonus credited to UGX wallet',strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusRef),
               env.DB.prepare("UPDATE wallets SET available_balance=available_balance+5000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1").bind(id)
             ]);
