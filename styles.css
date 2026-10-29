@@ -2873,3 +2873,61 @@ body .muted,body .small{line-height:1.55}
 @media(prefers-reduced-motion:reduce){
  #welcomeAdModal .welcome-ad-card:before,#welcomeAdModal .welcome-ad-card:after,#welcomeAdModal .welcome-ad-glow{animation:none!important}
 }
+
+
+/* Aurorar brand-wide red typography theme */
+:root{
+ --aurorar-text-red:#ff343f;
+ --aurorar-text-red-soft:#ff6972;
+ --aurorar-text-red-muted:#e9a0a4;
+}
+body,body #appView,body #authView,
+#appView h1,#appView h2,#appView h3,#appView h4,#appView p,
+#appView label,#appView span,#appView strong,#appView small,
+#appView li,#appView th,#appView td,#appView .muted,
+#authView h1,#authView h2,#authView h3,#authView p,
+#authView label,#authView .muted,
+.page h1,.page h2,.page h3,.page p,.page label,.page .label,
+.card h1,.card h2,.card h3,.card p,.card label,
+.table-wrap th,.table-wrap td,
+.profile,.account-identity,.section-head,
+#appView .empty,#appView .notice,#appView .account-number-label{
+ color:var(--aurorar-text-red)!important;
+}
+#appView input:not([type="checkbox"]):not([type="radio"]),
+#appView textarea,#appView select,
+#authView input:not([type="checkbox"]):not([type="radio"]),
+#authView textarea,#authView select{
+ color:var(--aurorar-text-red)!important;
+ caret-color:var(--aurorar-text-red)!important;
+}
+#appView input::placeholder,#appView textarea::placeholder,
+#authView input::placeholder,#authView textarea::placeholder{
+ color:var(--aurorar-text-red-muted)!important;opacity:1!important;
+}
+#appView button:not(.welcome-ad-telegram):not(.welcome-ad-close),
+#authView button:not(.welcome-ad-telegram):not(.welcome-ad-close){
+ color:var(--aurorar-text-red)!important;
+}
+#welcomeAdModal .welcome-ad-card,
+#welcomeAdModal #welcomeAdTitle,
+#welcomeAdModal #welcomeAdDescription,
+#welcomeAdModal .welcome-ad-kicker,
+#welcomeAdModal .welcome-ad-referrals span,
+#welcomeAdModal .welcome-ad-slider,
+#welcomeAdModal .welcome-ad-points,
+#welcomeAdModal .welcome-ad-note{
+ color:var(--aurorar-text-red)!important;
+}
+#welcomeAdModal #welcomeAdTitle{
+ background:none!important;-webkit-text-fill-color:var(--aurorar-text-red)!important;
+}
+#appView .status-completed,#appView .status-approved,
+#appView .status-processing,#appView .status-pending,
+#appView .status-failed{
+ color:var(--aurorar-text-red)!important;
+}
+#appView .welcome-highlight,#appView .welcome-brandline,
+#appView .stat .value,#appView .balance-value{
+ color:var(--aurorar-text-red)!important;
+}
