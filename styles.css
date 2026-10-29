@@ -2402,3 +2402,33 @@ body :is(.toast,[role=alert],.error,.auth-error){color:#8f1728}
 body :is(.success,.positive){color:#087653}
 .welcome-ad-card h2 span{color:#8ef0d1!important}.welcome-ad-card .welcome-ad-kicker{color:#79efd0!important}.welcome-ad-card .welcome-ad-note{color:rgba(239,250,249,.78)!important}.welcome-ad-continue{color:#06392f!important;background:linear-gradient(110deg,#38e0b3,#0cbd91)!important}
 @media(prefers-reduced-motion:reduce){body *,body *:before,body *:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+
+
+/* Global readability pass: deep red brand accents, high-contrast text, light surfaces. */
+:root{--aurora-red:#b42335;--aurora-red-dark:#821b2b;--aurora-red-soft:#fff0f1;--ink:#202938;--muted:#586579;--line:#dce2e9;--bg:#f4f6fa}
+body{color:#202938;background:#f4f6fa}
+h1,h2,h3,h4,h5,h6{color:#8f1d2c}
+p,li,label,small,summary,figcaption{color:#354052}
+.muted,.small,.helper,.description{color:#586579}
+a{color:#a51f32}
+a:hover{color:#751728}
+input,select,textarea{color:#202938;background:#fff;border-color:#d7dee7}
+input::placeholder,textarea::placeholder{color:#778294;opacity:1}
+input:focus,select:focus,textarea:focus{outline:0;border-color:#c13b4b;box-shadow:0 0 0 3px rgba(180,35,53,.13)}
+button:focus-visible,a:focus-visible{outline:3px solid rgba(180,35,53,.45);outline-offset:3px}
+.btn.primary,.welcome-ad-continue{background:linear-gradient(115deg,#c62f43,#991b2e);color:#fff;border-color:transparent;box-shadow:0 10px 24px rgba(153,27,46,.2)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.outline{color:#8f1d2c;border-color:#e5c4ca;background:#fff}
+.tabs button.active,.tab.active,[aria-selected="true"]{color:#941f30}
+.card,.panel,.auth-card{color:#202938}
+.toast{color:#202938}
+.status,.badge,.pill{font-weight:750}
+.error,[role="alert"]{color:#a61b2b}
+.success{color:#087a55}
+.welcome-ad-card h2{color:#fff}
+.welcome-ad-card h2 span{color:#8ef0d1}
+.welcome-ad-card>p{color:rgba(239,250,249,.88)}
+.welcome-ad-kicker{color:#9af2dc}
+.welcome-ad-points span{color:#f2fffb}
+.welcome-ad-note{color:rgba(239,250,249,.72)!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
