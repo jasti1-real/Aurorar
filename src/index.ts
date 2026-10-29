@@ -31,7 +31,7 @@ async function hmac(value: string, secret: string): Promise<string> {
   return bytesToHex(new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(value))));
 }
 async function makeSession(userId: string, secret: string): Promise<string> {
-  const payload = btoa(JSON.stringify({ sub: userId, exp: Date.now() + 365 * 86400000 })).replace(/=/g, "");
+  const payload = btoa(JSON.stringify({ sub: userId, exp: Date.now() + 7 * 86400000 })).replace(/=/g, "");
   return payload + "." + await hmac(payload, secret);
 }
 async function sessionUser(request: Request, env: Env): Promise<string | null> {
@@ -383,7 +383,7 @@ export default {
             throw dependentInsertError;
           }
           const token = await makeSession(id, env.SESSION_SECRET);
-          return json({ ok: true, user: { phone, referralCode }, message: "Account created." }, 201, { "Set-Cookie": cookie(token, 31536000) });
+          return json({ ok: true, user: { phone, referralCode }, message: "Account created." }, 201, { "Set-Cookie": cookie(token, 604800) });
         }
         if (url.pathname === "/api/auth/login" && request.method === "POST") {
           const body = await readJson(request);
