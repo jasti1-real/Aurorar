@@ -286,8 +286,9 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
    const response=await fetch('/api/payments/deposit',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({amount,phone,country:'UG'})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||'Could not start deposit. Please try again.');
-   toast(data.message||'Deposit request sent. Check your phone and approve the payment prompt.');
-   setTimeout(()=>loadAccount().then(render).catch(()=>{}),2500);
+   const reference=String(data.reference||'').trim();
+   toast((data.message||'Payment request sent.')+' Check your MTN/Airtel phone for the approval prompt and enter your mobile-money PIN only on your phone. '+(reference?'Reference: '+reference+'. ':'')+'If no prompt appears, check your phone notifications and use “Check status” beside the pending deposit in your transaction ledger. Your balance updates only after provider confirmation.');
+   try{await loadAccount();render()}catch{toast('Deposit request was sent, but the ledger could not refresh. Tap Refresh in Transaction Ledger to check its status.')}
   }catch(error){toast(error.message||'Deposit failed.');}
   finally{button.disabled=false;button.textContent=label;}
  }else{
