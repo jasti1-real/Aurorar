@@ -722,6 +722,13 @@ export default {
             if (!market || market.currency !== payout.currency || !String(payout.phone_number).startsWith(market.prefix) || !Number.isSafeInteger(Number(payout.amount)) || Number(payout.amount) <= 0) {
               return json({ error: "Withdrawal country, currency, phone, or amount is inconsistent. No payout was submitted." }, 409);
             }
+            // The requested amount is the gross wallet debit. Apply 15% tax
+            // on every withdrawal, including welcome-bonus requests, and send only net.
+            const taxAmount = Math.ceil(Number(payout.amount) * 0.15);
+            const netPayoutAmount = Number(payout.amount) - taxAmount;
+            if (!Number.isSafeInteger(netPayoutAmount) || netPayoutAmount <= 0) {
+              return json({ error: "The withdrawal amount is too small to process after the 15% tax." }, 400);
+            }
             const reference = crypto.randomUUID();
             const debitAt = new Date().toISOString();
             const walletDebit = payout.currency === "UGX"
@@ -748,7 +755,7 @@ export default {
                 method: "POST",
                 headers: { "Authorization": "Basic " + auth, "Content-Type": "application/json", "Accept": "application/json" },
                 body: JSON.stringify({
-                  amount: Number(payout.amount),
+                  amount: netPayoutAmount,
                   phone_number: payout.phone_number,
                   country: payout.country,
                   reference,
