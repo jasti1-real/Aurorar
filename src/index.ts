@@ -259,9 +259,9 @@ export default {
           if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Payment country must match your registered account country." }, 403);
           const amount = Number(body?.amount);
           const markets: Record<string, { prefix: string; currency: string; name: string; min: number; max: number }> = {
-            UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 15000, max: 10000000 },
-            RW: { prefix: "+250", currency: "RWF", name: "Rwanda", min: 100, max: 10000000 },
-            ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 1, max: 10000000 }
+            UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 10000, max: 10000000 },
+            RW: { prefix: "+250", currency: "RWF", name: "Rwanda", min: 15000, max: 10000000 },
+            ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 15000, max: 10000000 }
           };
           const market = markets[country];
           const phone = normalizePhone(body?.phone);
@@ -321,9 +321,9 @@ export default {
           const country = account.country || "UG";
           if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Withdrawal country must match your registered account country." }, 403);
           const markets: Record<string, {currency:string; prefix:string; min:number; name:string}> = {
-            UG: { currency:"UGX", prefix:"+256", min:3000, name:"Uganda" },
-            RW: { currency:"RWF", prefix:"+250", min:100, name:"Rwanda" },
-            ZM: { currency:"ZMW", prefix:"+260", min:10, name:"Zambia" }
+            UG: { currency:"UGX", prefix:"+256", min:5000, name:"Uganda" },
+            RW: { currency:"RWF", prefix:"+250", min:6000, name:"Rwanda" },
+            ZM: { currency:"ZMW", prefix:"+260", min:6000, name:"Zambia" }
           };
           const market = markets[country];
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
