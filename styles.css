@@ -2125,3 +2125,104 @@ html body #accountCountryPill::first-letter{font-size:26px!important;}
  #page-products .product-card .product-meta div{padding:11px 9px!important}
  #page-products .product-card .pill{font-size:11px;padding:7px 8px}
 }
+
+
+/* Aurorar authentication refresh — presentation only; form IDs and login logic remain unchanged */
+#authView.auth{
+  min-height:100svh;display:flex;align-items:center;justify-content:center;
+  padding:28px 16px!important;box-sizing:border-box;
+  background:radial-gradient(ellipse at top left,rgba(45,212,191,.13),transparent 42%),
+             linear-gradient(145deg,#f7fafc 0%,#eef3f8 100%)!important;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+}
+#authView .auth-card{
+  width:min(100%,440px)!important;max-width:440px!important;box-sizing:border-box;
+  margin:auto!important;padding:clamp(23px,6vw,34px)!important;
+  border-radius:20px!important;background:#fff!important;color:#172b46!important;
+  border:1px solid #e5ebf1!important;
+  box-shadow:0 22px 60px rgba(24,45,73,.11),0 3px 12px rgba(24,45,73,.035)!important;
+}
+#authView .brand{
+  display:flex;align-items:center;gap:10px;margin:0 0 27px!important;
+  color:#173553!important;font-size:22px!important;font-weight:850!important;letter-spacing:-.04em;
+}
+#authView .brand-logo{width:42px!important;height:42px!important;object-fit:contain;border-radius:13px}
+#authView #authTitle{
+  margin:0 0 8px!important;color:#142b46!important;font-size:clamp(27px,7vw,32px)!important;
+  line-height:1.15!important;font-weight:850!important;letter-spacing:-.045em;
+}
+#authView #authSub{
+  margin:0 0 24px!important;color:#69798b!important;font-size:15px!important;line-height:1.55;
+}
+#authView .auth-tabs{
+  display:grid!important;grid-template-columns:1fr 1fr;gap:5px!important;
+  padding:5px!important;margin:0 0 24px!important;border-radius:14px!important;
+  background:#f1f5f9!important;border:1px solid #e8edf3!important;
+}
+#authView .auth-tabs button{
+  min-height:44px;padding:10px 12px!important;border:0!important;border-radius:10px!important;
+  background:transparent!important;color:#66778b!important;box-shadow:none!important;
+  font:700 14px/1.2 Inter,ui-sans-serif,system-ui,sans-serif!important;cursor:pointer;
+  transition:background .18s ease,color .18s ease,box-shadow .18s ease;
+}
+#authView .auth-tabs button.active{
+  color:#087f69!important;background:#fff!important;
+  box-shadow:0 2px 8px rgba(20,42,68,.09)!important;
+}
+#authView #authForm{display:flex;flex-direction:column;gap:17px}
+#authView #authForm .field{display:flex;flex-direction:column;gap:8px;margin:0!important;min-width:0}
+#authView #authForm .field label,
+#authView #authForm label:not(.check){
+  color:#33465b!important;font-size:13px!important;font-weight:750!important;line-height:1.35;
+}
+#authView #authForm input:not([type=checkbox]),
+#authView #authForm select{
+  width:100%;min-width:0;box-sizing:border-box;min-height:52px;
+  padding:13px 14px!important;border:1px solid #d8e1e9!important;border-radius:12px!important;
+  background:#fff!important;color:#192f49!important;
+  font:500 15px/1.4 Inter,ui-sans-serif,system-ui,sans-serif!important;
+  box-shadow:0 1px 2px rgba(16,24,40,.025)!important;
+  outline:none;transition:border-color .18s ease,box-shadow .18s ease;
+}
+#authView #authForm input::placeholder{color:#9aa8b7!important;opacity:1}
+#authView #authForm input:not([type=checkbox]):focus,
+#authView #authForm select:focus{
+  border-color:#10a987!important;
+  box-shadow:0 0 0 4px rgba(16,185,129,.13)!important;
+}
+#authView #authForm .field>div:has(#password){display:flex!important;gap:8px!important;align-items:stretch}
+#authView #password{flex:1 1 auto}
+#authView #togglePassword{
+  flex:0 0 auto;min-width:66px;padding:0 12px!important;min-height:52px;
+  border-radius:12px!important;border:1px solid #dce5eb!important;
+  background:#f8fafc!important;color:#087f69!important;box-shadow:none!important;
+  font-size:13px!important;font-weight:750!important;
+}
+#authView #togglePassword:hover{background:#ecfdf5!important;border-color:#a7f3d0!important}
+#authView #submitAuth{
+  min-height:54px;margin-top:3px!important;padding:14px 18px!important;
+  border:0!important;border-radius:13px!important;
+  background:linear-gradient(110deg,#20c997 0%,#0a9f83 100%)!important;
+  color:#fff!important;font-size:16px!important;font-weight:800!important;letter-spacing:.005em;
+  box-shadow:0 10px 22px rgba(16,185,129,.2)!important;
+  transition:transform .15s ease,filter .15s ease,box-shadow .15s ease;
+}
+#authView #submitAuth:hover{filter:saturate(1.08);box-shadow:0 12px 26px rgba(16,185,129,.25)!important}
+#authView #submitAuth:active{transform:scale(.99)}
+#authView #submitAuth:disabled{opacity:.72;cursor:wait}
+#authView #termsWrap{display:flex;align-items:flex-start;gap:9px;color:#64748b!important;font-size:13px!important;line-height:1.5}
+#authView #termsWrap input{margin-top:3px;accent-color:#0a9f83}
+#authView #authFeedback{padding:11px 12px;border-radius:10px;background:#fff1f2;color:#b42318!important;line-height:1.5}
+#authView .auth-card>p.muted.small{
+  padding-top:15px!important;margin-top:20px!important;border-top:1px solid #edf1f5;
+  color:#8794a4!important;font-size:11px!important;line-height:1.6!important;
+}
+@media(max-width:380px){
+ #authView.auth{padding:16px 12px!important;align-items:flex-start}
+ #authView .auth-card{padding:22px 18px!important}
+ #authView .brand{margin-bottom:22px!important}
+ #authView .auth-tabs{margin-bottom:20px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #authView *{transition:none!important}
+}
