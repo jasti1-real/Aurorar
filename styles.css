@@ -2931,3 +2931,16 @@ body,body #appView,body #authView,
 #appView .stat .value,#appView .balance-value{
  color:var(--aurorar-text-red)!important;
 }
+
+
+/* GLOBAL TEXT COLOR: user requested all website text in red. */
+:root{--aurorar-text-red:#c1121f}
+body,body *{
+  color:var(--aurorar-text-red)!important;
+  -webkit-text-fill-color:var(--aurorar-text-red)!important;
+}
+body input::placeholder,body textarea::placeholder{
+  color:var(--aurorar-text-red)!important;
+  -webkit-text-fill-color:var(--aurorar-text-red)!important;
+  opacity:.72;
+}
