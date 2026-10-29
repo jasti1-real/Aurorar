@@ -9,7 +9,8 @@ CREATE TABLE IF NOT EXISTS users (
   referred_by TEXT,
   welcome_bonus INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','suspended'))
+  status TEXT NOT NULL DEFAULT 'active' CHECK(status IN ('active','suspended')),
+  country TEXT NOT NULL DEFAULT 'UG' CHECK(country IN ('UG','RW','ZM'))
 );
 
 CREATE TABLE IF NOT EXISTS wallets (
@@ -47,6 +48,7 @@ CREATE TABLE IF NOT EXISTS transactions (
   user_id TEXT NOT NULL REFERENCES users(id),
   type TEXT NOT NULL CHECK(type IN ('welcome_bonus','deposit','withdrawal','product_purchase','product_earning','referral_commission','withdrawal_tax','adjustment')),
   amount_ugx INTEGER NOT NULL,
+  currency TEXT NOT NULL DEFAULT 'UGX' CHECK(currency IN ('UGX','RWF','ZMW')),
   status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','processing','completed','failed','reversed')),
   external_reference TEXT UNIQUE,
   phone_number TEXT,
