@@ -126,6 +126,9 @@ export default {
     for (const p of ugEligible.results || []) {
       const ledgerId = crypto.randomUUID();
       await env.DB.batch([
+        // Repair a missing UGX wallet before creating the ledger row. Without this,
+        // the earning could remain pending forever because the ledger blocks future runs.
+        env.DB.prepare("INSERT OR IGNORE INTO wallets (user_id,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(p.user_id),
         env.DB.prepare("INSERT OR IGNORE INTO ugx_earning_ledger (id,user_product_id,user_id,earning_date,amount,status) VALUES (?,?,?,?,?,'pending')").bind(ledgerId,p.product_id,p.user_id,earningDate,Math.trunc(Number(p.daily_income))),
         env.DB.prepare("UPDATE wallets SET available_balance=available_balance+(SELECT amount FROM ugx_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending'),total_earned=total_earned+(SELECT amount FROM ugx_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending'),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1 AND EXISTS (SELECT 1 FROM ugx_earning_ledger WHERE user_product_id=? AND earning_date=? AND status='pending')").bind(p.product_id,earningDate,p.product_id,earningDate,p.user_id,p.product_id,earningDate),
         env.DB.prepare("UPDATE ugx_earning_ledger SET status='credited',credited_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_product_id=? AND earning_date=? AND status='pending' AND changes()=1 AND EXISTS (SELECT 1 FROM wallets WHERE user_id=?)").bind(p.product_id,earningDate,p.user_id,p.user_id)
