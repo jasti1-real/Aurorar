@@ -1798,3 +1798,20 @@ html body .product-load-error .btn{min-height:48px!important;border-radius:15px!
 .pill.status-processing{background:#e6f3ff;color:#075985}
 .pill.status-completed{background:#dcfce7;color:#166534}
 .pill.status-failed{background:#ffe4e6;color:#9f1239}
+
+/* Compact, polished mobile-money confirmation dialog */
+.payment-notice{position:fixed;inset:0;z-index:100000;display:grid;place-items:center;padding:18px 14px calc(18px + env(safe-area-inset-bottom));background:rgba(8,22,39,.58);backdrop-filter:blur(16px) saturate(125%);-webkit-backdrop-filter:blur(16px) saturate(125%);animation:modalFade .18s ease-out;}
+.payment-notice.hidden{display:none!important}
+.payment-notice-card{position:relative;width:min(100%,430px);max-height:calc(100dvh - 40px);overflow-y:auto;padding:28px 22px 20px;border-radius:30px;border:1px solid rgba(255,255,255,.9);background:linear-gradient(155deg,rgba(255,255,255,.98),rgba(237,255,248,.97));box-shadow:0 30px 90px rgba(0,18,36,.32);text-align:center;animation:modalRise .22s ease-out;}
+.payment-notice-close{position:absolute;right:15px;top:15px;width:38px;height:38px;border:0;border-radius:50%;background:#eaf1fa;color:#34445a;font-size:26px;line-height:1;}
+.payment-notice-check{display:grid;place-items:center;width:76px;height:76px;margin:4px auto 18px;border-radius:50%;background:linear-gradient(145deg,#22df91,#009b69);color:white;font-size:43px;font-weight:800;box-shadow:0 0 0 8px #d8fbed,0 12px 28px #009b6930;}
+.payment-notice-card h2{margin:0 28px 10px;font-size:clamp(22px,6vw,28px);line-height:1.16;letter-spacing:-.7px;color:#102c2b;}
+.payment-notice-copy{max-width:340px;margin:0 auto 20px;color:#5c6b7e;font-size:15px;line-height:1.55;}
+.payment-reference{display:flex;align-items:center;gap:12px;text-align:left;padding:14px 13px 14px 16px;border:1px solid #b8f3dc;border-radius:20px;background:rgba(225,252,241,.72);margin-bottom:13px;min-width:0;}
+.payment-reference>div{min-width:0;flex:1}.payment-reference span{display:block;margin-bottom:5px;color:#4c7a70;font-size:10px;font-weight:850;letter-spacing:1px;}.payment-reference strong{display:block;color:#153b3a;font-size:13px;line-height:1.45;overflow-wrap:anywhere;}
+.payment-reference button{flex:0 0 40px;width:40px;height:40px;border:1px solid #c5eadc;border-radius:13px;background:#fff;color:#07845d;font-size:22px;font-weight:800;}
+.payment-notice-tip{display:flex;align-items:flex-start;gap:11px;text-align:left;padding:13px 14px;margin-bottom:17px;border-radius:18px;background:#fff4d8;color:#815019;}.payment-notice-tip>span{font-size:21px;line-height:1.4}.payment-notice-tip p{margin:0;font-size:13px;line-height:1.5}.payment-notice-tip strong{display:block;margin-bottom:2px;color:#75400c;}
+.payment-notice-card .btn{min-height:54px;border-radius:17px;background:linear-gradient(100deg,#12d99a,#008c65);box-shadow:0 9px 22px #009b6928;font-size:16px;}
+.payment-notice-foot{margin:12px 0 0!important;color:#788698;font-size:11px!important;line-height:1.4!important;}
+@media(max-width:380px){.payment-notice-card{padding:25px 16px 17px;border-radius:25px}.payment-notice-check{width:65px;height:65px;font-size:37px}.payment-notice-copy{font-size:14px}.payment-reference{padding:12px}.payment-reference strong{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.payment-notice,.payment-notice-card{animation:none}}
