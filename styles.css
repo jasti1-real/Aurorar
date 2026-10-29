@@ -144,7 +144,7 @@ button,a,input,select{-webkit-tap-highlight-color:transparent}
   -webkit-backface-visibility:hidden;
   backface-visibility:hidden;
   transform:translateZ(0);
-  filter:contrast(1.08) saturate(1.08) brightness(1.025) sharpen(0);
+  filter:contrast(1.08) saturate(1.08) brightness(1.025);
   transition:filter .25s ease,transform .25s ease;
 }
 .product-card:hover .machine-image {
