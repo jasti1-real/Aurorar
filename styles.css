@@ -2655,3 +2655,62 @@ html body{font-family:'DM Sans',Inter,ui-sans-serif,system-ui,-apple-system,Blin
 #page-products>.card[style*="margin-bottom:14px"]{color:#08785f!important;-webkit-text-fill-color:#08785f!important;background:linear-gradient(110deg,#d9fbf0,#edfffa)!important;border:1px solid #bcefe0!important;border-radius:18px!important;box-shadow:0 5px 16px rgba(9,120,95,.07)!important;font-weight:800!important}
 #page-products #catalogueCountry{color:#08785f!important;-webkit-text-fill-color:#08785f!important;font-weight:900!important}
 @media(max-width:480px){#authView .auth-hero{min-height:0!important}#authView .auth-hero h2{font-size:clamp(29px,7.6vw,36px)!important;letter-spacing:-.9px!important}#authView .auth-hero-kicker{letter-spacing:1.6px!important}#page-products>.hello{padding:21px!important}}
+
+
+/* Premium site-wide polish: unified glass surfaces, spacing, controls and focus states */
+:root{
+ --aurora-ink:#142b43;--aurora-muted:#64788d;--aurora-line:#dce7ef;
+ --aurora-teal:#0a8b73;--aurora-mint:#dffaf1;--aurora-red:#e50920;
+}
+html{scroll-behavior:smooth}
+body{font-family:Inter,"DM Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif!important;color:var(--aurora-ink)}
+button,input,select,textarea{font-family:inherit}
+button,.btn,a{ -webkit-tap-highlight-color:transparent}
+button:focus-visible,.btn:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{
+ outline:3px solid rgba(10,139,115,.34)!important;outline-offset:3px!important
+}
+#app,.app-shell,.main-content{min-width:0}
+#page-home,#page-products,#page-referrals,#page-account,#page-wallet{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important}
+body .card,body .panel,body .stat-card,body .balance-card,body .notice,body .auth-card{
+ border:1px solid rgba(211,225,235,.88)!important;
+ box-shadow:0 8px 26px rgba(28,53,76,.065)!important;
+}
+body .card,body .panel,body .stat-card,body .balance-card{border-radius:22px!important}
+body .btn{transition:transform .18s ease,box-shadow .18s ease,filter .18s ease!important}
+body .btn:active{transform:translateY(1px) scale(.99)!important}
+body input,body select,body textarea{
+ border-color:#d7e5ed!important;box-shadow:inset 0 1px 2px rgba(20,43,67,.025)!important;
+}
+body input:focus,body select:focus,body textarea:focus{
+ border-color:#43c7b1!important;box-shadow:0 0 0 4px rgba(34,197,167,.12)!important;
+}
+body .pill{font-weight:800!important;letter-spacing:.05px}
+body .section-head{gap:10px}
+body .muted,body .small{line-height:1.55}
+#page-home>.hello,#page-products>.hello,#page-referrals>.hello,#page-account>.hello,#page-wallet>.hello{
+ position:relative;overflow:hidden;
+}
+#page-home>.hello:after,#page-products>.hello:after,#page-referrals>.hello:after,#page-account>.hello:after,#page-wallet>.hello:after{
+ content:"";position:absolute;inset:auto -36px -62px auto;width:150px;height:150px;border-radius:50%;
+ border:1px solid rgba(10,139,115,.12);pointer-events:none;
+}
+#page-home>.hello h1,#page-products>.hello h1,#page-referrals>.hello h1,#page-account>.hello h1,#page-wallet>.hello h1{
+ font-weight:900!important;letter-spacing:-.9px!important;
+}
+#page-home .stat-card,#page-home .balance-card{
+ transition:transform .18s ease,box-shadow .18s ease!important;
+}
+#page-home .stat-card:active,#page-home .balance-card:active{transform:scale(.99)!important}
+#bottomNav,.bottom-nav,.nav-bar{
+ padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media(max-width:600px){
+ body{font-size:15px}
+ #page-home,#page-products,#page-referrals,#page-account,#page-wallet{padding-left:0;padding-right:0}
+ body .card,body .panel,body .stat-card,body .balance-card{border-radius:19px!important}
+ body .btn{min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
