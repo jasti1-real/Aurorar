@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS regional_user_products (
   product_id INTEGER NOT NULL,
   currency TEXT NOT NULL CHECK (currency IN ('RWF','ZMW')),
   purchase_price INTEGER NOT NULL CHECK (purchase_price > 0),
+  daily_income INTEGER NOT NULL DEFAULT 0 CHECK (daily_income >= 0),
   starts_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
   ends_at TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','completed','cancelled')),
