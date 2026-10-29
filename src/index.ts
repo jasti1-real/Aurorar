@@ -202,7 +202,7 @@ export default {
               await env.DB.batch([
                 env.DB.prepare("UPDATE withdrawal_requests SET status='failed',provider_status=?,failure_reason='MarzPay reported disbursement failure',provider_transaction_uuid=COALESCE(provider_transaction_uuid,?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing' AND provider_reference=?").bind(String(tx.status),providerUuid,payout.id,reference),
                 walletRefund,
-                env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL").bind(payout.id)
+                env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL AND changes()=1").bind(payout.id)
               ]);
             }
             // payment_events.transaction_id references the deposits transaction ledger,
@@ -792,7 +792,7 @@ export default {
               await env.DB.batch([
                 env.DB.prepare("UPDATE withdrawal_requests SET status='failed',provider_status='rejected',failure_reason=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing' AND provider_reference=?").bind(failure,requestId,reference),
                 walletRefund,
-                env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL").bind(requestId)
+                env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL AND changes()=1").bind(requestId)
               ]);
               return json({ error: failure, status: "failed" }, 502);
             }
