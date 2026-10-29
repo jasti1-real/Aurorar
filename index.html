@@ -405,15 +405,21 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   finally{button.disabled=false;button.textContent=label;}
  }else{
   const market=({UG:{currency:'UGX',name:'Uganda',min:5000,prefix:'+256'},RW:{currency:'RWF',name:'Rwanda',min:2000,prefix:'+250'},ZM:{currency:'ZMW',name:'Zambia',min:28,prefix:'+260'}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:5000,prefix:'+256'};
-  const amountText=await appPrompt('Enter the amount you want to withdraw in '+market.currency+'. Minimum: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number');
+  const bonusEligible=Number(state.welcomeBonus||0)>0;
+  const withdrawalChoice=bonusEligible?await appPrompt('Enter STANDARD for a normal withdrawal, or BONUS to request only your welcome bonus. BONUS requests can be submitted any time after a successful deposit and machine purchase; requests are still reviewed and are not instant payouts.','Choose withdrawal type','Type STANDARD or BONUS','STANDARD','text'): 'STANDARD';
+  if(withdrawalChoice===null)return;
+  const requestType=String(withdrawalChoice).trim().toUpperCase()==='BONUS'?'welcome_bonus':'standard';
+  const bonusAmount=({UG:5000,RW:1646,ZM:22})[state.country||'UG']||5000;
+  const minAmount=requestType==='welcome_bonus'?bonusAmount:market.min;
+  const amountText=requestType==='welcome_bonus'?String(bonusAmount):await appPrompt('Enter the amount you want to withdraw in '+market.currency+'. Minimum: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number');
   if(amountText===null)return;
   const amount=Number(amountText);
-  if(!Number.isSafeInteger(amount)||amount<market.min){toast('Minimum withdrawal is '+market.min.toLocaleString('en-US')+' '+market.currency+'.');return;}
+  if(!Number.isSafeInteger(amount)||amount<=0||(requestType==='standard'&&amount<market.min)||(requestType==='welcome_bonus'&&amount!==bonusAmount)){toast(requestType==='welcome_bonus'?'Welcome-bonus requests must match the credited bonus exactly.':'Minimum withdrawal is '+market.min.toLocaleString('en-US')+' '+market.currency+'.');return;}
   const phone=await appPrompt('Enter the '+market.name+' mobile-money number that should receive the payout.','Payout number','Phone number',state.phone,'tel');
   if(phone===null)return;
   button.disabled=true;const label=button.textContent;button.textContent='Submitting…';
   try{
-   const response=await fetch('/api/withdrawals',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({country:'UG',amount,phone,idempotencyKey:crypto.randomUUID().replaceAll('-','')})});
+   const response=await fetch('/api/withdrawals',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',cache:'no-store',body:JSON.stringify({country:state.country||'UG',amount,phone,requestType,idempotencyKey:crypto.randomUUID().replaceAll('-','')})});
    const data=await response.json().catch(()=>({}));
    if(!response.ok)throw new Error(data.error||'Could not submit withdrawal request.');
    toast(data.message||'Withdrawal request submitted for review.');
