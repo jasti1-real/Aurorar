@@ -149,7 +149,8 @@ export default {
                 env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL").bind(payout.id)
               ]);
             }
-            await env.DB.prepare("INSERT OR IGNORE INTO payment_events (id,provider,provider_event_id,user_id,transaction_id,event_type,verified,payload_json) VALUES (?,?,?,?,?,?,1,?)").bind(crypto.randomUUID(),"marzpay",providerUuid,payout.user_id,payout.id,eventType,rawBody).run();
+            // payment_events.transaction_id references the deposits transaction ledger,
+            // so payout callbacks are reconciled on withdrawal_requests instead.
             return json({ received: true });
           }
           if (!eventType.startsWith("collection.")) return json({ received: true, ignored: true });
