@@ -69,6 +69,45 @@ function normalizePhone(input: unknown): string | null {
   if (!/^\+\d{10,15}$/.test(phone)) return null;
   return phone;
 }
+
+async function creditReferralCommissions(env: Env, depositTransactionId: string): Promise<void> {
+  // Referral rewards are paid only after a confirmed deposit, in the referrer's
+  // own currency. Cross-currency referrals are skipped because no FX rule exists.
+  const deposit = await env.DB.prepare(
+    "SELECT t.id,t.user_id,t.amount_ugx,t.currency,t.status,u.referred_by FROM transactions t JOIN users u ON u.id=t.user_id WHERE t.id=? AND t.type='deposit' AND t.status='completed'"
+  ).bind(depositTransactionId).first<any>();
+  if (!deposit || Number(deposit.amount_ugx) <= 0) return;
+  const currency = String(deposit.currency || "UGX").toUpperCase();
+  const rates = [0.25, 0.02, 0.01];
+  let ancestorId = deposit.referred_by ? String(deposit.referred_by) : "";
+  for (let level = 1; level <= 3 && ancestorId; level++) {
+    const ancestor = await env.DB.prepare(
+      "SELECT id,country,referred_by,status FROM users WHERE id=? AND status='active'"
+    ).bind(ancestorId).first<any>();
+    if (!ancestor) break;
+    const ancestorCurrency = ({ UG:"UGX", RW:"RWF", ZM:"ZMW" } as Record<string,string>)[String(ancestor.country || "UG")] || "UGX";
+    const nextAncestor = ancestor.referred_by ? String(ancestor.referred_by) : "";
+    if (ancestorCurrency === currency) {
+      const amount = Math.floor(Number(deposit.amount_ugx) * rates[level - 1]);
+      if (amount > 0) {
+        if (currency !== "UGX") {
+          await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(ancestor.id,currency).run();
+        }
+        const commissionRef = "referral-commission:" + deposit.id + ":L" + level;
+        const commissionId = crypto.randomUUID();
+        const walletCredit = currency === "UGX"
+          ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+(SELECT amount_ugx FROM transactions WHERE external_reference=? AND status='pending'), referral_earnings=referral_earnings+(SELECT amount_ugx FROM transactions WHERE external_reference=? AND status='pending'), updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM transactions WHERE external_reference=? AND user_id=? AND type='referral_commission' AND status='pending')").bind(commissionRef,commissionRef,ancestor.id,commissionRef,ancestor.id)
+          : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+(SELECT amount_ugx FROM transactions WHERE external_reference=? AND status='pending'), referral_earnings=referral_earnings+(SELECT amount_ugx FROM transactions WHERE external_reference=? AND status='pending'), updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM transactions WHERE external_reference=? AND user_id=? AND type='referral_commission' AND status='pending')").bind(commissionRef,commissionRef,ancestor.id,currency,commissionRef,ancestor.id);
+        await env.DB.batch([
+          env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description) SELECT ?,?,'referral_commission',?,?, 'pending',?,? WHERE EXISTS (SELECT 1 FROM transactions WHERE id=? AND type='deposit' AND status='completed')").bind(commissionId,ancestor.id,amount,currency,commissionRef,"Level "+level+" referral commission from confirmed deposit",deposit.id),
+          walletCredit,
+          env.DB.prepare("UPDATE transactions SET status='completed',completed_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE external_reference=? AND user_id=? AND type='referral_commission' AND status='pending'").bind(commissionRef,ancestor.id)
+        ]);
+      }
+    }
+    ancestorId = nextAncestor;
+  }
+}
 export default {
   async scheduled(_controller: ScheduledController, env: Env, _ctx: ExecutionContext): Promise<void> {
     // Disabled unless an operator explicitly sets REGIONAL_EARNINGS_ENABLED=true.
@@ -192,6 +231,9 @@ export default {
           } else if (["failed","cancelled"].includes(tx.status) && ["collection.failed","collection.cancelled"].includes(eventType)) {
             await env.DB.prepare("UPDATE transactions SET status='failed', description=? WHERE id=? AND status IN ('pending','processing')").bind("MarzPay collection " + tx.status, local.id).run();
           }
+          if (eventType === "collection.completed" && String(tx.status).toLowerCase() === "completed") {
+            await creditReferralCommissions(env, local.id);
+          }
           return json({ received: true });
         }
         if (url.pathname === "/api/payments/check" && request.method === "POST") {
@@ -203,7 +245,10 @@ export default {
           if (!transactionId) return json({ error: "Select a deposit transaction to check." }, 400);
           const local = await env.DB.prepare("SELECT id,user_id,amount_ugx,currency,status,external_reference,provider_transaction_uuid FROM transactions WHERE id=? AND user_id=? AND type='deposit'").bind(transactionId,userId).first<any>();
           if (!local) return json({ error: "Deposit transaction not found." }, 404);
-          if (local.status === "completed") return json({ ok: true, status: "completed", message: "This deposit is already credited." });
+          if (local.status === "completed") {
+            await creditReferralCommissions(env, local.id);
+            return json({ ok: true, status: "completed", message: "This deposit is already credited." });
+          }
           if (["failed","reversed"].includes(local.status)) return json({ ok: true, status: local.status, message: "This deposit was not completed." });
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let provider: any = null;
@@ -251,6 +296,7 @@ export default {
             const completed = Number(results[0]?.meta?.changes || 0) === 1;
             const credited = Number(results[1]?.meta?.changes || 0) === 1;
             if (completed && !credited) throw new Error("Confirmed deposit wallet credit did not apply.");
+            await creditReferralCommissions(env, local.id);
             return json({ ok: true, status: "completed", message: completed && credited
               ? "MarzPay confirmed this deposit. Your wallet has been updated; refresh your account balance."
               : "This deposit was already processed. Refresh your account balance." });
