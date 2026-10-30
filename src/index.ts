@@ -461,14 +461,17 @@ export default {
             return json({ error: "Your spendable " + market.currency + " balance is not enough for this withdrawal. Available balance: " + availableBalance.toLocaleString("en-US") + " " + market.currency + "; already requested and awaiting resolution: " + reservedBalance.toLocaleString("en-US") + " " + market.currency + ". No money was deducted." }, 400);
           }
           const id = crypto.randomUUID();
+          const taxAmount = Math.ceil(amount * 0.15);
+          const netPayoutAmount = amount - taxAmount;
+          if (!Number.isSafeInteger(taxAmount) || netPayoutAmount <= 0) return json({ error: "The withdrawal amount is too small after the 15% tax." }, 400);
           try {
             // Enforce the balance reservation in the same SQL statement as the insert.
             // This closes the race where two simultaneous requests both pass the earlier
             // display check and reserve the same funds.
             const inserted = country === "UG"
               ? await env.DB.prepare(`
-                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key,request_type)
-                  SELECT ?,?,?,?, ?,?, 'requested',?,?
+                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,tax_amount,net_amount,phone_number,status,idempotency_key,request_type)
+                  SELECT ?,?,?,?, ?,?,?,?, 'requested',?,?
                   WHERE EXISTS (
                     SELECT 1 FROM wallets w
                     WHERE w.user_id=?
@@ -477,10 +480,10 @@ export default {
                         WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
                       ),0) >= ?
                   )
-                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,requestType,userId,userId,market.currency,amount).run()
+                `).bind(id,userId,country,market.currency,amount,taxAmount,netPayoutAmount,phone,idempotencyKey,requestType,userId,userId,market.currency,amount).run()
               : await env.DB.prepare(`
-                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,phone_number,status,idempotency_key,request_type)
-                  SELECT ?,?,?,?, ?,?, 'requested',?,?
+                  INSERT INTO withdrawal_requests (id,user_id,country,currency,amount,tax_amount,net_amount,phone_number,status,idempotency_key,request_type)
+                  SELECT ?,?,?,?, ?,?,?,?, 'requested',?,?
                   WHERE EXISTS (
                     SELECT 1 FROM currency_wallets w
                     WHERE w.user_id=? AND w.currency=?
@@ -489,7 +492,7 @@ export default {
                         WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
                       ),0) >= ?
                   )
-                `).bind(id,userId,country,market.currency,amount,phone,idempotencyKey,requestType,userId,market.currency,userId,market.currency,amount).run();
+                `).bind(id,userId,country,market.currency,amount,taxAmount,netPayoutAmount,phone,idempotencyKey,requestType,userId,market.currency,userId,market.currency,amount).run();
             if (Number(inserted.meta?.changes || 0) !== 1) {
               const duplicate = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
               if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
@@ -750,9 +753,9 @@ export default {
             if (!market || market.currency !== payout.currency || !String(payout.phone_number).startsWith(market.prefix) || !Number.isSafeInteger(Number(payout.amount)) || Number(payout.amount) <= 0) {
               return json({ error: "Withdrawal country, currency, phone, or amount is inconsistent. No payout was submitted." }, 409);
             }
-            // No withdrawal tax or deduction: pay the full requested amount.
-            const taxAmount = 0;
-            const netPayoutAmount = Number(payout.amount);
+            // Apply the 15% withdrawal tax to every withdrawal, including welcome-bonus withdrawals.
+            const taxAmount = Number(payout.tax_amount ?? Math.ceil(Number(payout.amount) * 0.15));
+            const netPayoutAmount = Number(payout.net_amount ?? (Number(payout.amount) - taxAmount));
             if (!Number.isSafeInteger(netPayoutAmount) || netPayoutAmount <= 0) {
               return json({ error: "The withdrawal amount is invalid." }, 400);
             }
