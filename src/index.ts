@@ -122,7 +122,7 @@ export default {
 
     // Uganda machines use the UGX wallet and need their own idempotent daily ledger.
     // The unique (user_product_id, earning_date) key prevents repeat credits on retries.
-    const ugEligible = await env.DB.prepare("SELECT up.id AS product_id, up.user_id, p.daily_income_ugx AS daily_income FROM user_products up JOIN products p ON p.id=up.product_id WHERE up.status='active' AND p.daily_income_ugx>0 AND datetime(up.starts_at)<=datetime('now') AND datetime(up.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM ugx_earning_ledger el WHERE el.user_product_id=up.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;daily_income:number}>();
+    const ugEligible = await env.DB.prepare("SELECT up.id AS product_id, up.user_id, p.daily_income_ugx AS daily_income FROM user_products up JOIN products p ON p.id=up.product_id WHERE up.status='active' AND p.daily_income_ugx>0 AND EXISTS (SELECT 1 FROM transactions dt WHERE dt.user_id=up.user_id AND dt.type='deposit' AND dt.status='completed' AND dt.currency='UGX' AND dt.amount_ugx>0) AND datetime(up.starts_at)<=datetime('now') AND datetime(up.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM ugx_earning_ledger el WHERE el.user_product_id=up.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;daily_income:number}>();
     for (const p of ugEligible.results || []) {
       const ledgerId = crypto.randomUUID();
       await env.DB.batch([
@@ -135,7 +135,7 @@ export default {
       ]);
     }
 
-    const eligible = await env.DB.prepare("SELECT rup.id AS product_id, rup.user_id, rup.currency, rup.daily_income FROM regional_user_products rup WHERE rup.status='active' AND rup.currency IN ('RWF','ZMW') AND rup.daily_income>0 AND datetime(rup.starts_at)<=datetime('now') AND datetime(rup.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM regional_earning_ledger el WHERE el.user_product_id=rup.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;currency:string;daily_income:number}>();
+    const eligible = await env.DB.prepare("SELECT rup.id AS product_id, rup.user_id, rup.currency, rup.daily_income FROM regional_user_products rup WHERE rup.status='active' AND rup.currency IN ('RWF','ZMW') AND rup.daily_income>0 AND EXISTS (SELECT 1 FROM transactions dt WHERE dt.user_id=rup.user_id AND dt.type='deposit' AND dt.status='completed' AND dt.currency=rup.currency AND dt.amount_ugx>0) AND datetime(rup.starts_at)<=datetime('now') AND datetime(rup.ends_at)>datetime('now') AND NOT EXISTS (SELECT 1 FROM regional_earning_ledger el WHERE el.user_product_id=rup.id AND el.earning_date=?)").bind(earningDate).all<{product_id:string;user_id:string;currency:string;daily_income:number}>();
     for (const p of eligible.results || []) {
       const ledgerId = crypto.randomUUID();
       await env.DB.batch([
@@ -664,7 +664,7 @@ export default {
           if (url.pathname === "/api/admin/overview" && request.method === "GET") {
             const [users, products, deposits, withdrawals, pending, balances] = await Promise.all([
               env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active FROM users").first<any>(),
-              env.DB.prepare("SELECT COUNT(*) AS active FROM user_products WHERE status='active'").first<any>(),
+              env.DB.prepare("SELECT COUNT(*) AS active FROM user_products up WHERE up.status='active' AND EXISTS (SELECT 1 FROM transactions dt WHERE dt.user_id=up.user_id AND dt.type='deposit' AND dt.status='completed' AND dt.currency='UGX' AND dt.amount_ugx>0)").first<any>(),
               env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='deposit' AND status='completed' AND COALESCE(currency,'UGX')='UGX'").first<any>(),
               env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='withdrawal' AND status='completed' AND COALESCE(currency,'UGX')='UGX'").first<any>(),
               env.DB.prepare("SELECT COUNT(*) AS total FROM transactions WHERE status IN ('pending','processing')").first<any>(),
@@ -870,6 +870,8 @@ export default {
             const account = await env.DB.prepare("SELECT country FROM users WHERE id=? AND status='active'").bind(userId).first<{country:string}>();
             const expectedCountry = currency === "RWF" ? "RW" : "ZM";
             if (!account || account.country !== expectedCountry) return json({ error: "Your registered country does not match this wallet currency. No money was deducted." }, 403);
+            const regionalDeposit = await env.DB.prepare("SELECT 1 AS ok FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency=? AND amount_ugx>0 LIMIT 1").bind(userId,currency).first<any>();
+            if (!regionalDeposit) return json({ error: "A successful "+currency+" deposit is required before purchasing a machine. Failed or processing deposits do not qualify. No money was deducted." }, 403);
             // Regional purchases are enabled only for an active, explicitly priced
             // local-currency catalogue item. Wallet debit and purchase record are atomic.
             const product = await env.DB.prepare("SELECT id,name,price,daily_income,duration_days,active FROM regional_products WHERE id=? AND currency=?").bind(productId,currency).first<any>();
@@ -889,6 +891,8 @@ export default {
 
           const account = await env.DB.prepare("SELECT country FROM users WHERE id=? AND status='active'").bind(userId).first<{country:string}>();
           if (!account || (account.country || "UG") !== "UG") return json({ error: "This account is registered outside Uganda. UGX machine purchases are not available for your market. No money was deducted." }, 403);
+          const depositCheck = await env.DB.prepare("SELECT 1 AS ok FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency='UGX' AND amount_ugx>0 LIMIT 1").bind(userId).first<any>();
+          if (!depositCheck) return json({ error: "A successful UGX deposit is required before purchasing a machine. Failed or processing deposits do not qualify. No money was deducted." }, 403);
           const product = await env.DB.prepare("SELECT id,name,price_ugx,active,duration_days FROM products WHERE id=?").bind(productId).first<any>();
           if (!product || Number(product.active) !== 1) return json({ error: "This machine is not currently available." }, 404);
           const price = Number(product.price_ugx), durationDays = Number(product.duration_days);
