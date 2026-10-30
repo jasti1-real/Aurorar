@@ -4,6 +4,7 @@ export interface Env {
   DB: D1Database;
   SESSION_SECRET: string;
   ADMIN_PHONES?: string;
+  ADMIN_PHONES_EXTRA?: string;
   MARZPAY_API_KEY?: string;
   MARZPAY_API_SECRET?: string;
   MARZPAY_WEBHOOK_SECRET?: string;
