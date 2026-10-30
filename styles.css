@@ -3416,3 +3416,28 @@ th,td{padding:11px 12px;line-height:1.45;vertical-align:middle;overflow-wrap:any
  #page-home .welcome-flag-slide{animation:none!important}
  #page-home .welcome-flag-slide.flag-ug{opacity:.18!important}
 }
+
+
+/* Actual regional flag images in the welcome slideshow */
+#page-home .welcome-flag-slideshow{display:block!important;position:absolute!important;inset:0!important;z-index:1!important;overflow:hidden!important;pointer-events:none!important;background:#082542!important}
+#page-home .welcome-flag-slide{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;opacity:0!important;overflow:hidden!important;animation:aurorarRealFlagFade 18s ease-in-out infinite!important}
+#page-home .welcome-flag-slide img{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;object-fit:cover!important;object-position:center!important}
+#page-home .welcome-flag-slide.flag-ug{animation-delay:0s!important}
+#page-home .welcome-flag-slide.flag-rw{animation-delay:-6s!important}
+#page-home .welcome-flag-slide.flag-zm{animation-delay:-12s!important}
+#page-home .welcome-glow{position:absolute!important;inset:0!important;z-index:2!important;pointer-events:none!important;background:linear-gradient(90deg,rgba(2,20,43,.68),rgba(2,20,43,.52) 52%,rgba(2,20,43,.67))!important}
+#page-home .welcome-copy,#page-home .welcome-bottom-ticker{position:relative!important;z-index:4!important}
+#page-home .aurorar-welcome h1,#page-home .welcome-description,#page-home .welcome-eyebrow,#page-home .welcome-brandline{ text-shadow:0 2px 10px rgba(0,0,0,.95)!important}
+@keyframes aurorarRealFlagFade{
+  0%,28%{opacity:.48}
+  33%,100%{opacity:0}
+}
+@media(max-width:560px){
+ #page-home .aurorar-welcome{display:block!important;min-height:0!important;height:auto!important;padding:22px 18px 58px!important}
+ #page-home .welcome-copy{width:100%!important;max-width:none!important;min-width:0!important}
+ #page-home .welcome-portrait-wrap{display:none!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #page-home .welcome-flag-slide{animation:none!important}
+ #page-home .welcome-flag-slide.flag-ug{opacity:.30!important}
+}
