@@ -731,6 +731,53 @@ export default {
               markets: [summarize("RW"), summarize("ZM")]
             });
           }
+          if (url.pathname === "/api/admin/marzpay/payout-services" && request.method === "GET") {
+            // Read-only diagnostic for outbound mobile-money/disbursement subscriptions.
+            if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET) {
+              return json({ error: "MarzPay API credentials are not configured." }, 503);
+            }
+            let providerResponse: any;
+            try {
+              const response = await fetch("https://wallet.wearemarz.com/api/v1/send-money/services", {
+                method: "GET",
+                headers: {
+                  "Authorization": "Basic " + btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET),
+                  "Accept": "application/json"
+                },
+                signal: AbortSignal.timeout(8000)
+              });
+              providerResponse = await response.json().catch(() => ({}));
+              if (!response.ok || providerResponse?.status === "error") {
+                console.error("MarzPay payout service diagnostic failed", { httpStatus: response.status, errorCode: providerResponse?.error_code || null });
+                return json({ error: "MarzPay could not return your merchant payout services. Check the MarzPay dashboard or try again later." }, 502);
+              }
+            } catch {
+              return json({ error: "Could not contact MarzPay to check payout services. No payout was initiated." }, 502);
+            }
+            const countries = providerResponse?.data?.countries || {};
+            const summarize = (code: string) => {
+              const country = countries[code];
+              const providers = Array.isArray(country?.providers) ? country.providers : [];
+              return {
+                country: code,
+                countryName: country?.country_name || (code === "RW" ? "Rwanda" : "Zambia"),
+                currency: code === "RW" ? "RWF" : "ZMW",
+                configured: !!country,
+                providers: providers.map((provider: any) => ({
+                  provider: String(provider?.provider || provider?.name || "Unknown"),
+                  currency: String(provider?.currency || (code === "RW" ? "RWF" : "ZMW")),
+                  mode: String(provider?.mode || "unknown"),
+                  subscribed: !!(provider?.subscription_uuid || provider?.subscription?.uuid || provider?.availability?.is_subscribed)
+                }))
+              };
+            };
+            return json({
+              ok: true,
+              readOnly: true,
+              message: "Merchant payout service status only. This check did not initiate a payout or change any wallet.",
+              markets: [summarize("RW"), summarize("ZM")]
+            });
+          }
           if (url.pathname === "/api/admin/overview" && request.method === "GET") {
             const [users, products, deposits, withdrawals, pending, balances] = await Promise.all([
               env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active FROM users").first<any>(),
