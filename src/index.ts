@@ -781,18 +781,23 @@ export default {
             let response: Response;
             let providerResponse: any;
             try {
+              // MarzPay's published Send Money guide demonstrates multipart/form-data.
+              // Use FormData so the runtime sets the boundary; keep a unique UUID reference.
+              const payoutForm = new FormData();
+              payoutForm.set("amount", String(netPayoutAmount));
+              payoutForm.set("phone_number", String(payout.phone_number));
+              payoutForm.set("country", String(payout.country));
+              payoutForm.set("reference", reference);
+              payoutForm.set("callback_url", callbackUrl);
+              payoutForm.set("description", "Aurorar withdrawal " + requestId);
+              payoutForm.set("metadata", JSON.stringify([
+                { withdrawal_request_id: requestId },
+                { currency: String(payout.currency) }
+              ]));
               response = await fetch("https://wallet.wearemarz.com/api/v1/send-money", {
                 method: "POST",
-                headers: { "Authorization": "Basic " + auth, "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({
-                  amount: netPayoutAmount,
-                  phone_number: payout.phone_number,
-                  country: payout.country,
-                  reference,
-                  callback_url: callbackUrl,
-                  description: "Aurorar withdrawal " + requestId,
-                  metadata: { withdrawal_request_id: requestId, currency: payout.currency }
-                })
+                headers: { "Authorization": "Basic " + auth, "Accept": "application/json" },
+                body: payoutForm
               });
               providerResponse = await response.json().catch(() => ({}));
             } catch {
