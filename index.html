@@ -213,14 +213,14 @@ function toast(s){
   feedback.style.display='block';
  }
 }
-async function loadAccount(){
- // Fetch account and referral data concurrently to reduce dashboard wait time.
+async function loadAccount(initialAccountData=null){
+ // Reuse the successful session check response; avoid a second /api/me call on refresh.
  const [response,referralResponse,withdrawalResponse]=await Promise.all([
-  fetch('/api/me',{credentials:'same-origin',cache:'no-store'}),
+  initialAccountData ? Promise.resolve(null) : fetch('/api/me',{credentials:'same-origin',cache:'no-store'}),
   fetch('/api/referrals',{credentials:'same-origin',cache:'no-store'}).catch(()=>null),
   fetch('/api/withdrawals',{credentials:'same-origin',cache:'no-store'}).catch(()=>null)
  ]);
- const data=await response.json().catch(()=>({}));
+ const data=initialAccountData || (response ? await response.json().catch(()=>({})) : {});
  const referralData=referralResponse ? await referralResponse.json().catch(()=>({})) : {};
  const withdrawalData=withdrawalResponse ? await withdrawalResponse.json().catch(()=>({})) : {};
  state.withdrawalRequests=withdrawalResponse&&withdrawalResponse.ok?(withdrawalData.requests||[]):[];
