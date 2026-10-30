@@ -9,7 +9,7 @@
 
 </head>
 <body>
-<section id="authView" class="auth auth-screen">
+<section id="authView" class="auth auth-screen hidden" hidden>
  <div class="auth-shell">
   <header class="auth-hero" aria-label="Aurorar introduction">
    <div class="auth-hero-shade"></div>
@@ -483,11 +483,18 @@ updateInstallButton();
 renderProducts();
 render();
 (async function restoreLoginSession(){
+ const showLogin=()=>{
+  $('appView').classList.add('hidden');
+  $('appView').hidden=true;
+  $('authView').classList.remove('hidden');
+  $('authView').hidden=false;
+ };
  try{
   const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
-  if(!response.ok)return;
+  if(!response.ok){showLogin();return;}
   const data=await response.json().catch(()=>({}));
-  // Open the signed-in app immediately, then refresh wallet/history in the background.
+  // Keep the login form hidden while checking the saved session, so refresh
+  // never briefly sends a returning user back to the sign-in screen.
   state.phone=data.user?.phone||state.phone;
   state.country=String(data.user?.country||state.country||'UG').toUpperCase();
   $('authView').classList.add('hidden');
@@ -498,7 +505,7 @@ render();
   showPage('home');
   loadAccount().then(()=>render()).catch(()=>toast('Your session is active, but account details are still loading. Please refresh shortly.'));
  }catch(error){
-  // Keep the login screen visible when the session is expired or unavailable.
+  showLogin();
  }
 })();
 
