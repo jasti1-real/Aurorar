@@ -683,6 +683,54 @@ export default {
           if (!adminConfig.length) return json({ error: "Admin access is not configured yet." }, 503);
           const adminUser = await env.DB.prepare("SELECT phone FROM users WHERE id = ? AND status = 'active'").bind(adminUserId).first<{phone:string}>();
           if (!adminUser || !adminConfig.includes(adminUser.phone)) return json({ error: "This account is not authorized for administration." }, 403);
+          if (url.pathname === "/api/admin/marzpay/services" && request.method === "GET") {
+            // Read-only diagnostic: checks MarzPay's actual merchant collection-service
+            // subscriptions without initiating a payment or touching customer balances.
+            if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET) {
+              return json({ error: "MarzPay API credentials are not configured." }, 503);
+            }
+            let providerResponse: any;
+            try {
+              const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money/services", {
+                method: "GET",
+                headers: {
+                  "Authorization": "Basic " + btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET),
+                  "Accept": "application/json"
+                },
+                signal: AbortSignal.timeout(8000)
+              });
+              providerResponse = await response.json().catch(() => ({}));
+              if (!response.ok || providerResponse?.status === "error") {
+                console.error("MarzPay service diagnostic failed", { httpStatus: response.status, errorCode: providerResponse?.error_code || null });
+                return json({ error: "MarzPay could not return your merchant collection services. Check the MarzPay dashboard or try again later." }, 502);
+              }
+            } catch {
+              return json({ error: "Could not contact MarzPay to check collection services. No payment was initiated." }, 502);
+            }
+            const countries = providerResponse?.data?.countries || {};
+            const summarize = (code: string) => {
+              const country = countries[code];
+              const providers = Array.isArray(country?.providers) ? country.providers : [];
+              return {
+                country: code,
+                countryName: country?.country_name || (code === "RW" ? "Rwanda" : "Zambia"),
+                currency: code === "RW" ? "RWF" : "ZMW",
+                configured: !!country,
+                providers: providers.map((provider: any) => ({
+                  provider: String(provider?.provider || provider?.name || "Unknown"),
+                  currency: String(provider?.currency || (code === "RW" ? "RWF" : "ZMW")),
+                  mode: String(provider?.mode || "unknown"),
+                  subscribed: !!provider?.subscription_uuid
+                }))
+              };
+            };
+            return json({
+              ok: true,
+              readOnly: true,
+              message: "Merchant service status only. This check did not initiate a payment or change any wallet.",
+              markets: [summarize("RW"), summarize("ZM")]
+            });
+          }
           if (url.pathname === "/api/admin/overview" && request.method === "GET") {
             const [users, products, deposits, withdrawals, pending, balances] = await Promise.all([
               env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active FROM users").first<any>(),
