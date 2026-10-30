@@ -382,7 +382,101 @@ export default {
           await env.DB.prepare("UPDATE transactions SET status='processing', provider_transaction_uuid=COALESCE(?,provider_transaction_uuid), description='MarzPay payment request sent' WHERE id=? AND status='pending'").bind(providerUuid ? String(providerUuid) : null,transactionId).run();
           return json({ ok: true, message: providerResponse?.message || "Payment request sent. Approve it on your phone and wait for confirmation.", reference, status: "processing", country, currency: market.currency }, 201);
         }
-        if (url.pathname === "/api/withdrawals" && (request.method === "POST" || request.method === "GET")) {
+                const submitWithdrawalPayout = async (requestId: string, origin: string): Promise<Response> => {
+            if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) {
+              return json({ error: "MarzPay send-money credentials and webhook verification secret must be configured in Cloudflare before approving payouts." }, 503);
+            }
+            const payout = await env.DB.prepare("SELECT id,user_id,country,currency,amount,phone_number,status,provider_reference FROM withdrawal_requests WHERE id=?").bind(requestId).first<any>();
+            if (!payout) return json({ error: "Withdrawal request not found." }, 404);
+            if (payout.status !== "requested") return json({ error: "Only a request still marked requested can be approved. Current status: " + payout.status + "." }, 409);
+            const markets: Record<string,{currency:string;prefix:string}> = {
+              UG: { currency: "UGX", prefix: "+256" },
+              RW: { currency: "RWF", prefix: "+250" },
+              ZM: { currency: "ZMW", prefix: "+260" }
+            };
+            const market = markets[String(payout.country)];
+            if (!market || market.currency !== payout.currency || !String(payout.phone_number).startsWith(market.prefix) || !Number.isSafeInteger(Number(payout.amount)) || Number(payout.amount) <= 0) {
+              return json({ error: "Withdrawal country, currency, phone, or amount is inconsistent. No payout was submitted." }, 409);
+            }
+            // Apply the 15% withdrawal tax to every withdrawal, including welcome-bonus withdrawals.
+            const taxAmount = Number(payout.tax_amount ?? Math.ceil(Number(payout.amount) * 0.15));
+            const netPayoutAmount = Number(payout.net_amount ?? (Number(payout.amount) - taxAmount));
+            if (!Number.isSafeInteger(netPayoutAmount) || netPayoutAmount <= 0) {
+              return json({ error: "The withdrawal amount is invalid." }, 400);
+            }
+            const reference = crypto.randomUUID();
+            const debitAt = new Date().toISOString();
+            const walletDebit = payout.currency === "UGX"
+              ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,Number(payout.amount),payout.user_id,requestId,Number(payout.amount))
+              : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency=? AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,Number(payout.amount),payout.user_id,payout.currency,requestId,Number(payout.amount));
+            const reserveResults = await env.DB.batch([
+              walletDebit,
+              env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,tax_amount=?,net_amount=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='requested' AND changes()=1").bind(reference,debitAt,taxAmount,netPayoutAmount,requestId)
+            ]);
+            if (Number(reserveResults[0]?.meta?.changes || 0) !== 1 || Number(reserveResults[1]?.meta?.changes || 0) !== 1) {
+              // If the wallet debit succeeded but the state transition did not, roll it back.
+              if (Number(reserveResults[0]?.meta?.changes || 0) === 1) {
+                if (payout.currency === "UGX") await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id).run();
+                else await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency).run();
+              }
+              return json({ error: "The request could not be reserved safely. Refresh the admin list and retry only if it remains requested." }, 409);
+            }
+            const callbackUrl = new URL("/api/payments/marzpay/callback", origin).toString();
+            const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
+            let response: Response;
+            let providerResponse: any;
+            try {
+              const payoutForm = new FormData();
+              payoutForm.set("amount", String(netPayoutAmount));
+              payoutForm.set("phone_number", String(payout.phone_number));
+              payoutForm.set("country", String(payout.country));
+              payoutForm.set("reference", reference);
+              payoutForm.set("callback_url", callbackUrl);
+              payoutForm.set("description", "Aurorar withdrawal " + requestId);
+              payoutForm.set("metadata", JSON.stringify([
+                { withdrawal_request_id: requestId },
+                { currency: String(payout.currency) }
+              ]));
+              response = await fetch("https://wallet.wearemarz.com/api/v1/send-money", {
+                method: "POST",
+                headers: { "Authorization": "Basic " + auth, "Accept": "application/json" },
+                body: payoutForm
+              });
+              providerResponse = await response.json().catch(() => ({}));
+            } catch {
+              // A network timeout can occur after the provider accepts a payout. Keep funds
+              // reserved and require reconciliation; never retry automatically or refund blindly.
+              await env.DB.prepare("UPDATE withdrawal_requests SET provider_status='submission_unknown',failure_reason='Network result uncertain; reconcile in MarzPay before retrying',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing'").bind(requestId).run();
+              return json({ error: "MarzPay submission result is uncertain. The request remains processing and its funds remain reserved. Check MarzPay before any retry." }, 502);
+            }
+            const providerTx = providerResponse?.transaction || providerResponse?.data?.transaction || providerResponse?.data || {};
+            const providerUuid = providerTx?.uuid || providerTx?.transaction_uuid || providerTx?.id || providerResponse?.transaction_uuid || providerResponse?.uuid || null;
+            const providerStatus = String(providerTx?.status || providerResponse?.status || "").toLowerCase();
+            const explicitProviderRejection = providerResponse?.status === "error" ||
+              (response.status >= 400 && response.status < 500 && providerResponse?.success === false);
+            if (!response.ok || providerResponse?.status === "error") {
+              // Only a clearly explicit provider rejection may release the reserved funds.
+              // A timeout, 5xx, or unclear response may have been accepted upstream; keep
+              // those funds reserved until the MarzPay dashboard/callback reconciles them.
+              if (!explicitProviderRejection) {
+                await env.DB.prepare("UPDATE withdrawal_requests SET provider_status='submission_unknown',failure_reason='MarzPay returned an ambiguous response; reconcile in provider dashboard before retrying',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing'").bind(requestId).run();
+                return json({ error: "MarzPay returned an uncertain result. The request remains processing and funds stay reserved. Check MarzPay before any retry." }, 502);
+              }
+              const failure = String(providerResponse?.message || "MarzPay rejected the disbursement request").slice(0,300);
+              const walletRefund = payout.currency === "UGX"
+                ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM withdrawal_requests WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL)").bind(Number(payout.amount),Number(payout.amount),payout.user_id,requestId)
+                : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM withdrawal_requests WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL)").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,requestId);
+              await env.DB.batch([
+                env.DB.prepare("UPDATE withdrawal_requests SET status='failed',provider_status='rejected',failure_reason=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing' AND provider_reference=?").bind(failure,requestId,reference),
+                walletRefund,
+                env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL AND changes()=1").bind(requestId)
+              ]);
+              return json({ error: failure, status: "failed" }, 502);
+            }
+            await env.DB.prepare("UPDATE withdrawal_requests SET provider_transaction_uuid=COALESCE(?,provider_transaction_uuid),provider_status=?,failure_reason=NULL,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing' AND provider_reference=?").bind(providerUuid ? String(providerUuid) : null,providerStatus || "submitted",requestId,reference).run();
+            return json({ ok: true, message: providerResponse?.message || "Withdrawal submitted to MarzPay. Final status will be updated by its verified callback.", status: "processing", reference, providerTransactionUuid: providerUuid ? String(providerUuid) : null }, 202);
+        };
+if (url.pathname === "/api/withdrawals" && (request.method === "POST" || request.method === "GET")) {
           const userId = await sessionUser(request, env);
           if (!userId) return json({ error: "Please log in before requesting a withdrawal." }, 401);
           if (request.method === "GET") {
@@ -438,14 +532,14 @@ export default {
             const priorBonusRequest = await env.DB.prepare("SELECT id,status FROM withdrawal_requests WHERE user_id=? AND currency=? AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed') LIMIT 1").bind(userId,market.currency).first<any>();
             if (priorBonusRequest) return json({ error: "Your welcome bonus already has a withdrawal request or has been withdrawn. Check withdrawal history before trying again." }, 409);
           }
-          // Withdrawal eligibility: require both a confirmed deposit and an active machine purchase.
-          // The welcome bonus is visible in the balance immediately, but remains withdrawal-locked
-          // until these two account milestones are satisfied.
+          // Standard withdrawals require an active purchased machine. The normal
+          // request checks also enforce the country withdrawal window, minimum, and balance.
+          // Only the welcome bonus has the extra completed-deposit unlock requirement.
           const eligibility = country === "UG"
             ? await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency='UGX' AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM user_products WHERE user_id=? AND status='active') AS has_machine").bind(userId,userId).first<any>()
             : await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency=? AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM regional_user_products WHERE user_id=? AND currency=? AND status='active') AS has_machine").bind(userId,market.currency,userId,market.currency).first<any>();
-          if (!Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock withdrawals, first complete a successful deposit and then purchase a machine." }, 403);
-          if (!Number(eligibility?.has_machine || 0)) return json({ error:"To unlock withdrawals, purchase a machine after your successful deposit." }, 403);
+          if (!Number(eligibility?.has_machine || 0)) return json({ error:"To withdraw, you must have an active purchased machine." }, 403);
+          if (requestType === "welcome_bonus" && !Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock your welcome bonus withdrawal, first complete a successful deposit." }, 403);
           const [wallet, pendingWithdrawals] = await Promise.all([
             country === "UG"
               ? env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>()
@@ -503,7 +597,10 @@ export default {
             if (duplicate) return json({ ok:true, request:duplicate, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
             throw error;
           }
-          return json({ ok:true, request:{id,country,currency:market.currency,amount,phone_number:phone,status:"requested"}, message:"Withdrawal request recorded for review. This is not a payment confirmation; no money has been deducted and no payout has been sent. The balance will be rechecked before any payout is approved." }, 201);
+          // Automatically submit eligible withdrawals to MarzPay. The shared payout
+          // handler atomically reserves/debits the wallet, uses a unique provider
+          // reference, and leaves ambiguous results processing for callback reconciliation.
+          return await submitWithdrawalPayout(id, url.origin);
         }
         if (url.pathname === "/api/auth/register" && request.method === "POST") {
           const body = await readJson(request);
@@ -738,95 +835,7 @@ export default {
           if (url.pathname.startsWith("/api/admin/withdrawals/") && url.pathname.endsWith("/approve") && request.method === "POST") {
             const requestId = decodeURIComponent(url.pathname.slice("/api/admin/withdrawals/".length, -"/approve".length)).trim();
             if (!requestId || requestId.length > 100) return json({ error: "Invalid withdrawal request id." }, 400);
-            if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) {
-              return json({ error: "MarzPay send-money credentials and webhook verification secret must be configured in Cloudflare before approving payouts." }, 503);
-            }
-            const payout = await env.DB.prepare("SELECT id,user_id,country,currency,amount,phone_number,status,provider_reference FROM withdrawal_requests WHERE id=?").bind(requestId).first<any>();
-            if (!payout) return json({ error: "Withdrawal request not found." }, 404);
-            if (payout.status !== "requested") return json({ error: "Only a request still marked requested can be approved. Current status: " + payout.status + "." }, 409);
-            const markets: Record<string,{currency:string;prefix:string}> = {
-              UG: { currency: "UGX", prefix: "+256" },
-              RW: { currency: "RWF", prefix: "+250" },
-              ZM: { currency: "ZMW", prefix: "+260" }
-            };
-            const market = markets[String(payout.country)];
-            if (!market || market.currency !== payout.currency || !String(payout.phone_number).startsWith(market.prefix) || !Number.isSafeInteger(Number(payout.amount)) || Number(payout.amount) <= 0) {
-              return json({ error: "Withdrawal country, currency, phone, or amount is inconsistent. No payout was submitted." }, 409);
-            }
-            // Apply the 15% withdrawal tax to every withdrawal, including welcome-bonus withdrawals.
-            const taxAmount = Number(payout.tax_amount ?? Math.ceil(Number(payout.amount) * 0.15));
-            const netPayoutAmount = Number(payout.net_amount ?? (Number(payout.amount) - taxAmount));
-            if (!Number.isSafeInteger(netPayoutAmount) || netPayoutAmount <= 0) {
-              return json({ error: "The withdrawal amount is invalid." }, 400);
-            }
-            const reference = crypto.randomUUID();
-            const debitAt = new Date().toISOString();
-            const walletDebit = payout.currency === "UGX"
-              ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,Number(payout.amount),payout.user_id,requestId,Number(payout.amount))
-              : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency=? AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,Number(payout.amount),payout.user_id,payout.currency,requestId,Number(payout.amount));
-            const reserveResults = await env.DB.batch([
-              walletDebit,
-              env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,tax_amount=?,net_amount=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='requested' AND changes()=1").bind(reference,debitAt,taxAmount,netPayoutAmount,requestId)
-            ]);
-            if (Number(reserveResults[0]?.meta?.changes || 0) !== 1 || Number(reserveResults[1]?.meta?.changes || 0) !== 1) {
-              // If the wallet debit succeeded but the state transition did not, roll it back.
-              if (Number(reserveResults[0]?.meta?.changes || 0) === 1) {
-                if (payout.currency === "UGX") await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id).run();
-                else await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency).run();
-              }
-              return json({ error: "The request could not be reserved safely. Refresh the admin list and retry only if it remains requested." }, 409);
-            }
-            const callbackUrl = new URL("/api/payments/marzpay/callback", url.origin).toString();
-            const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
-            let response: Response;
-            let providerResponse: any;
-            try {
-              response = await fetch("https://wallet.wearemarz.com/api/v1/send-money", {
-                method: "POST",
-                headers: { "Authorization": "Basic " + auth, "Content-Type": "application/json", "Accept": "application/json" },
-                body: JSON.stringify({
-                  amount: netPayoutAmount,
-                  phone_number: payout.phone_number,
-                  country: payout.country,
-                  reference,
-                  callback_url: callbackUrl,
-                  description: "Aurorar withdrawal " + requestId,
-                  metadata: { withdrawal_request_id: requestId, currency: payout.currency }
-                })
-              });
-              providerResponse = await response.json().catch(() => ({}));
-            } catch {
-              // A network timeout can occur after the provider accepts a payout. Keep funds
-              // reserved and require reconciliation; never retry automatically or refund blindly.
-              await env.DB.prepare("UPDATE withdrawal_requests SET provider_status='submission_unknown',failure_reason='Network result uncertain; reconcile in MarzPay before retrying',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing'").bind(requestId).run();
-              return json({ error: "MarzPay submission result is uncertain. The request remains processing and its funds remain reserved. Check MarzPay before any retry." }, 502);
-            }
-            const providerTx = providerResponse?.transaction || providerResponse?.data?.transaction || providerResponse?.data || {};
-            const providerUuid = providerTx?.uuid || providerTx?.transaction_uuid || providerTx?.id || providerResponse?.transaction_uuid || providerResponse?.uuid || null;
-            const providerStatus = String(providerTx?.status || providerResponse?.status || "").toLowerCase();
-            const explicitProviderRejection = providerResponse?.status === "error" ||
-              (response.status >= 400 && response.status < 500 && providerResponse?.success === false);
-            if (!response.ok || providerResponse?.status === "error") {
-              // Only a clearly explicit provider rejection may release the reserved funds.
-              // A timeout, 5xx, or unclear response may have been accepted upstream; keep
-              // those funds reserved until the MarzPay dashboard/callback reconciles them.
-              if (!explicitProviderRejection) {
-                await env.DB.prepare("UPDATE withdrawal_requests SET provider_status='submission_unknown',failure_reason='MarzPay returned an ambiguous response; reconcile in provider dashboard before retrying',updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing'").bind(requestId).run();
-                return json({ error: "MarzPay returned an uncertain result. The request remains processing and funds stay reserved. Check MarzPay before any retry." }, 502);
-              }
-              const failure = String(providerResponse?.message || "MarzPay rejected the disbursement request").slice(0,300);
-              const walletRefund = payout.currency === "UGX"
-                ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM withdrawal_requests WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL)").bind(Number(payout.amount),Number(payout.amount),payout.user_id,requestId)
-                : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_withdrawn=MAX(0,total_withdrawn-?),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM withdrawal_requests WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL)").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,requestId);
-              await env.DB.batch([
-                env.DB.prepare("UPDATE withdrawal_requests SET status='failed',provider_status='rejected',failure_reason=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing' AND provider_reference=?").bind(failure,requestId,reference),
-                walletRefund,
-                env.DB.prepare("UPDATE withdrawal_requests SET wallet_refunded_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='failed' AND wallet_debited_at IS NOT NULL AND wallet_refunded_at IS NULL AND changes()=1").bind(requestId)
-              ]);
-              return json({ error: failure, status: "failed" }, 502);
-            }
-            await env.DB.prepare("UPDATE withdrawal_requests SET provider_transaction_uuid=COALESCE(?,provider_transaction_uuid),provider_status=?,failure_reason=NULL,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='processing' AND provider_reference=?").bind(providerUuid ? String(providerUuid) : null,providerStatus || "submitted",requestId,reference).run();
-            return json({ ok: true, message: providerResponse?.message || "Withdrawal submitted to MarzPay. Final status will be updated by its verified callback.", status: "processing", reference, providerTransactionUuid: providerUuid ? String(providerUuid) : null }, 202);
+            return await submitWithdrawalPayout(requestId, url.origin);
           }
           if (url.pathname === "/api/admin/withdrawals" && request.method === "GET") {
             const status = (url.searchParams.get("status") || "").trim().toLowerCase();
