@@ -3011,3 +3011,28 @@ html body #toast.toast.hidden{display:none!important}
  html body #toast.toast::before{left:15px!important;top:19px!important;width:38px!important;height:38px!important;font-size:21px!important}
 }
 @media(prefers-reduced-motion:reduce){html body #toast.toast{animation:none!important}}
+
+
+/* Hotfix: the site's global red-text rule was overriding toast text fill. */
+html body #toast.toast,
+html body #toast.toast *{
+  color:#f7fbff!important;
+  -webkit-text-fill-color:#f7fbff!important;
+  text-shadow:none!important;
+}
+html body #toast.toast::before{
+  color:#062b39!important;
+  -webkit-text-fill-color:#062b39!important;
+}
+/* Keep the notice above the floating bottom navigation on phones. */
+@media(max-width:600px){
+ html body #toast.toast{
+   bottom:calc(178px + env(safe-area-inset-bottom))!important;
+   max-width:560px!important;
+   padding:17px 16px 17px 68px!important;
+   min-height:82px!important;
+   font-size:14px!important;
+   line-height:1.5!important;
+ }
+ html body #toast.toast::before{left:15px!important;top:19px!important;width:38px!important;height:38px!important}
+}
