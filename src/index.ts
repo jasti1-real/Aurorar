@@ -438,14 +438,14 @@ export default {
             const priorBonusRequest = await env.DB.prepare("SELECT id,status FROM withdrawal_requests WHERE user_id=? AND currency=? AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed') LIMIT 1").bind(userId,market.currency).first<any>();
             if (priorBonusRequest) return json({ error: "Your welcome bonus already has a withdrawal request or has been withdrawn. Check withdrawal history before trying again." }, 409);
           }
-          // Withdrawal eligibility: require both a confirmed deposit and an active machine purchase.
-          // The welcome bonus is visible in the balance immediately, but remains withdrawal-locked
-          // until these two account milestones are satisfied.
+          // Standard withdrawals require an active purchased machine. The normal
+          // request checks also enforce the country withdrawal window, minimum, and balance.
+          // Only the welcome bonus has the extra completed-deposit unlock requirement.
           const eligibility = country === "UG"
             ? await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency='UGX' AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM user_products WHERE user_id=? AND status='active') AS has_machine").bind(userId,userId).first<any>()
             : await env.DB.prepare("SELECT EXISTS(SELECT 1 FROM transactions WHERE user_id=? AND type='deposit' AND status='completed' AND currency=? AND amount_ugx>0) AS has_deposit, EXISTS(SELECT 1 FROM regional_user_products WHERE user_id=? AND currency=? AND status='active') AS has_machine").bind(userId,market.currency,userId,market.currency).first<any>();
-          if (!Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock withdrawals, first complete a successful deposit and then purchase a machine." }, 403);
-          if (!Number(eligibility?.has_machine || 0)) return json({ error:"To unlock withdrawals, purchase a machine after your successful deposit." }, 403);
+          if (!Number(eligibility?.has_machine || 0)) return json({ error:"To withdraw, you must have an active purchased machine." }, 403);
+          if (requestType === "welcome_bonus" && !Number(eligibility?.has_deposit || 0)) return json({ error:"To unlock your welcome bonus withdrawal, first complete a successful deposit." }, 403);
           const [wallet, pendingWithdrawals] = await Promise.all([
             country === "UG"
               ? env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>()
