@@ -3328,3 +3328,29 @@ th,td{padding:11px 12px;line-height:1.45;vertical-align:middle;overflow-wrap:any
   100%{opacity:.20;transform:scale(1.02)}
 }
 @media(prefers-reduced-motion:reduce){#page-home .welcome-flag-slide{animation:none!important}#page-home .welcome-flag-slide.flag-ug{opacity:.16!important}}
+
+
+/* Mobile welcome hero repair: full-width copy, visible flag slides, high contrast */
+#page-home .aurorar-welcome{display:grid!important;grid-template-columns:minmax(0,1fr)!important;grid-template-rows:auto!important;gap:18px!important;min-width:0!important}
+#page-home .welcome-flag-slideshow{display:block!important;position:absolute!important;inset:0!important;z-index:0!important;overflow:hidden!important}
+#page-home .welcome-flag-slide{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:flex!important;align-items:center!important;justify-content:center!important;font-size:clamp(190px,58vw,360px)!important;opacity:0!important;white-space:nowrap!important;pointer-events:none!important}
+#page-home .welcome-flag-slide.flag-ug{animation:aurorarWelcomeFlagFade 18s ease-in-out infinite!important;animation-delay:0s!important}
+#page-home .welcome-flag-slide.flag-rw{animation:aurorarWelcomeFlagFade 18s ease-in-out infinite!important;animation-delay:6s!important}
+#page-home .welcome-flag-slide.flag-zm{animation:aurorarWelcomeFlagFade 18s ease-in-out infinite!important;animation-delay:12s!important}
+#page-home .welcome-copy{grid-column:1!important;grid-row:1!important;width:100%!important;max-width:none!important;min-width:0!important;z-index:3!important}
+#page-home .welcome-portrait-wrap{display:none!important}
+#page-home .welcome-brandline,#page-home .welcome-eyebrow,#page-home .aurorar-welcome h1,#page-home .aurorar-welcome h1 span,#page-home .welcome-description,#page-home .welcome-note{overflow-wrap:normal!important;word-break:normal!important;hyphens:none!important}
+#page-home .welcome-eyebrow{color:#b5fff0!important;-webkit-text-fill-color:#b5fff0!important;text-shadow:0 2px 8px rgba(0,0,0,.95)!important}
+#page-home .aurorar-welcome h1{max-width:100%!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:clamp(29px,8vw,42px)!important;line-height:1.12!important;letter-spacing:-.65px!important;text-shadow:0 3px 16px rgba(0,0,0,.95)!important}
+#page-home .aurorar-welcome h1 .welcome-highlight{display:inline!important;color:#a8fff0!important;-webkit-text-fill-color:#a8fff0!important;background:none!important}
+#page-home .welcome-description{max-width:100%!important;color:#fff!important;-webkit-text-fill-color:#fff!important;font-size:clamp(14px,3.8vw,17px)!important;line-height:1.6!important;text-shadow:0 2px 9px rgba(0,0,0,.98)!important}
+#page-home .welcome-ticker{width:100%!important;max-width:100%!important;min-width:0!important}
+#page-home .welcome-actions{display:flex!important;flex-wrap:wrap!important;align-items:flex-start!important;gap:10px!important}
+#page-home .welcome-cta{max-width:100%!important;white-space:normal!important}
+#page-home .welcome-bottom-ticker{grid-column:1!important;position:relative!important;z-index:3!important;display:flex!important;flex-wrap:wrap!important;gap:10px 18px!important;justify-content:space-between!important}
+@media(min-width:561px){
+ #page-home .aurorar-welcome{grid-template-columns:minmax(0,1fr) minmax(150px,.55fr)!important}
+ #page-home .welcome-copy{grid-column:1!important}
+ #page-home .welcome-portrait-wrap{display:block!important;grid-column:2!important;grid-row:1!important;z-index:2!important}
+}
+@media(prefers-reduced-motion:reduce){#page-home .welcome-flag-slide{animation:none!important}#page-home .welcome-flag-slide.flag-ug{opacity:.17!important}}
