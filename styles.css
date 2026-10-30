@@ -3071,3 +3071,138 @@ html body #toast.toast{
 @media(prefers-reduced-motion:reduce){
  html body #toast.toast{animation:none!important}
 }
+
+
+/* Welcome modal refresh: uncluttered, high-contrast, phone-first layout */
+#welcomeAdModal.welcome-ad-overlay{
+  padding:14px!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:rgba(4,12,26,.78)!important;
+  backdrop-filter:blur(10px)!important;
+  -webkit-backdrop-filter:blur(10px)!important;
+}
+#welcomeAdModal .welcome-ad-card{
+  width:min(100%,520px)!important;
+  max-width:520px!important;
+  max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  overflow-y:auto!important;
+  overscroll-behavior:contain!important;
+  padding:24px 22px 22px!important;
+  border-radius:28px!important;
+  border:1px solid rgba(105,244,225,.36)!important;
+  background:
+    radial-gradient(circle at 12% 5%,rgba(30,205,192,.20),transparent 35%),
+    linear-gradient(155deg,#102a49 0%,#14213e 62%,#101a31 100%)!important;
+  box-shadow:0 24px 80px rgba(0,0,0,.48),0 0 0 1px rgba(255,255,255,.05) inset!important;
+  text-align:center!important;
+  color:#f5f8ff!important;
+}
+#welcomeAdModal .welcome-ad-card:before,
+#welcomeAdModal .welcome-ad-card:after,
+#welcomeAdModal .welcome-ad-glow{opacity:.18!important;pointer-events:none!important}
+#welcomeAdModal .welcome-ad-close{
+  position:absolute!important;top:14px!important;right:14px!important;
+  z-index:5!important;width:42px!important;height:42px!important;
+  display:grid!important;place-items:center!important;
+  border:1px solid rgba(255,255,255,.2)!important;border-radius:50%!important;
+  background:rgba(255,255,255,.10)!important;color:#fff!important;
+  font-size:23px!important;box-shadow:none!important;
+}
+#welcomeAdModal .welcome-ad-logo{
+  display:flex!important;justify-content:center!important;align-items:center!important;
+  padding:4px 0 12px!important;margin:0!important;
+}
+#welcomeAdModal .welcome-ad-logo img{
+  width:70px!important;height:70px!important;object-fit:contain!important;
+}
+#welcomeAdModal .welcome-ad-kicker{
+  margin:2px 0 10px!important;color:#73f1d8!important;
+  font-size:11px!important;letter-spacing:2.2px!important;font-weight:850!important;
+}
+#welcomeAdModal .welcome-ad-card h2{
+  margin:0 auto 14px!important;max-width:410px!important;
+  color:#fff!important;font-size:clamp(27px,6vw,39px)!important;
+  line-height:1.14!important;letter-spacing:-.8px!important;font-weight:850!important;
+}
+#welcomeAdModal .welcome-ad-card h2 span{color:#7df0d7!important}
+#welcomeAdModal .welcome-ad-card>p{
+  max-width:390px!important;margin:0 auto 18px!important;
+  color:#dbe6f4!important;font-size:15px!important;line-height:1.65!important;
+}
+#welcomeAdModal .welcome-ad-referrals{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:9px!important;margin:16px 0!important;padding:0!important;
+  background:transparent!important;border:0!important;
+}
+#welcomeAdModal .welcome-ad-referrals>div{
+  min-width:0!important;padding:13px 5px!important;gap:5px!important;
+  border:1px solid rgba(128,232,222,.24)!important;border-radius:16px!important;
+  background:rgba(255,255,255,.055)!important;
+}
+#welcomeAdModal .welcome-ad-referrals strong{
+  font-size:clamp(21px,5vw,28px)!important;color:#76f0d9!important;
+}
+#welcomeAdModal .welcome-ad-referrals span{
+  color:#eaf2fc!important;font-size:12px!important;
+}
+#welcomeAdModal .welcome-ad-slider{
+  min-height:0!important;margin:14px 0!important;padding:13px 14px!important;
+  border:1px solid rgba(128,232,222,.2)!important;border-radius:15px!important;
+  background:rgba(2,13,27,.25)!important;color:#eaf2fc!important;
+  font-size:13px!important;line-height:1.5!important;text-align:left!important;
+}
+#welcomeAdModal .welcome-ad-points{
+  display:flex!important;justify-content:center!important;flex-wrap:wrap!important;
+  gap:8px!important;margin:14px 0 18px!important;color:#e5edf8!important;font-size:12px!important;
+}
+#welcomeAdModal .welcome-ad-points span{
+  padding:8px 11px!important;border-radius:12px!important;
+  border:1px solid rgba(255,255,255,.12)!important;background:rgba(255,255,255,.055)!important;
+  color:#eaf2fc!important;
+}
+#welcomeAdModal .welcome-ad-telegram{
+  width:100%!important;min-height:56px!important;margin:8px 0 12px!important;
+  padding:14px 16px!important;justify-content:center!important;gap:10px!important;
+  border-radius:16px!important;background:linear-gradient(110deg,#087fb7,#1266b1)!important;
+  color:#fff!important;font-size:15px!important;font-weight:850!important;
+  box-shadow:0 8px 20px rgba(0,111,190,.18)!important;
+}
+#welcomeAdModal .welcome-ad-telegram span,
+#welcomeAdModal .welcome-ad-telegram b{color:#fff!important}
+#welcomeAdModal .welcome-ad-note{
+  max-width:390px!important;margin:12px auto 16px!important;
+  color:#c7d5e7!important;font-size:11px!important;line-height:1.55!important;
+}
+#welcomeAdModal .welcome-ad-continue{
+  width:100%!important;min-height:52px!important;padding:14px 18px!important;
+  border-radius:15px!important;background:linear-gradient(110deg,#39e0b5,#0bbd98)!important;
+  color:#062c35!important;font-size:15px!important;font-weight:850!important;
+  box-shadow:none!important;
+}
+#welcomeAdModal .welcome-ad-continue span{color:#063d42!important}
+@media(max-width:480px){
+ #welcomeAdModal.welcome-ad-overlay{padding:10px!important}
+ #welcomeAdModal .welcome-ad-card{
+  max-height:calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+  padding:20px 16px 17px!important;border-radius:23px!important;
+ }
+ #welcomeAdModal .welcome-ad-logo img{width:58px!important;height:58px!important}
+ #welcomeAdModal .welcome-ad-card h2{font-size:clamp(27px,7.4vw,34px)!important;margin-bottom:11px!important}
+ #welcomeAdModal .welcome-ad-card>p{font-size:14px!important;line-height:1.55!important;margin-bottom:14px!important}
+ #welcomeAdModal .welcome-ad-referrals{gap:7px!important;margin:13px 0!important}
+ #welcomeAdModal .welcome-ad-referrals>div{padding:11px 3px!important;border-radius:13px!important}
+ #welcomeAdModal .welcome-ad-referrals strong{font-size:21px!important}
+ #welcomeAdModal .welcome-ad-referrals span{font-size:11px!important}
+ #welcomeAdModal .welcome-ad-slider{font-size:12px!important;padding:11px!important}
+ #welcomeAdModal .welcome-ad-points{gap:6px!important;margin:12px 0 15px!important}
+ #welcomeAdModal .welcome-ad-points span{font-size:11px!important;padding:7px 9px!important}
+ #welcomeAdModal .welcome-ad-telegram{min-height:52px!important;font-size:14px!important}
+}
+@media(max-height:720px){
+ #welcomeAdModal .welcome-ad-card{padding-top:15px!important;padding-bottom:14px!important}
+ #welcomeAdModal .welcome-ad-logo img{width:48px!important;height:48px!important}
+ #welcomeAdModal .welcome-ad-card h2{font-size:27px!important}
+ #welcomeAdModal .welcome-ad-referrals{margin:10px 0!important}
+ #welcomeAdModal .welcome-ad-points{margin:9px 0 12px!important}
+}
