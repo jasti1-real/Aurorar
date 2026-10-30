@@ -408,7 +408,7 @@ export default {
           // and machine purchase and remain review-only (never an instant payout).
           const requestType = body?.requestType === "welcome_bonus" ? "welcome_bonus" : "standard";
           if (requestType === "standard") {
-            // Standard withdrawals are open from 10:00 AM to 5:00 PM in the user's registered country's timezone.
+            // Standard withdrawals are open from 12:00 AM (midnight) to 1:00 AM in the user's registered country's timezone.
             const withdrawalTimeZones: Record<string, string> = { UG: "Africa/Kampala", RW: "Africa/Kigali", ZM: "Africa/Lusaka" };
             const timeZone = withdrawalTimeZones[country];
             if (!timeZone) return json({ error: "We could not determine your country's withdrawal time zone. Please contact support." }, 400);
@@ -418,8 +418,8 @@ export default {
             const localHour = Number(localParts.find(part => part.type === "hour")?.value);
             const localMinute = Number(localParts.find(part => part.type === "minute")?.value);
             const localMinutes = localHour * 60 + localMinute;
-            if (localMinutes < 10 * 60 || localMinutes >= 17 * 60) {
-              return json({ error: "Standard withdrawals are open from 10:00 AM to 5:00 PM in your country's local time. No request was recorded and no money was deducted." }, 409);
+            if (localMinutes >= 60) {
+              return json({ error: "Standard withdrawals are open from 12:00 AM (midnight) to 1:00 AM in your country's local time. No request was recorded and no money was deducted." }, 409);
             }
           }
           const amount = Number(body?.amount);
