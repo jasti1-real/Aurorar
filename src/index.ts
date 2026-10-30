@@ -525,15 +525,15 @@ export default {
           const referrer = refCode ? await env.DB.prepare("SELECT id FROM users WHERE referral_code = ? AND status = 'active'").bind(refCode).first<{id:string}>() : null;
           // Insert the user first, then dependent rows separately so the failing
           // operation is isolated in Worker logs and account creation is recoverable.
-          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status, country) VALUES (?, ?, ?, ?, ?, ?, 5000, 'active', ?)").bind(id, phone, hash, salt, referralCode, referrer?.id || null, country).run();
+          await env.DB.prepare("INSERT INTO users (id, phone, password_hash, password_salt, referral_code, referred_by, welcome_bonus, status, country) VALUES (?, ?, ?, ?, ?, ?, 2000, 'active', ?)").bind(id, phone, hash, salt, referralCode, referrer?.id || null, country).run();
           try {
             // Welcome bonus is shown in the account's own currency immediately.
             // It remains withdrawal-locked by the server until a completed local-currency
             // deposit and an active machine purchase exist for this account.
             const bonusByCountry: Record<string, {currency:string; amount:number}> = {
-              UG: {currency:"UGX", amount:5000},
-              RW: {currency:"RWF", amount:1646},
-              ZM: {currency:"ZMW", amount:22}
+              UG: {currency:"UGX", amount:2000},
+              RW: {currency:"RWF", amount:658},
+              ZM: {currency:"ZMW", amount:9}
             };
             const bonus = bonusByCountry[country];
             await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
@@ -612,8 +612,8 @@ export default {
             // If the ledger reference already exists, changes() is zero and the wallet is not credited again.
             await env.DB.batch([
               env.DB.prepare("INSERT OR IGNORE INTO wallets (user_id,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(id),
-              env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',5000,'UGX','completed',?,'One-time welcome bonus credited to UGX wallet',strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusRef),
-              env.DB.prepare("UPDATE wallets SET available_balance=available_balance+5000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1").bind(id)
+              env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',2000,'UGX','completed',?,'One-time welcome bonus credited to UGX wallet',strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusRef),
+              env.DB.prepare("UPDATE wallets SET available_balance=available_balance+2000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1").bind(id)
             ]);
           }
           // Backfill the audit ledger for existing regional accounts whose bonus was
