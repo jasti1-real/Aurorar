@@ -412,11 +412,11 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   const requestType=String(withdrawalChoice).trim().toUpperCase()==='BONUS'?'welcome_bonus':'standard';
   const bonusAmount=({UG:2000,RW:658,ZM:9})[state.country||'UG']||2000;
   const minAmount=requestType==='welcome_bonus'?bonusAmount:market.min;
-  const amountText=requestType==='welcome_bonus'?String(bonusAmount):await appPrompt('Enter the amount you want to withdraw in '+market.currency+'. No withdrawal tax is deducted. Minimum withdrawal: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number');
+  const amountText=requestType==='welcome_bonus'?String(bonusAmount):await appPrompt('Enter the gross withdrawal amount in '+market.currency+'. A 15% withdrawal tax applies; estimated payout after tax is 85% of the requested amount. Minimum withdrawal: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number');
   if(amountText===null)return;
   const amount=Number(amountText);
   if(!Number.isSafeInteger(amount)||amount<=0||(requestType==='standard'&&amount<market.min)||(requestType==='welcome_bonus'&&amount!==bonusAmount)){toast(requestType==='welcome_bonus'?'Welcome-bonus requests must match the credited bonus exactly.':'Minimum withdrawal is '+market.min.toLocaleString('en-US')+' '+market.currency+'.');return;}
-  const confirmWithdraw=await appPrompt('You requested '+amount.toLocaleString('en-US')+' '+market.currency+'. No withdrawal tax will be deducted. Continue? Enter YES to confirm.','Confirm withdrawal','Type YES to continue','YES','text');
+  const confirmWithdraw=await appPrompt('You requested '+amount.toLocaleString('en-US')+' '+market.currency+'. 15% tax: '+Math.round(amount*0.15).toLocaleString('en-US')+' '+market.currency+'. Estimated payout after tax: '+(amount-Math.round(amount*0.15)).toLocaleString('en-US')+' '+market.currency+'. Continue? Enter YES to confirm.','Confirm withdrawal','Type YES to continue','YES','text');
   if(confirmWithdraw===null||confirmWithdraw.trim().toUpperCase()!=='YES')return;
   const phone=await appPrompt('Enter the '+market.name+' mobile-money number that should receive the payout.','Payout number','Phone number',state.phone,'tel');
   if(phone===null)return;
