@@ -3265,52 +3265,40 @@ th,td{padding:11px 12px;line-height:1.45;vertical-align:middle;overflow-wrap:any
 }
 
 
-/* Aurorar wallet dock motion refinement — slower flag orbit and larger center tab */
-@media (max-width:800px){
-  .bottom-nav{
-    align-items:end!important;
-    padding-top:12px!important;
-    padding-bottom:calc(9px + env(safe-area-inset-bottom))!important;
+/* Aurorar wallet dock refinement: larger wallet hub, slower flag orbit */
+@media(max-width:800px){
+  html body nav.bottom-nav>.wallet-shortcut{
+    position:relative!important;z-index:5!important;align-self:end!important;
+    min-height:98px!important;margin-top:-34px!important;padding:0 2px 6px!important;
+    gap:5px!important;overflow:visible!important;transform:translateY(-1px)!important;
   }
-  .bottom-nav .wallet-shortcut{
-    margin-top:-31px!important;
-    min-height:91px!important;
-    padding:0 2px 6px!important;
-    gap:5px!important;
-    transform:translateY(-1px);
+  html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit{
+    width:82px!important;height:82px!important;min-width:82px!important;min-height:82px!important;
+    flex:0 0 82px!important;border-width:2px!important;
+    box-shadow:0 0 0 5px rgba(41,211,157,.13),0 10px 27px rgba(0,0,0,.20),inset 0 1px 0 rgba(255,255,255,.18)!important;
   }
-  .bottom-nav .wallet-logo-orbit{
-    width:70px!important;
-    height:70px!important;
-    flex:0 0 70px!important;
-    border-width:2px!important;
-    box-shadow:0 0 0 5px rgba(41,211,157,.13),0 10px 27px rgba(0,0,0,.34),inset 0 1px 0 rgba(255,255,255,.18)!important;
+  html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit img{
+    width:63px!important;height:63px!important;max-width:none!important;max-height:none!important;
   }
-  .bottom-nav .wallet-logo-orbit img{
-    width:49px!important;
-    height:49px!important;
-  }
-  .bottom-nav .wallet-country-flag{
-    width:29px!important;
-    height:29px!important;
-    font-size:17px!important;
-    transform-origin:36px 36px!important;
-    animation:walletFlagOrbitSlow 18s linear infinite!important;
+  html body nav.bottom-nav>.wallet-shortcut .wallet-country-flag{
+    width:29px!important;height:29px!important;font-size:17px!important;
+    transform-origin:41px 41px!important;
+    animation:aurorarWalletFlagOrbitSlow 20s linear infinite!important;
     box-shadow:0 3px 10px rgba(31,74,87,.23)!important;
   }
-  .bottom-nav .wallet-country-flag.flag-uganda{--flag-angle:0deg!important;animation-delay:0s!important}
-  .bottom-nav .wallet-country-flag.flag-rwanda{--flag-angle:120deg!important;animation-delay:-6s!important}
-  .bottom-nav .wallet-country-flag.flag-zambia{--flag-angle:240deg!important;animation-delay:-12s!important}
-  .bottom-nav .wallet-shortcut>span:last-child{
-    font-size:11px!important;
-    letter-spacing:.25px!important;
-  }
+  html body nav.bottom-nav>.wallet-shortcut .wallet-country-flag.flag-uganda{--flag-angle:0deg!important;animation-delay:0s!important}
+  html body nav.bottom-nav>.wallet-shortcut .wallet-country-flag.flag-rwanda{--flag-angle:120deg!important;animation-delay:-6.666s!important}
+  html body nav.bottom-nav>.wallet-shortcut .wallet-country-flag.flag-zambia{--flag-angle:240deg!important;animation-delay:-13.333s!important}
+  html body nav.bottom-nav>.wallet-shortcut>span:last-child{font-size:11px!important;letter-spacing:.25px!important}
 }
-@keyframes walletFlagOrbitSlow{
-  from{transform:rotate(var(--flag-angle,0deg)) translateY(-48px) rotate(calc(-1 * var(--flag-angle,0deg)))}
-  to{transform:rotate(calc(var(--flag-angle,0deg) + 360deg)) translateY(-48px) rotate(calc(-1 * (var(--flag-angle,0deg) + 360deg)))}
+@keyframes aurorarWalletFlagOrbitSlow{
+  from{transform:rotate(var(--flag-angle,0deg)) translateY(-49px) rotate(calc(-1 * var(--flag-angle,0deg)))}
+  to{transform:rotate(calc(var(--flag-angle,0deg) + 360deg)) translateY(-49px) rotate(calc(-1 * (var(--flag-angle,0deg) + 360deg)))}
+}
+@media(max-width:380px){
+  html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit{width:74px!important;height:74px!important;min-width:74px!important;min-height:74px!important;flex-basis:74px!important}
+  html body nav.bottom-nav>.wallet-shortcut .wallet-logo-orbit img{width:56px!important;height:56px!important}
 }
 @media(prefers-reduced-motion:reduce){
-  .bottom-nav .wallet-country-flag{animation-duration:30s!important}
+  html body nav.bottom-nav>.wallet-shortcut .wallet-country-flag{animation:none!important}
 }
-
