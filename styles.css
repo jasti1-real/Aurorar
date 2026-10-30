@@ -3036,3 +3036,38 @@ html body #toast.toast::before{
  }
  html body #toast.toast::before{left:15px!important;top:19px!important;width:38px!important;height:38px!important}
 }
+
+
+/* Position toast fully inside the viewport; override legacy toast transforms/animations. */
+html body #toast.toast{
+  position:fixed!important;
+  left:50%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:calc(156px + env(safe-area-inset-bottom))!important;
+  width:calc(100% - 28px)!important;
+  max-width:560px!important;
+  margin:0!important;
+  transform:translateX(-50%)!important;
+  translate:none!important;
+  animation:aurorarNoticeIn .22s ease-out both!important;
+  z-index:100000!important;
+}
+@keyframes aurorarNoticeIn{
+  from{opacity:0;transform:translate(-50%,8px)}
+  to{opacity:1;transform:translate(-50%,0)}
+}
+@media(min-width:801px){
+ html body #toast.toast{bottom:24px!important}
+}
+@media(max-width:600px){
+ html body #toast.toast{
+  bottom:calc(158px + env(safe-area-inset-bottom))!important;
+  left:50%!important;right:auto!important;
+  width:calc(100% - 28px)!important;
+  transform:translateX(-50%)!important;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ html body #toast.toast{animation:none!important}
+}
