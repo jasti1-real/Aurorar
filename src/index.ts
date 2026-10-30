@@ -754,8 +754,11 @@ export default {
               return json({ error: "Withdrawal country, currency, phone, or amount is inconsistent. No payout was submitted." }, 409);
             }
             // Apply the 15% withdrawal tax to every withdrawal, including welcome-bonus withdrawals.
-            const taxAmount = Number(payout.tax_amount ?? Math.ceil(Number(payout.amount) * 0.15));
-            const netPayoutAmount = Number(payout.net_amount ?? (Number(payout.amount) - taxAmount));
+            const grossAmount = Number(payout.amount);
+            // Recalculate from the requested gross amount on the server. Never trust
+            // stale or zero tax/net values stored on older withdrawal rows.
+            const taxAmount = Math.ceil(grossAmount * 0.15);
+            const netPayoutAmount = grossAmount - taxAmount;
             if (!Number.isSafeInteger(netPayoutAmount) || netPayoutAmount <= 0) {
               return json({ error: "The withdrawal amount is invalid." }, 400);
             }
