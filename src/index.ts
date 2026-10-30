@@ -349,24 +349,31 @@ export default {
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let providerResponse: any;
           try {
-            const form = new FormData();
-            form.set("amount", String(amount));
-            form.set("phone_number", phone);
-            form.set("country", country);
-            form.set("currency", market.currency);
-            form.set("reference", reference);
-            form.set("description", "Aurorar account deposit");
-            form.set("callback_url", new URL("/api/payments/marzpay/callback", url.origin).toString());
-            form.set("metadata", JSON.stringify([{ transactionId }]));
+            const payload = {
+              amount,
+              phone_number: phone,
+              country,
+              currency: market.currency,
+              method: "mobile_money",
+              reference,
+              description: "Aurorar account deposit",
+              callback_url: new URL("/api/payments/marzpay/callback", url.origin).toString(),
+              metadata: [{ transactionId }]
+            };
             const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money", {
               method: "POST",
-              headers: { "Authorization": "Basic " + auth },
-              body: form
+              headers: {
+                "Authorization": "Basic " + auth,
+                "Accept": "application/json",
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(payload)
             });
             providerResponse = await response.json().catch(() => ({}));
             if (!response.ok || providerResponse?.status === "error") {
-              await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay rejected collection request' WHERE id=? AND status='pending'").bind(transactionId).run();
               const providerMessage = String(providerResponse?.message || providerResponse?.error || "");
+              console.error("MarzPay collection request rejected", { country, currency: market.currency, httpStatus: response.status, errorCode: providerResponse?.error_code || null, message: providerMessage.slice(0, 300) });
+              await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay rejected collection request' WHERE id=? AND status='pending'").bind(transactionId).run();
               const lowerProviderMessage = providerMessage.toLowerCase();
               if (lowerProviderMessage.includes("no collection services available") || lowerProviderMessage.includes("service not enabled") || lowerProviderMessage.includes("market not enabled")) {
                 return json({ error: "Deposits for this country are not enabled on the MarzPay business account yet. In MarzPay, enable the " + market.name + " collection wallet and subscribe to its mobile-money collection services, then try again. No money was deducted." }, 503);
