@@ -639,7 +639,13 @@ export default {
           const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? AND currency = ?").bind(id, currency).all();
           const selectedWallet = currency === "UGX" ? (ugWallet || {}) : ((currencyWallets.results || [])[0] || {});
           const transactions = await env.DB.prepare("SELECT id, type, amount_ugx, currency, status, created_at FROM transactions WHERE user_id = ? AND COALESCE(currency, 'UGX') = ? AND status <> 'cancelled' ORDER BY created_at DESC LIMIT 50").bind(id, currency).all();
-          return json({ user, wallet: selectedWallet, currencyWallets: currencyWallets.results || [], products: products.results || [], regionalProducts: regionalProducts.results || [], transactions: transactions.results || [] });
+          const todayEarningSql = currency === 'UGX'
+            ? "SELECT COALESCE(SUM(amount),0) AS total FROM ugx_earning_ledger WHERE user_id=? AND earning_date=date(datetime('now','+3 hours')) AND status='credited'"
+            : "SELECT COALESCE(SUM(amount),0) AS total FROM regional_earning_ledger WHERE user_id=? AND currency=? AND earning_date=date(datetime('now','+3 hours')) AND status='credited'";
+          const todayEarningQuery = currency === 'UGX'
+            ? await env.DB.prepare(todayEarningSql).bind(id).first<any>()
+            : await env.DB.prepare(todayEarningSql).bind(id,currency).first<any>();
+          return json({ user, wallet: selectedWallet, currencyWallets: currencyWallets.results || [], products: products.results || [], regionalProducts: regionalProducts.results || [], transactions: transactions.results || [], todayEarnings: Number(todayEarningQuery?.total || 0) });
         }
         if (url.pathname === "/api/referrals" && request.method === "GET") {
           const userId = await sessionUser(request, env);
