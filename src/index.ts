@@ -657,7 +657,7 @@ export default {
         if (url.pathname.startsWith("/api/admin/")) {
           const adminUserId = await sessionUser(request, env);
           if (!adminUserId) return json({ error: "Log in with your account first." }, 401);
-          const adminConfig = (env.ADMIN_PHONES || "").split(",").map(v => normalizePhone(v.trim())).filter(Boolean);
+          const adminConfig = [env.ADMIN_PHONES || "", env.ADMIN_PHONES_EXTRA || ""].join(",").split(",").map(v => normalizePhone(v.trim())).filter(Boolean);
           if (!adminConfig.length) return json({ error: "Admin access is not configured yet." }, 503);
           const adminUser = await env.DB.prepare("SELECT phone FROM users WHERE id = ? AND status = 'active'").bind(adminUserId).first<{phone:string}>();
           if (!adminUser || !adminConfig.includes(adminUser.phone)) return json({ error: "This account is not authorized for administration." }, 403);
