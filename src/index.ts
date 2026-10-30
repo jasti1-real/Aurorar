@@ -664,7 +664,7 @@ export default {
           if (url.pathname === "/api/admin/overview" && request.method === "GET") {
             const [users, products, deposits, withdrawals, pending, balances] = await Promise.all([
               env.DB.prepare("SELECT COUNT(*) AS total, SUM(CASE WHEN status='active' THEN 1 ELSE 0 END) AS active FROM users").first<any>(),
-              env.DB.prepare("SELECT COUNT(*) AS active FROM user_products up WHERE up.status='active' AND EXISTS (SELECT 1 FROM transactions dt WHERE dt.user_id=up.user_id AND dt.type='deposit' AND dt.status='completed' AND dt.currency='UGX' AND dt.amount_ugx>0)").first<any>(),
+              env.DB.prepare("SELECT ((SELECT COUNT(*) FROM user_products up WHERE up.status='active' AND EXISTS (SELECT 1 FROM transactions dt WHERE dt.user_id=up.user_id AND dt.type='deposit' AND dt.status='completed' AND dt.currency='UGX' AND dt.amount_ugx>0)) + (SELECT COUNT(*) FROM regional_user_products rup WHERE rup.status='active' AND rup.currency IN ('RWF','ZMW') AND EXISTS (SELECT 1 FROM transactions dt WHERE dt.user_id=rup.user_id AND dt.type='deposit' AND dt.status='completed' AND dt.currency=rup.currency AND dt.amount_ugx>0))) AS active").first<any>(),
               env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='deposit' AND status='completed' AND COALESCE(currency,'UGX')='UGX'").first<any>(),
               env.DB.prepare("SELECT COALESCE(SUM(amount_ugx),0) AS total FROM transactions WHERE type='withdrawal' AND status='completed' AND COALESCE(currency,'UGX')='UGX'").first<any>(),
               env.DB.prepare("SELECT COUNT(*) AS total FROM transactions WHERE status IN ('pending','processing')").first<any>(),
