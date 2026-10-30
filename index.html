@@ -261,7 +261,7 @@ async function loadAccount(initialAccountData=null){
  state.earned=Number(w.total_earned||0);
  state.withdrawn=Number(w.total_withdrawn||0);
  state.referrals=Number(w.referral_earnings||0);
- state.today=0;
+ state.today=Number(data.todayEarnings||0);
  state.products=(data.products||[]).map(p=>({id:p.id,n:Number(p.product_number||p.id||0),name:p.name,price:Number(p.price_ugx||p.price||0),days:Number(p.duration_days||p.days||0),currency:p.currency||'UGX'}));
  state.regionalProducts=(data.regionalProducts||[]).map(p=>({id:p.id,n:Number(p.product_id||0),name:p.name,price:Number(p.price||0),daily:Number(p.daily_income||0),days:Number(p.days||p.duration_days||0),currency:p.currency||'RWF'}));
  state.currencyWallets=(data.currencyWallets||[]).map(w=>({currency:w.currency,available_balance:Number(w.available_balance||0),total_deposited:Number(w.total_deposited||0),total_earned:Number(w.total_earned||0),total_withdrawn:Number(w.total_withdrawn||0),referral_earnings:Number(w.referral_earnings||0)}));
