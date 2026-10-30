@@ -3302,3 +3302,29 @@ th,td{padding:11px 12px;line-height:1.45;vertical-align:middle;overflow-wrap:any
 @media(prefers-reduced-motion:reduce){
   html body nav.bottom-nav>.wallet-shortcut .wallet-country-flag{animation:none!important}
 }
+
+
+/* Regional flag slideshow behind the welcome hero — text stays on a dark contrast layer */
+#page-home .aurorar-welcome{position:relative!important;isolation:isolate!important;overflow:hidden!important;background:linear-gradient(112deg,rgba(3,25,55,.96) 0%,rgba(5,47,83,.91) 52%,rgba(0,67,76,.91) 100%)!important}
+#page-home .welcome-flag-slideshow{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;background:linear-gradient(90deg,rgba(3,22,47,.60),rgba(3,22,47,.28) 58%,rgba(3,22,47,.48))}
+#page-home .welcome-flag-slide{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"Apple Color Emoji","Noto Color Emoji",sans-serif;font-size:clamp(180px,34vw,430px);line-height:1;opacity:0;filter:saturate(.94);transform:scale(1.08);animation:aurorarWelcomeFlagFade 18s ease-in-out infinite}
+#page-home .welcome-flag-slide.flag-ug{animation-delay:0s}
+#page-home .welcome-flag-slide.flag-rw{animation-delay:6s}
+#page-home .welcome-flag-slide.flag-zm{animation-delay:12s}
+#page-home .welcome-glow,#page-home .welcome-copy,#page-home .welcome-portrait-wrap,#page-home .welcome-bottom-ticker{position:relative;z-index:1}
+#page-home .welcome-copy{padding:2px 0;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+#page-home .welcome-eyebrow{color:#a8fff0!important;-webkit-text-fill-color:#a8fff0!important;text-shadow:0 2px 8px rgba(0,0,0,.75)!important}
+#page-home .aurorar-welcome h1{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 3px 14px rgba(0,0,0,.72)!important}
+#page-home .welcome-highlight{background:none!important;color:#a8fff0!important;-webkit-text-fill-color:#a8fff0!important;text-shadow:0 2px 9px rgba(0,0,0,.65)!important}
+#page-home .welcome-description{color:#fff!important;-webkit-text-fill-color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.8)!important}
+#page-home .welcome-brandline{color:#fff!important;text-shadow:0 2px 8px rgba(0,0,0,.75)!important}
+#page-home .welcome-note{color:#fff!important;text-shadow:0 2px 7px rgba(0,0,0,.8)!important}
+#page-home .welcome-ticker,#page-home .portrait-caption,#page-home .portrait-float-card{background:rgba(2,17,39,.90)!important;border-color:rgba(178,255,239,.42)!important;backdrop-filter:blur(8px)}
+#page-home .welcome-bottom-ticker{background:rgba(1,20,39,.76)!important;color:#fff!important}
+@keyframes aurorarWelcomeFlagFade{
+  0%,27%{opacity:.20;transform:scale(1.02)}
+  33%,61%{opacity:0;transform:scale(1.12)}
+  66%,94%{opacity:0;transform:scale(1.12)}
+  100%{opacity:.20;transform:scale(1.02)}
+}
+@media(prefers-reduced-motion:reduce){#page-home .welcome-flag-slide{animation:none!important}#page-home .welcome-flag-slide.flag-ug{opacity:.16!important}}
