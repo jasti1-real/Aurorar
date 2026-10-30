@@ -532,7 +532,7 @@ export default {
             // deposit and an active machine purchase exist for this account.
             const bonusByCountry: Record<string, {currency:string; amount:number}> = {
               UG: {currency:"UGX", amount:2000},
-              RW: {currency:"RWF", amount:658},
+              RW: {currency:"RWF", amount:678},
               ZM: {currency:"ZMW", amount:9}
             };
             const bonus = bonusByCountry[country];
