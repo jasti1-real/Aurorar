@@ -970,7 +970,7 @@ export default {
             return json({ withdrawals: rows.results || [], message: "These are withdrawal requests, not confirmed payouts. No payout is sent by this endpoint." });
           }
           if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
-            const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.currency, t.status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
+            const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.currency, CASE WHEN t.type='product_purchase' AND t.currency='UGX' AND EXISTS (SELECT 1 FROM user_products up WHERE up.user_id=t.user_id AND up.status='pending_payment' AND t.external_reference='purchase:'||up.id) THEN 'processing' ELSE t.status END AS status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
             return json({ transactions: rows.results || [] });
           }
           return json({ error: "Not found" }, 404);
