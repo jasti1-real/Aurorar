@@ -225,7 +225,7 @@ async function loadAccount(){
  const withdrawalData=withdrawalResponse ? await withdrawalResponse.json().catch(()=>({})) : {};
  state.withdrawalRequests=withdrawalResponse&&withdrawalResponse.ok?(withdrawalData.requests||[]):[];
  state.referralRows=referralResponse&&referralResponse.ok?(referralData.referrals||[]):[];
- if(!response.ok) throw new Error(data.error||'Could not load your account.');
+ if(response && !response.ok) throw new Error(data.error||'Could not load your account.');
  const w=data.wallet||{};
  state.phone=data.user?.phone||state.phone;
  state.country=String(data.user?.country||state.country||'UG').toUpperCase();
@@ -508,7 +508,7 @@ render();
   state.country=String(data.user?.country||state.country||'UG').toUpperCase();
   render();
   // Load balances and other dashboard data in parallel after the shell appears.
-  loadAccount().then(()=>{render();renderProducts();}).catch(()=>toast('Your session is active, but some account details are still loading.'));
+  loadAccount(data).then(()=>{render();renderProducts();}).catch(()=>toast('Your session is active, but some account details are still loading.'));
  }catch(error){
   // Network timeouts should not immediately log the user out: keep the app
   // visible and let them retry rather than mistaking a slow connection for
