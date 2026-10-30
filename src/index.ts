@@ -623,16 +623,25 @@ export default {
               env.DB.prepare("UPDATE wallets SET available_balance=available_balance+2000,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND changes()=1").bind(id)
             ]);
           }
-          // Backfill the audit ledger for existing regional accounts whose bonus was
-          // credited directly to the currency wallet before regional bonus ledger support.
-          // This records the existing credit only; it deliberately does not credit the wallet again.
-          const regionalBonusByCountry: Record<string, {currency:string; amount:number}> = {
-            RW: {currency:"RWF", amount:1646},
-            ZM: {currency:"ZMW", amount:22}
-          };
-          const regionalBonus = regionalBonusByCountry[String(user.country || "UG")];
-          if (regionalBonus) {
-            await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',?,?,'completed',?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,regionalBonus.amount,regionalBonus.currency,"welcome-bonus:"+id,"One-time welcome bonus recorded for "+regionalBonus.currency+" wallet").run();
+          // Safely backfill the audit ledger for legacy regional bonuses only when
+          // the wallet still contains the untouched original bonus and no other
+          // completed transaction could explain its balance. Never guess a fixed
+          // amount and never credit the wallet in this backfill.
+          const regionalCurrencyByCountry: Record<string, string> = { RW: "RWF", ZM: "ZMW" };
+          const regionalCurrency = regionalCurrencyByCountry[String(user.country || "UG")];
+          if (regionalCurrency) {
+            const [regionalWallet, existingBonus, otherCompletedTransaction, regionalPurchase, withdrawal] = await Promise.all([
+              env.DB.prepare("SELECT available_balance FROM currency_wallets WHERE user_id=? AND currency=?").bind(id,regionalCurrency).first<{available_balance:number}>(),
+              env.DB.prepare("SELECT id FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency=? LIMIT 1").bind(id,regionalCurrency).first(),
+              env.DB.prepare("SELECT id FROM transactions WHERE user_id=? AND currency=? AND status='completed' AND type<>'welcome_bonus' LIMIT 1").bind(id,regionalCurrency).first(),
+              env.DB.prepare("SELECT id FROM regional_user_products WHERE user_id=? AND currency=? LIMIT 1").bind(id,regionalCurrency).first(),
+              env.DB.prepare("SELECT id FROM withdrawal_requests WHERE user_id=? AND currency=? LIMIT 1").bind(id,regionalCurrency).first()
+            ]);
+            const legacyBonusAmount = Number(regionalWallet?.available_balance || 0);
+            const knownLegacyAmounts = regionalCurrency === "RWF" ? [678, 1646] : [9, 22];
+            if (!existingBonus && !otherCompletedTransaction && !regionalPurchase && !withdrawal && knownLegacyAmounts.includes(legacyBonusAmount)) {
+              await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',?,?,'completed',?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,legacyBonusAmount,regionalCurrency,"welcome-bonus:"+id,"Legacy welcome bonus ledger entry for "+regionalCurrency+" wallet; no wallet credit performed").run();
+            }
           }
           const countryCurrency: Record<string, string> = { UG: "UGX", RW: "RWF", ZM: "ZMW" };
           const currency = countryCurrency[user.country] || "UGX";
