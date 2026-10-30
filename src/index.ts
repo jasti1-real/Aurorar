@@ -755,7 +755,7 @@ export default {
             if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) {
               return json({ error: "MarzPay send-money credentials and webhook verification secret must be configured in Cloudflare before approving payouts." }, 503);
             }
-            const payout = await env.DB.prepare("SELECT id,user_id,country,currency,amount,phone_number,status,provider_reference FROM withdrawal_requests WHERE id=?").bind(requestId).first<any>();
+            const payout = await env.DB.prepare("SELECT id,user_id,country,currency,amount,phone_number,status,provider_reference,tax_amount,net_amount FROM withdrawal_requests WHERE id=?").bind(requestId).first<any>();
             if (!payout) return json({ error: "Withdrawal request not found." }, 404);
             if (payout.status !== "approved") return json({ error: "Only a request already approved by an admin can be sent. Current status: " + payout.status + "." }, 409);
             const markets: Record<string,{currency:string;prefix:string}> = {
@@ -780,7 +780,7 @@ export default {
               : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency=? AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,Number(payout.amount),payout.user_id,payout.currency,requestId,Number(payout.amount));
             const reserveResults = await env.DB.batch([
               walletDebit,
-              env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,tax_amount=?,net_amount=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')").bind(reference,debitAt,taxAmount,netPayoutAmount,requestId)
+              env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,tax_amount=?,net_amount=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='approved'").bind(reference,debitAt,taxAmount,netPayoutAmount,requestId)
             ]);
             if (Number(reserveResults[0]?.meta?.changes || 0) !== 1 || Number(reserveResults[1]?.meta?.changes || 0) !== 1) {
               // If the wallet debit succeeded but the state transition did not, roll it back.
