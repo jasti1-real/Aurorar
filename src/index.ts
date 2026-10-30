@@ -33,7 +33,7 @@ async function hmac(value: string, secret: string): Promise<string> {
 async function makeSession(userId: string, secret: string, passwordSalt: string): Promise<string> {
   // Binding the token to the current password salt revokes every previous session
   // as soon as the account password is changed.
-  const payload = btoa(JSON.stringify({ sub: userId, exp: Date.now() + 7 * 86400000, ver: passwordSalt })).replace(/=/g, "");
+  const payload = btoa(JSON.stringify({ sub: userId, exp: Date.now() + 30 * 86400000, ver: passwordSalt })).replace(/=/g, "");
   return payload + "." + await hmac(payload, secret);
 }
 async function sessionUser(request: Request, env: Env): Promise<string | null> {
@@ -552,7 +552,7 @@ export default {
             throw dependentInsertError;
           }
           const token = await makeSession(id, env.SESSION_SECRET, salt);
-          return json({ ok: true, user: { phone, referralCode }, message: "Account created." }, 201, { "Set-Cookie": cookie(token, 604800) });
+          return json({ ok: true, user: { phone, referralCode }, message: "Account created." }, 201, { "Set-Cookie": cookie(token, 2592000) });
         }
         if (url.pathname === "/api/auth/login" && request.method === "POST") {
           const body = await readJson(request);
@@ -579,7 +579,7 @@ export default {
           }
           await env.DB.prepare("DELETE FROM login_attempts WHERE phone=?").bind(phone).run();
           const token = await makeSession(user.id, env.SESSION_SECRET, user.password_salt);
-          return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 604800) });
+          return json({ ok: true, user: { phone: user.phone, referralCode: user.referral_code, country: user.country || "UG" } }, 200, { "Set-Cookie": cookie(token, 2592000) });
         }
         if (url.pathname === "/api/auth/change-password" && request.method === "POST") {
           const userId = await sessionUser(request, env);
@@ -596,7 +596,7 @@ export default {
           // Keep this device signed in with the new password version. All other
           // sessions carry the old salt and will be rejected by sessionUser().
           const token = await makeSession(userId, env.SESSION_SECRET, salt);
-          return json({ ok: true, message: "Password changed successfully. Other active sessions have been signed out." }, 200, { "Set-Cookie": cookie(token, 604800) });
+          return json({ ok: true, message: "Password changed successfully. Other active sessions have been signed out." }, 200, { "Set-Cookie": cookie(token, 2592000) });
         }
         if (url.pathname === "/api/auth/logout" && request.method === "POST") return json({ ok: true }, 200, { "Set-Cookie": cookie("", 0) });
         if (url.pathname === "/api/me" && request.method === "GET") {
