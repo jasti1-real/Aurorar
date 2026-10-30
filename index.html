@@ -299,10 +299,9 @@ const UGX_DISPLAY_RATES={UGX:1,RWF:0.3395,ZMW:0.004494};
 function displayCurrencyAmount(ugx,currency){return Math.round(Number(ugx||0)*(UGX_DISPLAY_RATES[currency]||1))}
 async function renderProducts(){
  const grid=$('productsGrid');
- // Always refresh the signed-in session before selecting a market. A fresh page
- // can have a valid session cookie while state.phone is still empty; skipping /api/me
- // in that case incorrectly defaults regional users to Uganda/UGX.
- try{await loadAccount()}catch(e){
+ // Account/session restoration runs once at startup. Only fetch account data here
+ // when the user opens the catalogue without an already-restored account.
+ try{if(!state.phone)await loadAccount()}catch(e){
   if(!state.phone){grid.innerHTML='<div class="card"><h3>Please sign in to view your local catalogue</h3><p class="muted">Sign in so Aurorar can load your registered country and the correct currency.</p></div>';return}
  }
  state.country=String(state.country||'UG').toUpperCase();
@@ -480,7 +479,6 @@ window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPro
 window.addEventListener('appinstalled',()=>{deferredPrompt=null;if(installButton)installButton.textContent='App installed';});
 if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('/sw.js').catch(()=>{}));}
 updateInstallButton();
-renderProducts();
 render();
 (async function restoreLoginSession(){
  const showLogin=()=>{
@@ -510,7 +508,7 @@ render();
   state.country=String(data.user?.country||state.country||'UG').toUpperCase();
   render();
   // Load balances and other dashboard data in parallel after the shell appears.
-  loadAccount().then(()=>render()).catch(()=>toast('Your session is active, but some account details are still loading.'));
+  loadAccount().then(()=>{render();renderProducts();}).catch(()=>toast('Your session is active, but some account details are still loading.'));
  }catch(error){
   // Network timeouts should not immediately log the user out: keep the app
   // visible and let them retry rather than mistaking a slow connection for
