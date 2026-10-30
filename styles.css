@@ -2960,3 +2960,54 @@ button[class*="purchase"]{
   text-shadow:none!important;
   opacity:1!important;
 }
+
+
+/* Aurorar premium in-app notices: clear, accessible, and distinct from browser alerts */
+html body #toast.toast{
+  position:fixed!important;
+  z-index:99999!important;
+  left:16px!important;
+  right:16px!important;
+  bottom:calc(106px + env(safe-area-inset-bottom))!important;
+  width:auto!important;
+  max-width:560px!important;
+  margin-inline:auto!important;
+  padding:20px 20px 20px 76px!important;
+  min-height:94px!important;
+  border:1px solid rgba(52,244,220,.8)!important;
+  border-radius:24px!important;
+  background:
+    radial-gradient(ellipse at 0% 0%,rgba(0,214,205,.19),transparent 48%),
+    linear-gradient(145deg,#071a35 0%,#102e50 58%,#073e4b 100%)!important;
+  color:#f7fbff!important;
+  box-shadow:0 18px 48px rgba(0,18,38,.34),0 0 0 1px rgba(255,255,255,.07) inset,0 0 22px rgba(0,224,210,.16)!important;
+  font-size:15px!important;
+  font-weight:600!important;
+  line-height:1.55!important;
+  text-align:left!important;
+  overflow-wrap:anywhere!important;
+  backdrop-filter:blur(18px)!important;
+  -webkit-backdrop-filter:blur(18px)!important;
+}
+html body #toast.toast::before{
+  content:"✓"!important;
+  position:absolute!important;
+  left:18px!important;
+  top:20px!important;
+  width:42px!important;
+  height:42px!important;
+  display:grid!important;
+  place-items:center!important;
+  border-radius:50%!important;
+  background:linear-gradient(145deg,#43f2c0,#00c9b6)!important;
+  color:#062b39!important;
+  font-size:24px!important;
+  font-weight:900!important;
+  box-shadow:0 0 0 6px rgba(0,229,204,.10)!important;
+}
+html body #toast.toast.hidden{display:none!important}
+@media(max-width:480px){
+ html body #toast.toast{left:12px!important;right:12px!important;bottom:calc(100px + env(safe-area-inset-bottom))!important;padding:17px 15px 17px 68px!important;min-height:82px!important;border-radius:21px!important;font-size:14px!important;line-height:1.5!important}
+ html body #toast.toast::before{left:15px!important;top:19px!important;width:38px!important;height:38px!important;font-size:21px!important}
+}
+@media(prefers-reduced-motion:reduce){html body #toast.toast{animation:none!important}}
