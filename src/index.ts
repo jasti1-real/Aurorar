@@ -921,7 +921,7 @@ export default {
                   reference,
                   callback_url: callbackUrl,
                   description: "Aurorar withdrawal " + requestId,
-                  metadata: { withdrawal_request_id: requestId, currency: payout.currency }
+                  metadata: [{ withdrawal_request_id: requestId }, { currency: payout.currency }]
                 })
               });
               providerResponse = await response.json().catch(() => ({}));
