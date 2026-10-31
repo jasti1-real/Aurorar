@@ -832,13 +832,15 @@ export default {
               return json({ error: "MarzPay API credentials are not configured." }, 503);
             }
             let providerResponse: any;
+            let genericServicesResponse: any = null;
             try {
+              const headers = {
+                "Authorization": "Basic " + btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET),
+                "Accept": "application/json"
+              };
               const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money/services", {
                 method: "GET",
-                headers: {
-                  "Authorization": "Basic " + btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET),
-                  "Accept": "application/json"
-                },
+                headers,
                 signal: AbortSignal.timeout(8000)
               });
               providerResponse = await response.json().catch(() => ({}));
@@ -846,56 +848,29 @@ export default {
                 console.error("MarzPay service diagnostic failed", { httpStatus: response.status, errorCode: providerResponse?.error_code || null });
                 return json({ error: "MarzPay could not return your merchant collection services. Check the MarzPay dashboard or try again later." }, 502);
               }
+              // Cross-check the generic services endpoint too: some merchant accounts expose
+              // subscription details there even when the market-list endpoint is incomplete.
+              const genericResponse = await fetch("https://wallet.wearemarz.com/api/v1/services?type=collection", {
+                method: "GET",
+                headers,
+                signal: AbortSignal.timeout(8000)
+              });
+              if (genericResponse.ok) {
+                const candidate = await genericResponse.json().catch(() => null);
+                if (candidate?.status !== "error") genericServicesResponse = candidate;
+              }
             } catch {
               return json({ error: "Could not contact MarzPay to check collection services. No payment was initiated." }, 502);
             }
-            // MarzPay has used more than one service-list response shape. Support
-            // both the country/provider list and the documented data.services format;
-            // otherwise an active subscription could be incorrectly reported as missing.
+            // Support both the country/provider list and the documented service/subscription
+            // response. The generic endpoint is a second read-only source for missing markets.
             const data = providerResponse?.data || {};
+            const genericData = genericServicesResponse?.data || {};
             const countries = data?.countries || {};
-            const serviceRows = Array.isArray(data?.services) ? data.services : [];
-            const summarize = (code: string) => {
-              const country = countries[code];
-              const currency = code === "RW" ? "RWF" : "ZMW";
-              const countryProviders = Array.isArray(country?.providers) ? country.providers : [];
-              const serviceProviders = serviceRows.filter((row: any) => {
-                const service = row?.service || row;
-                const rowCountry = String(service?.country || service?.country_code || row?.country || "").toUpperCase();
-                const rowCurrency = String(service?.currency || row?.currency || "").toUpperCase();
-                const name = String(service?.name || row?.name || "").toLowerCase();
-                return rowCountry === code || rowCurrency === currency ||
-                  (code === "RW" && name.includes("rwanda")) ||
-                  (code === "ZM" && name.includes("zambia"));
-              }).map((row: any) => {
-                const service = row?.service || row;
-                const subscription = row?.subscription || {};
-                const availability = row?.availability || {};
-                return {
-                  provider: String(service?.provider || service?.name || "Unknown"),
-                  currency: String(service?.currency || currency),
-                  mode: String(service?.mode || "unknown"),
-                  active: service?.is_active === true,
-                  subscriptionStatus: String(subscription?.status || "unknown"),
-                  subscribed: !!(subscription?.uuid || availability?.is_subscribed || service?.subscription_uuid)
-                };
-              });
-              const providers = countryProviders.map((provider: any) => ({
-                provider: String(provider?.provider || provider?.name || "Unknown"),
-                currency: String(provider?.currency || currency),
-                mode: String(provider?.mode || "unknown"),
-                active: provider?.is_active !== false,
-                subscriptionStatus: String(provider?.subscription?.status || "unknown"),
-                subscribed: !!(provider?.subscription_uuid || provider?.subscription?.uuid || provider?.availability?.is_subscribed)
-              }));
-              return {
-                country: code,
-                countryName: country?.country_name || (code === "RW" ? "Rwanda" : "Zambia"),
-                currency,
-                configured: !!country || serviceProviders.length > 0,
-                providers: [...providers, ...serviceProviders]
-              };
-            };
+            const serviceRows = [
+              ...(Array.isArray(data?.services) ? data.services : []),
+              ...(Array.isArray(genericData?.services) ? genericData.services : [])
+            ];
             return json({
               ok: true,
               readOnly: true,
@@ -928,7 +903,7 @@ export default {
             }
             const countries = providerResponse?.data?.countries || {};
             const summarize = (code: string) => {
-              const country = countries[code];
+              const country = countries[code] || genericData?.countries?.[code] || null;
               const providers = Array.isArray(country?.providers) ? country.providers : [];
               return {
                 country: code,
