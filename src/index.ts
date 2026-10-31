@@ -918,6 +918,7 @@ export default {
                   amount: netPayoutAmount,
                   phone_number: payout.phone_number,
                   country: payout.country,
+                  currency: payout.currency,
                   reference,
                   callback_url: callbackUrl,
                   description: "Aurorar withdrawal " + requestId,
