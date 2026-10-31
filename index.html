@@ -388,7 +388,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
  if(action!=='deposit'&&action!=='withdraw')return;
  if(!state.phone){toast('Please log in first.');return;}
  if(action==='deposit'){
-  const market=({UG:{currency:'UGX',name:'Uganda',min:10000,max:10000000},RW:{currency:'RWF',name:'Rwanda',min:5100,max:10000000},ZM:{currency:'ZMW',name:'Zambia',min:70,max:10000000}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:10000,max:10000000};
+  const market=({UG:{currency:'UGX',name:'Uganda',min:10000,max:10000000},RW:{currency:'RWF',name:'Rwanda',min:5100,max:10000000},ZM:{currency:'ZMW',name:'Zambia',min:46,max:10000000}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:10000,max:10000000};
   const amountText=await appPrompt('Enter deposit amount in '+market.currency+' (minimum '+market.min.toLocaleString('en-US')+' '+market.currency+'):', 'Deposit funds','Amount in '+market.currency,String(market.min),'number');
   if(amountText===null)return;
   const amount=Number(amountText);
