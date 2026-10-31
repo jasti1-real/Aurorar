@@ -701,7 +701,11 @@ export default {
         }
         if (url.pathname === "/api/auth/login" && request.method === "POST") {
           const body = await readJson(request);
-          const phone = normalizePhone(body?.phone);
+          const country = typeof body?.country === "string" ? body.country.toUpperCase() : "UG";
+          if (!["UG", "RW", "ZM"].includes(country)) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
+          // Normalize local-format login numbers using the country selected on the login form.
+          // International numbers remain valid regardless of the selected country.
+          const phone = normalizePhone(body?.phone, country);
           if (!phone || typeof body?.password !== "string") return json({ error: "Enter your phone number and password." }, 400);
           // Keep failed-login throttling in D1 so it survives Worker isolate restarts.
           await env.DB.prepare("CREATE TABLE IF NOT EXISTS login_attempts (phone TEXT PRIMARY KEY, failed_count INTEGER NOT NULL DEFAULT 0, locked_until INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')))").run();
