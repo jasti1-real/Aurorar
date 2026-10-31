@@ -416,14 +416,20 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   const market=({UG:{currency:'UGX',name:'Uganda',min:3000,prefix:'+256'},RW:{currency:'RWF',name:'Rwanda',min:2000,prefix:'+250'},ZM:{currency:'ZMW',name:'Zambia',min:28,prefix:'+260'}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:3000,prefix:'+256'};
   const bonusEligible=Number(state.welcomeBonus||0)>0;
   const forcedBonus=button.dataset.withdrawalType==='welcome_bonus';
-  const withdrawalChoice=forcedBonus?(await appPrompt('You are requesting your one-time welcome bonus of '+({UG:'UGX 2,000',RW:'RWF 658',ZM:'ZMW 9'}[state.country||'UG']||'UGX 2,000')+'. You must have completed a successful deposit and purchased a machine. A 15% withdrawal tax applies. Continue to confirm this request?','Withdraw Welcome Bonus','Type YES to continue','YES','text')): (bonusEligible?await appPrompt('Enter STANDARD for a normal withdrawal, or BONUS to request only your welcome bonus. You can request your welcome bonus once after a successful deposit and machine purchase. Requests are reviewed; submitting does not mean payment is instant.','Choose withdrawal type','Type STANDARD or BONUS','STANDARD','text'): 'STANDARD');
-  if(withdrawalChoice===null)return;
-  const requestType=String(withdrawalChoice).trim().toUpperCase()==='BONUS'?'welcome_bonus':'standard';
   const bonusAmount=({UG:2000,RW:658,ZM:9})[state.country||'UG']||2000;
-  const minAmount=requestType==='welcome_bonus'?bonusAmount:market.min;
-  const amountText=requestType==='welcome_bonus'?String(bonusAmount):await appPrompt('Enter the gross withdrawal amount in '+market.currency+'. A 15% withdrawal tax applies; estimated payout after tax is 85% of the requested amount. Minimum withdrawal: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number');
-  if(amountText===null)return;
-  const amount=Number(amountText);
+  // The dedicated welcome-bonus button must never fall through to the standard
+  // withdrawal amount prompt, even if the confirmation text is not exactly YES.
+  let requestType='standard';
+  if(forcedBonus){
+   const confirmBonus=await appPrompt('Request your one-time welcome bonus of '+bonusAmount.toLocaleString('en-US')+' '+market.currency+'. You must have a successful deposit and a machine purchase. A 15% tax applies.','Withdraw Welcome Bonus','Type YES to continue','YES','text');
+   if(confirmBonus===null||confirmBonus.trim().toUpperCase()!=='YES')return;
+   requestType='welcome_bonus';
+  }else if(bonusEligible){
+   const choice=await appPrompt('Enter STANDARD for a normal withdrawal, or BONUS to request only your welcome bonus. The bonus is available once after a successful deposit and machine purchase. Requests are reviewed; payment is not instant.','Choose withdrawal type','Type STANDARD or BONUS','STANDARD','text');
+   if(choice===null)return;
+   requestType=choice.trim().toUpperCase()==='BONUS'?'welcome_bonus':'standard';
+  }
+  const amount=requestType==='welcome_bonus'?bonusAmount:Number(await appPrompt('Enter the gross withdrawal amount in '+market.currency+'. A 15% withdrawal tax applies; estimated payout after tax is 85% of the requested amount. Minimum withdrawal: '+market.min.toLocaleString('en-US')+' '+market.currency+'.','Withdraw funds','Amount in '+market.currency,String(market.min),'number'));
   if(!Number.isSafeInteger(amount)||amount<=0||(requestType==='standard'&&amount<market.min)||(requestType==='welcome_bonus'&&amount!==bonusAmount)){toast(requestType==='welcome_bonus'?'Welcome-bonus requests must match the credited bonus exactly.':'Minimum withdrawal is '+market.min.toLocaleString('en-US')+' '+market.currency+'.');return;}
   const confirmWithdraw=await appPrompt('You requested '+amount.toLocaleString('en-US')+' '+market.currency+'. 15% tax: '+Math.round(amount*0.15).toLocaleString('en-US')+' '+market.currency+'. Estimated payout after tax: '+(amount-Math.round(amount*0.15)).toLocaleString('en-US')+' '+market.currency+'. Continue? Enter YES to confirm.','Confirm withdrawal','Type YES to continue','YES','text');
   if(confirmWithdraw===null||confirmWithdraw.trim().toUpperCase()!=='YES')return;
