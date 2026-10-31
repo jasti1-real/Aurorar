@@ -1100,6 +1100,40 @@ export default {
           if (Number(result[1]?.meta?.changes || 0) !== 1 || Number(result[2]?.meta?.changes || 0) !== 1) return json({ error: "Purchase could not be recorded. No money was deducted." }, 409);
           return json({ok:true,message:product.name+" purchased.",purchase:{id:purchaseId,productId:product.id,name:product.name,priceUgx:price,currency:"UGX"}},201);
         }
+        if (url.pathname === "/api/fx-rates" && request.method === "GET") {
+          // Indicative display rates only. Never use this endpoint response to credit
+          // wallets or submit payouts; financial conversions require a persisted,
+          // timestamped rate snapshot and verified provider settlement terms.
+          const response = await fetch("https://open.er-api.com/v6/latest/USD", {
+            headers: { "Accept": "application/json" },
+            signal: AbortSignal.timeout(5000)
+          });
+          if (!response.ok) return json({ error: "Live exchange rates are temporarily unavailable. Please try again." }, 503);
+          const data: any = await response.json().catch(() => null);
+          const rates = data?.rates;
+          const usdToUgx = Number(rates?.UGX);
+          const usdToRwf = Number(rates?.RWF);
+          const usdToZmw = Number(rates?.ZMW);
+          const updatedAt = Number(data?.time_last_update_unix);
+          const ageSeconds = Math.floor(Date.now() / 1000) - updatedAt;
+          if (data?.result !== "success" || !Number.isFinite(usdToUgx) || usdToUgx <= 0 ||
+              !Number.isFinite(usdToRwf) || usdToRwf <= 0 ||
+              !Number.isFinite(usdToZmw) || usdToZmw <= 0 ||
+              !Number.isFinite(updatedAt) || ageSeconds < 0 || ageSeconds > 48 * 60 * 60) {
+            return json({ error: "The exchange-rate feed is stale or invalid. No conversion was performed." }, 503);
+          }
+          return json({
+            baseCurrency: "UGX",
+            purpose: "display_estimate_only",
+            updatedAt: new Date(updatedAt * 1000).toISOString(),
+            rates: {
+              UGX: { ugxPerUnit: 1 },
+              RWF: { ugxPerUnit: usdToUgx / usdToRwf },
+              ZMW: { ugxPerUnit: usdToUgx / usdToZmw }
+            },
+            notice: "Indicative market rates only; provider fees and settlement rates may differ. These rates do not authorize or perform a wallet conversion."
+          }, 200, { "Cache-Control": "public, max-age=300" });
+        }
         if (url.pathname === "/api/products" && request.method === "GET") {
           const currency = (url.searchParams.get("currency") || "UGX").toUpperCase();
           if (currency === "RWF" || currency === "ZMW") {
