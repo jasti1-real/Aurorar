@@ -463,25 +463,24 @@ export default {
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let providerResponse: any;
           try {
-            const payload = {
-              amount: providerAmount,
-              phone_number: phone,
-              country,
-              currency: providerCurrency,
-              method: "mobile_money",
-              reference,
-              description: "Aurorar account deposit",
-              callback_url: new URL("/api/payments/marzpay/callback", url.origin).toString(),
-              metadata: [{ transactionId }]
-            };
+            // MarzPay's Collections guide documents collection creation as multipart form fields
+            // (curl --form). Send FormData rather than JSON so the request matches that contract.
+            // Do not manually set Content-Type: fetch must add the multipart boundary.
+            const payload = new FormData();
+            payload.set("amount", String(providerAmount));
+            payload.set("phone_number", phone);
+            payload.set("country", country);
+            payload.set("reference", reference);
+            payload.set("description", "Aurorar account deposit");
+            payload.set("callback_url", new URL("/api/payments/marzpay/callback", url.origin).toString());
+            payload.set("metadata", JSON.stringify([{ transactionId }]));
             const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money", {
               method: "POST",
               headers: {
                 "Authorization": "Basic " + auth,
-                "Accept": "application/json",
-                "Content-Type": "application/json"
+                "Accept": "application/json"
               },
-              body: JSON.stringify(payload)
+              body: payload
             });
             providerResponse = await response.json().catch(() => ({}));
             // MarzPay sandbox requests return simulated success but do not send a real
