@@ -2,9 +2,9 @@ name = "aurorar"
 main = "src/index.ts"
 compatibility_date = "2026-10-28"
 
-# 00:05 East Africa Time daily (21:05 UTC). Regional earnings and regional machine purchases enabled.
+# 00:00 East Africa Time daily (21:00 UTC). Daily earnings run at midnight EAT.
 [triggers]
-crons = ["5 21 * * *"]
+crons = ["0 21 * * *"]
 
 [vars]
 REGIONAL_EARNINGS_ENABLED = "true"
