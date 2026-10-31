@@ -327,7 +327,7 @@ export default {
               await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id,currency,available_balance,total_deposited,total_earned,total_withdrawn,referral_earnings,updated_at) VALUES (?,?,0,0,0,0,0,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(local.user_id, localCurrency).run();
             }
             const completedAt = new Date().toISOString();
-            const completeTx = env.DB.prepare("UPDATE transactions SET status='completed', completed_at=?, description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(completedAt,local.id);
+            const completeTx = env.DB.prepare("UPDATE transactions SET status='completed', completed_at=?, ledger_amount_ugx=CASE WHEN currency='UGX' THEN local_amount ELSE NULL END, description='MarzPay collection completed' WHERE id=? AND status IN ('pending','processing')").bind(completedAt,local.id);
             const ledgerUpdate = localCurrency === "UGX"
               ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay collection completed')").bind(Number(local.amount_ugx),Number(local.amount_ugx),local.user_id,local.id,completedAt)
               : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?, total_deposited=total_deposited+?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay collection completed')").bind(Number(local.amount_ugx),Number(local.amount_ugx),local.user_id,localCurrency,local.id,completedAt);
@@ -408,7 +408,7 @@ export default {
             }
             // Keep completion and wallet credit atomic and tie the credit to this exact state transition.
             const completedAt = new Date().toISOString();
-            const completeTx = env.DB.prepare("UPDATE transactions SET status='completed',completed_at=?,description='MarzPay payment verified by status check' WHERE id=? AND user_id=? AND type='deposit' AND status IN ('pending','processing')").bind(completedAt,local.id,userId);
+            const completeTx = env.DB.prepare("UPDATE transactions SET status='completed',completed_at=?,ledger_amount_ugx=CASE WHEN currency='UGX' THEN local_amount ELSE NULL END,description='MarzPay payment verified by status check' WHERE id=? AND user_id=? AND type='deposit' AND status IN ('pending','processing')").bind(completedAt,local.id,userId);
             const creditWallet = currency === "UGX"
               ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay payment verified by status check')").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId,local.id,completedAt)
               : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,total_deposited=total_deposited+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND EXISTS (SELECT 1 FROM transactions WHERE id=? AND status='completed' AND completed_at=? AND description='MarzPay payment verified by status check')").bind(Number(local.amount_ugx),Number(local.amount_ugx),userId,currency,local.id,completedAt);
@@ -453,7 +453,13 @@ export default {
           const providerAmount = amount;
           const reference = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
-          await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,?,'pending',?,?,?)").bind(transactionId,userId,amount,market.currency,reference,phone,"MarzPay mobile money deposit").run();
+          // Preserve the actual market amount separately from the legacy amount_ugx
+          // column. A non-UGX deposit stays unconverted until a verified settlement
+          // rate is available; never pretend its local amount is already UGX.
+          await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,local_amount,local_currency,ledger_amount_ugx,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,?,?,?,?,'pending',?,?,?)").bind(
+            transactionId,userId,amount,market.currency,amount,market.currency,
+            market.currency === "UGX" ? amount : null,reference,phone,"MarzPay mobile money deposit"
+          ).run();
           const auth = btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
           let providerResponse: any;
           try {
