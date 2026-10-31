@@ -68,7 +68,7 @@ function normalizePhone(input: unknown, country = "UG"): string | null {
   const prefixes: Record<string, string> = { UG: "+256", RW: "+250", ZM: "+260" };
   const prefix = prefixes[country] || prefixes.UG;
   if (/^0\d{9}$/.test(phone)) phone = prefix + phone.slice(1);
-  else if (/^\d{10,15}$/.test(phone)) {
+  else if (/^\d{9,15}$/.test(phone)) {
     if (phone.startsWith("256") || phone.startsWith("250") || phone.startsWith("260")) phone = "+" + phone;
     else if (phone.length === 9) phone = prefix + phone;
   }
