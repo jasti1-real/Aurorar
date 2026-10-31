@@ -347,12 +347,13 @@ export default {
           };
           const market = markets[country];
           const phone = normalizePhone(body?.phone, country);
-          // Zambia customer-facing amounts are ZMW; MarzPay is explicitly instructed to collect the UGX equivalent. The 93 ZMW minimum maps to exactly 20,000 UGX; keep this rate configurable when a live FX source is added.
+          // MarzPay's Zambia collection API requires the Zambia market currency (ZMW).
+          // Keep the customer's amount and provider amount/currency aligned to avoid rejected cross-market collections.
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
-          const providerCurrency = country === "ZM" ? "UGX" : market.currency;
-          const providerAmount = country === "ZM" ? Math.round(amount * (20000 / 93)) : amount;
+          const providerCurrency = market.currency;
+          const providerAmount = amount;
           const reference = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
           await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,?,'pending',?,?,?)").bind(transactionId,userId,amount,market.currency,reference,phone,"MarzPay mobile money deposit").run();
