@@ -551,6 +551,11 @@ export default {
           if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
           const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
           if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+          if (requestType === "welcome_bonus" && country !== "UG") {
+            // Entitlement is fixed at UGX 2,000; regional wallets are denominated in
+            // RWF/ZMW. Do not interpret UGX as local units or create a fake conversion.
+            return json({ error: "Your UGX 2,000 welcome-bonus entitlement is recorded. Regional bonus withdrawal is temporarily unavailable until verified UGX-to-local-currency settlement accounting is implemented. Your wallet balance has not been changed." }, 409);
+          }
           if (requestType === "welcome_bonus") {
             const bonus = await env.DB.prepare("SELECT amount_ugx FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency=? AND status='completed' ORDER BY created_at ASC LIMIT 1").bind(userId,market.currency).first<any>();
             if (!bonus || Number(bonus.amount_ugx) <= 0 || amount !== Number(bonus.amount_ugx)) {
