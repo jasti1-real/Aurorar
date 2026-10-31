@@ -314,8 +314,11 @@ export default {
           if (!local) return json({ received: true, ignored: true });
           const localCurrency = String(local.currency || "UGX").toUpperCase();
           const providerCurrency = String(tx?.amount?.currency || "").toUpperCase();
-          const expectedProviderCurrency = localCurrency === "ZMW" ? "UGX" : localCurrency;
-          const expectedProviderAmount = localCurrency === "ZMW" ? Math.round(Number(local.amount_ugx) * (20000 / 93)) : Number(local.amount_ugx);
+          // The collection request sends the customer's exact amount in the
+          // market's local currency (including ZMW). Verify callbacks against that
+          // same amount/currency; never apply a hard-coded FX multiplier here.
+          const expectedProviderCurrency = localCurrency;
+          const expectedProviderAmount = Number(local.amount_ugx);
           if (Number(tx?.amount?.raw) !== expectedProviderAmount || providerCurrency !== expectedProviderCurrency) return json({ error: "Payment amount or currency mismatch." }, 409);
           if (tx.status === "completed" && eventType === "collection.completed") {
             // Regional users may not have a wallet row until their first confirmed payment.
