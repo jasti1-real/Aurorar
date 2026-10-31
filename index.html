@@ -198,16 +198,20 @@ function showPaymentNotice(reference){
  $('paymentNoticeDone').focus();
 }
 let toastTimer=null;
-function toast(s){
+function toast(s,kind){
  const message=String(s||'');
+ const lower=message.toLowerCase();
+ const isError=kind==='error'||(!kind&&/(rejected|failed|error|could not|cannot|unavailable|no money was deducted|not completed|invalid|must be|minimum withdrawal|blocked|expired)/i.test(message));
  const floating=$('toast');
  if(floating){
   floating.textContent=message;
-  floating.classList.remove('hidden');
+  floating.classList.remove('hidden','toast-error','toast-success');
+  floating.classList.add(isError?'toast-error':'toast-success');
   floating.style.display='block';
-  floating.setAttribute('role','status');
+  floating.setAttribute('role',isError?'alert':'status');
+  floating.setAttribute('aria-live',isError?'assertive':'polite');
   if(toastTimer)clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>{floating.classList.add('hidden');floating.style.display='';},4200);
+  toastTimer=setTimeout(()=>{floating.classList.add('hidden');floating.style.display='';},6500);
  }
  const feedback=$('authFeedback');
  if(feedback&&!$('authView').classList.contains('hidden')){
