@@ -62,11 +62,16 @@ const cookie = (token: string, maxAge: number) => `aurorar_session=${token}; Htt
 async function readJson(request: Request): Promise<any> {
   try { return await request.json(); } catch { return null; }
 }
-function normalizePhone(input: unknown): string | null {
+function normalizePhone(input: unknown, country = "UG"): string | null {
   if (typeof input !== "string") return null;
   let phone = input.replace(/[\s()-]/g, "");
-  if (/^0\d{9}$/.test(phone)) phone = "+256" + phone.slice(1);
-  else if (/^256\d{9}$/.test(phone)) phone = "+" + phone;
+  const prefixes: Record<string, string> = { UG: "+256", RW: "+250", ZM: "+260" };
+  const prefix = prefixes[country] || prefixes.UG;
+  if (/^0\d{9}$/.test(phone)) phone = prefix + phone.slice(1);
+  else if (/^\d{10,15}$/.test(phone)) {
+    if (phone.startsWith("256") || phone.startsWith("250") || phone.startsWith("260")) phone = "+" + phone;
+    else if (phone.length === 9) phone = prefix + phone;
+  }
   if (!/^\+\d{10,15}$/.test(phone)) return null;
   return phone;
 }
@@ -341,7 +346,7 @@ export default {
             ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 93, max: 10000000 }
           };
           const market = markets[country];
-          const phone = normalizePhone(body?.phone);
+          const phone = normalizePhone(body?.phone, country);
           // Zambia customer-facing amounts are ZMW; MarzPay is explicitly instructed to collect the UGX equivalent. The 93 ZMW minimum maps to exactly 20,000 UGX; keep this rate configurable when a live FX source is added.
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
