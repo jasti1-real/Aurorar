@@ -150,7 +150,7 @@
 const plans=[
 [1,10000,2500,60],[2,15000,3500,45],[3,20000,5000,30],[4,80000,16000,15],[5,120000,24000,15],[6,250000,50000,15],[7,500000,100000,10],[8,1000000,600000,10],[9,2000000,800000,10],[10,3000000,1000000,30]
 ];
-const money=n=>{const c=({UG:'UGX',RW:'RWF',ZM:'ZMW'})[state.country||'UG']||'UGX';const locale=({UG:'en-UG',RW:'en-RW',ZM:'en-ZM'})[state.country||'UG']||'en-UG';return c+' '+Number(n||0).toLocaleString(locale)};
+const money=n=>'UGX '+Number(n||0).toLocaleString('en-UG');
 const state={phone:'',country:'UG',refCode:'',products:[],regionalProducts:[],balance:0,welcomeBonus:0,deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[],referralRows:[],currencyWallets:[],withdrawalRequests:[]};
 let mode='login',deferredPrompt=null,installPromptReady=false;
 const $=id=>document.getElementById(id);
@@ -250,7 +250,7 @@ async function loadAccount(initialAccountData=null){
  const regionalWalletHeading=$('regionalWalletSection')?.querySelector('.section-head h2');
  const regionalWalletPill=$('regionalWalletSection')?.querySelector('.section-head .pill');
  if(regionalWalletHeading)regionalWalletHeading.textContent=state.country==='RW'?'Rwanda wallet overview':state.country==='ZM'?'Zambia wallet overview':'Regional currency wallets';
- if(regionalWalletPill)regionalWalletPill.textContent=state.country==='RW'?'RWF account':state.country==='ZM'?'ZMW account':'Regional markets';
+ if(regionalWalletPill)regionalWalletPill.textContent='UGX account';
   // Keep each regional market focused on its own country's wallet and guidance.
   const regionalSection=$('regionalWalletSection');
   if(regionalSection){
@@ -301,7 +301,7 @@ function closeWelcomeAd(){const modal=$('welcomeAdModal');if(!modal)return;modal
 $('welcomeAdClose')?.addEventListener('click',closeWelcomeAd);$('welcomeAdContinue')?.addEventListener('click',()=>{closeWelcomeAd();showPage('home')});$('welcomeAdModal')?.addEventListener('click',e=>{if(e.target===$('welcomeAdModal'))closeWelcomeAd()});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('welcomeAdModal')&&!$('welcomeAdModal').classList.contains('hidden'))closeWelcomeAd()});
 function showPage(page){document.querySelectorAll('.page').forEach(p=>p.classList.toggle('hidden',p.id!=='page-'+page));document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page));window.scrollTo({top:0,behavior:'smooth'})}
 document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
-function localMoney(value,currency){return Number(value||0).toLocaleString('en-US')+' '+currency}
+function localMoney(value,currency){return 'UGX '+Number(value||0).toLocaleString('en-UG')}
 // Indicative display-only conversions from UGX (reference rates checked 28 Oct 2026).
 // Regional transactions remain disabled; these rates do not set payment or settlement amounts.
 const UGX_DISPLAY_RATES={UGX:1,RWF:0.347,ZMW:0.004494};
@@ -416,7 +416,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   const market=({UG:{currency:'UGX',name:'Uganda',min:3000,prefix:'+256'},RW:{currency:'RWF',name:'Rwanda',min:2000,prefix:'+250'},ZM:{currency:'ZMW',name:'Zambia',min:28,prefix:'+260'}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:3000,prefix:'+256'};
   const bonusEligible=Number(state.welcomeBonus||0)>0;
   const forcedBonus=button.dataset.withdrawalType==='welcome_bonus';
-  const bonusAmount=({UG:2000,RW:658,ZM:9})[state.country||'UG']||2000;
+  const bonusAmount=2000;
   // The dedicated welcome-bonus button must never fall through to the standard
   // withdrawal amount prompt, even if the confirmation text is not exactly YES.
   let requestType='standard';
