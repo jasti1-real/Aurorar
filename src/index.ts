@@ -470,10 +470,11 @@ export default {
             payload.set("amount", String(providerAmount));
             payload.set("phone_number", phone);
             payload.set("country", country);
+            payload.set("currency", providerCurrency);
+            payload.set("method", "mobile_money");
             payload.set("reference", reference);
             payload.set("description", "Aurorar account deposit");
             payload.set("callback_url", new URL("/api/payments/marzpay/callback", url.origin).toString());
-            payload.set("metadata", JSON.stringify([{ transactionId }]));
             const response = await fetch("https://wallet.wearemarz.com/api/v1/collect-money", {
               method: "POST",
               headers: {
