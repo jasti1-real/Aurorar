@@ -507,7 +507,7 @@ export default {
           const country = account.country || "UG";
           if (typeof body?.country === "string" && body.country.toUpperCase() !== country) return json({ error: "Withdrawal country must match your registered account country." }, 403);
           const markets: Record<string, {currency:string; prefix:string; min:number; name:string}> = {
-            UG: { currency:"UGX", prefix:"+256", min:3000, name:"Uganda" },
+            UG: { currency:"UGX", prefix:"+256", min:2000, name:"Uganda" },
             RW: { currency:"RWF", prefix:"+250", min:2000, name:"Rwanda" },
             ZM: { currency:"ZMW", prefix:"+260", min:28, name:"Zambia" }
           };
@@ -524,7 +524,7 @@ export default {
           // This endpoint records requests only; payout processing still follows verified provider status.
           const amount = Number(body?.amount);
           if (!Number.isSafeInteger(amount) || amount <= 0 || (requestType === "standard" && amount < market.min)) return json({ error: requestType === "welcome_bonus" ? "Enter a valid welcome-bonus amount." : "The minimum withdrawal is " + market.min + " " + market.currency + ".", status:400 }, 400);
-          const phone = normalizePhone(body?.phone);
+          const phone = normalizePhone(body?.phone, country);
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
           const idempotencyKey = typeof body?.idempotencyKey === "string" ? body.idempotencyKey.slice(0,80) : "";
           if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
