@@ -11,6 +11,12 @@ This checklist is required before enabling Rwanda (RW) and Zambia (ZM) deposits/
 - Existing regional transaction rows include legacy `amount_ugx` values that must not be assumed to be UGX. Some rows have no `ledger_amount_ugx`.
 - The current withdrawal route records Rwanda/Zambia requests as manual; do not describe these as automatic provider payouts.
 
+## Fixed welcome bonus
+
+- The welcome bonus is **UGX 2,000** for every eligible user, regardless of whether their registered country is Uganda, Rwanda, or Zambia.
+- Display the bonus as `UGX 2,000` in the interface for all three countries. Never substitute local-currency equivalents such as RWF or ZMW values in the customer-facing bonus.
+- The display amount is not permission to make a bonus withdrawable or to credit it more than once. Preserve the existing eligibility and ledger rules, and ensure the bonus is granted only once according to the verified backend logic.
+
 ## Required provider-side evidence
 
 An account administrator must verify in MarzPay (not infer from public documentation):
