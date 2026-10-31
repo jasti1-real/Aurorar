@@ -32,7 +32,7 @@
   <div class="auth-tabs"><button id="loginTab" class="active" type="button">Log in</button><button id="registerTab" type="button">Create account</button></div>
   <form id="authForm" novalidate>
    <div id="registerCountryWrap" class="field hidden"><label for="registerCountry">Country</label><select id="registerCountry" name="country" style="width:100%;border:1px solid #dce3eb;border-radius:11px;padding:12px;background:#fff"><option value="UG">🇺🇬 Uganda (+256)</option><option value="RW">🇷🇼 Rwanda (+250)</option><option value="ZM">🇿🇲 Zambia (+260)</option></select></div>
-   <div class="field"><label for="phone">Telephone number</label><input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="+256 7XX XXX XXX" required></div>
+   <div class="field"><label for="phone">Telephone number</label><input id="phone" name="phone" type="tel" autocomplete="tel" placeholder="Enter phone number with country code" required></div>
    <div class="field"><label for="password">Password</label><div style="display:flex;gap:8px"><input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter password" required><button class="btn outline" id="togglePassword" type="button" aria-label="Show password">Show</button></div></div>
    <div id="confirmWrap" class="field hidden"><label for="confirmPassword">Confirm password</label><input id="confirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter password"></div>
    <label id="termsWrap" class="check hidden"><input type="checkbox" id="terms"> I agree to the site's terms and product risks.</label>
@@ -400,7 +400,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   if(amountText===null)return;
   const amount=Number(amountText);
   if(!Number.isSafeInteger(amount)||amount<market.min||amount>market.max){toast('Enter an amount between '+market.min.toLocaleString('en-US')+' and '+market.max.toLocaleString('en-US')+' '+market.currency+'.');return;}
-  const phone=await appPrompt('Enter the '+market.name+' MTN or Airtel Money number to charge.','Mobile money number','Phone number',state.phone,'tel');
+  const phone=await appPrompt('Enter the MTN or Airtel Money number you want to charge. Use the correct country code for this number.','Mobile money number','Phone number',state.phone,'tel');
   if(phone===null)return;
   button.disabled=true;const label=button.textContent;button.textContent='Sending request…';
   try{
