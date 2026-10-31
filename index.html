@@ -421,7 +421,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
   // withdrawal amount prompt, even if the confirmation text is not exactly YES.
   let requestType='standard';
   if(forcedBonus){
-   const confirmBonus=await appPrompt('Request your one-time welcome bonus of '+bonusAmount.toLocaleString('en-US')+' '+market.currency+'. You must have a successful deposit and a machine purchase. A 15% tax applies.','Withdraw Welcome Bonus','Type YES to continue','YES','text');
+   const confirmBonus=await appPrompt('Request your one-time welcome bonus of UGX '+bonusAmount.toLocaleString('en-US')+'. The bonus is denominated in Ugandan shillings for every country. You must have a successful deposit and a machine purchase. A 15% tax applies. The request may be rejected until the regional bonus ledger is reconciled.','Withdraw Welcome Bonus','Type YES to continue','YES','text');
    if(confirmBonus===null||confirmBonus.trim().toUpperCase()!=='YES')return;
    requestType='welcome_bonus';
   }else if(bonusEligible){
