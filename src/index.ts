@@ -475,6 +475,18 @@ export default {
               body: JSON.stringify(payload)
             });
             providerResponse = await response.json().catch(() => ({}));
+            // MarzPay sandbox requests return simulated success but do not send a real
+            // MTN/Airtel USSD prompt. Never leave these transactions looking payable.
+            const providerData = providerResponse?.data || {};
+            const providerCollection = providerData?.collection || providerResponse?.collection || {};
+            const sandboxMode = providerResponse?.metadata?.sandbox_mode === true ||
+              providerData?.metadata?.sandbox_mode === true ||
+              String(providerCollection?.mode || providerData?.mode || "").toLowerCase() === "sandbox";
+            if (response.ok && sandboxMode) {
+              console.error("MarzPay collection is in sandbox mode; no real mobile-money prompt can be sent.", { country, currency: market.currency });
+              await env.DB.prepare("UPDATE transactions SET status='failed', description='MarzPay sandbox mode; no real collection prompt sent' WHERE id=? AND status='pending'").bind(transactionId).run();
+              return json({ error: "MarzPay accepted this request in SANDBOX mode, which cannot send a real MTN/Airtel prompt. Switch your MarzPay account and API credentials to LIVE mode, then try again. No money was deducted." }, 503);
+            }
             if (!response.ok || providerResponse?.status === "error") {
               const providerMessage = String(providerResponse?.message || providerResponse?.error || "");
               console.error("MarzPay collection request rejected", { country, currency: market.currency, httpStatus: response.status, errorCode: providerResponse?.error_code || null, message: providerMessage.slice(0, 300) });
