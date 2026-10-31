@@ -974,10 +974,45 @@ export default {
             const status = (url.searchParams.get("status") || "").trim().toLowerCase();
             const allowedStatuses = ["requested", "approved", "processing", "completed", "rejected", "failed"];
             if (status && !allowedStatuses.includes(status)) return json({ error: "Invalid withdrawal status filter." }, 400);
+
+            // Reconcile a small batch of in-flight payouts against MarzPay when the admin
+            // opens/refreshes this queue. Never initiate or retry a payout here.
+            if (env.MARZPAY_API_KEY && env.MARZPAY_API_SECRET && (!status || status === "processing")) {
+              const pending = await env.DB.prepare("SELECT id,currency,amount,net_amount,phone_number,provider_reference,provider_transaction_uuid FROM withdrawal_requests WHERE status='processing' AND provider_transaction_uuid IS NOT NULL AND provider_transaction_uuid<>'' ORDER BY updated_at ASC LIMIT 20").all<any>();
+              const auth = "Basic " + btoa(env.MARZPAY_API_KEY + ":" + env.MARZPAY_API_SECRET);
+              for (const item of (pending.results || []) as any[]) {
+                try {
+                  const response = await fetch("https://wallet.wearemarz.com/api/v1/send-money/" + encodeURIComponent(String(item.provider_transaction_uuid)), {
+                    method: "GET",
+                    headers: { "Authorization": auth, "Accept": "application/json" },
+                    signal: AbortSignal.timeout(5000)
+                  });
+                  if (!response.ok) continue;
+                  const payload: any = await response.json().catch(() => ({}));
+                  const tx = payload?.transaction || payload?.data?.transaction || payload?.data || {};
+                  const txStatus = String(tx?.status || "").toLowerCase();
+                  const txReference = String(tx?.reference || "");
+                  const txUuid = String(tx?.uuid || "");
+                  const txCurrency = String(tx?.amount?.currency || payload?.data?.disbursement?.amount?.currency || "").toUpperCase();
+                  const txAmount = Number(tx?.amount?.raw ?? payload?.data?.disbursement?.amount?.raw);
+                  const txPhone = String(tx?.phone_number || payload?.data?.disbursement?.phone_number || "");
+                  const expectedAmount = Number(item.net_amount) > 0 ? Number(item.net_amount) : Number(item.amount);
+                  if (txStatus === "completed" && txReference === String(item.provider_reference) &&
+                      txUuid === String(item.provider_transaction_uuid) &&
+                      txCurrency === String(item.currency).toUpperCase() && txAmount === expectedAmount &&
+                      txPhone === String(item.phone_number)) {
+                    await env.DB.prepare("UPDATE withdrawal_requests SET status='completed',provider_status='completed',completed_at=COALESCE(completed_at,strftime('%Y-%m-%dT%H:%M:%fZ','now')),updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now'),failure_reason=NULL WHERE id=? AND status='processing' AND provider_reference=? AND provider_transaction_uuid=?").bind(item.id,item.provider_reference,item.provider_transaction_uuid).run();
+                  }
+                } catch (error) {
+                  console.error("MarzPay withdrawal reconciliation check failed", { requestId: item.id, error: String(error).slice(0,160) });
+                }
+              }
+            }
+
             const rows = status
               ? await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.request_type, wr.tax_amount, wr.net_amount, wr.phone_number, wr.status, wr.provider_reference, wr.provider_transaction_uuid, wr.provider_status, wr.payout_submitted_at, wr.completed_at, wr.failure_reason, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id WHERE wr.status=? ORDER BY wr.created_at DESC LIMIT 200").bind(status).all()
               : await env.DB.prepare("SELECT wr.id, wr.user_id, u.phone, wr.country, wr.currency, wr.amount, wr.request_type, wr.tax_amount, wr.net_amount, wr.phone_number, wr.status, wr.provider_reference, wr.provider_transaction_uuid, wr.provider_status, wr.payout_submitted_at, wr.completed_at, wr.failure_reason, wr.created_at, wr.updated_at FROM withdrawal_requests wr JOIN users u ON u.id=wr.user_id ORDER BY wr.created_at DESC LIMIT 200").all();
-            return json({ withdrawals: rows.results || [], message: "These are withdrawal requests, not confirmed payouts. No payout is sent by this endpoint." });
+            return json({ withdrawals: rows.results || [], message: "Withdrawal statuses are reconciled from verified MarzPay records; this endpoint never initiates a payout." });
           }
           if (url.pathname === "/api/admin/transactions" && request.method === "GET") {
             const rows = await env.DB.prepare("SELECT t.id, u.phone, t.type, t.amount_ugx, t.currency, CASE WHEN t.type='product_purchase' AND t.currency='UGX' AND EXISTS (SELECT 1 FROM user_products up WHERE up.user_id=t.user_id AND up.status='pending_payment' AND t.external_reference='purchase:'||up.id) THEN 'processing' ELSE t.status END AS status, t.external_reference, t.description, t.created_at FROM transactions t JOIN users u ON u.id=t.user_id ORDER BY t.created_at DESC LIMIT 100").all();
