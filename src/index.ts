@@ -336,7 +336,7 @@ export default {
           const markets: Record<string, { prefix: string; currency: string; name: string; min: number; max: number }> = {
             UG: { prefix: "+256", currency: "UGX", name: "Uganda", min: 10000, max: 10000000 },
             RW: { prefix: "+250", currency: "RWF", name: "Rwanda", min: 5100, max: 10000000 },
-            ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 70, max: 10000000 }
+            ZM: { prefix: "+260", currency: "ZMW", name: "Zambia", min: 46, max: 10000000 }
           };
           const market = markets[country];
           const phone = normalizePhone(body?.phone);
