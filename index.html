@@ -207,6 +207,9 @@ function toast(s,kind){
   floating.textContent=message;
   floating.classList.remove('hidden','toast-error','toast-success');
   floating.classList.add(isError?'toast-error':'toast-success');
+  floating.style.background=isError?'#7f1d1d':'#064e3b';
+  floating.style.borderColor=isError?'#ef4444':'#10b981';
+  floating.style.color='#ffffff';
   floating.style.display='block';
   floating.setAttribute('role',isError?'alert':'status');
   floating.setAttribute('aria-live',isError?'assertive':'polite');
