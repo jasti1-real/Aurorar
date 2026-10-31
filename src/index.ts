@@ -849,21 +849,51 @@ export default {
             } catch {
               return json({ error: "Could not contact MarzPay to check collection services. No payment was initiated." }, 502);
             }
-            const countries = providerResponse?.data?.countries || {};
+            // MarzPay has used more than one service-list response shape. Support
+            // both the country/provider list and the documented data.services format;
+            // otherwise an active subscription could be incorrectly reported as missing.
+            const data = providerResponse?.data || {};
+            const countries = data?.countries || {};
+            const serviceRows = Array.isArray(data?.services) ? data.services : [];
             const summarize = (code: string) => {
               const country = countries[code];
-              const providers = Array.isArray(country?.providers) ? country.providers : [];
+              const currency = code === "RW" ? "RWF" : "ZMW";
+              const countryProviders = Array.isArray(country?.providers) ? country.providers : [];
+              const serviceProviders = serviceRows.filter((row: any) => {
+                const service = row?.service || row;
+                const rowCountry = String(service?.country || service?.country_code || row?.country || "").toUpperCase();
+                const rowCurrency = String(service?.currency || row?.currency || "").toUpperCase();
+                const name = String(service?.name || row?.name || "").toLowerCase();
+                return rowCountry === code || rowCurrency === currency ||
+                  (code === "RW" && name.includes("rwanda")) ||
+                  (code === "ZM" && name.includes("zambia"));
+              }).map((row: any) => {
+                const service = row?.service || row;
+                const subscription = row?.subscription || {};
+                const availability = row?.availability || {};
+                return {
+                  provider: String(service?.provider || service?.name || "Unknown"),
+                  currency: String(service?.currency || currency),
+                  mode: String(service?.mode || "unknown"),
+                  active: service?.is_active === true,
+                  subscriptionStatus: String(subscription?.status || "unknown"),
+                  subscribed: !!(subscription?.uuid || availability?.is_subscribed || service?.subscription_uuid)
+                };
+              });
+              const providers = countryProviders.map((provider: any) => ({
+                provider: String(provider?.provider || provider?.name || "Unknown"),
+                currency: String(provider?.currency || currency),
+                mode: String(provider?.mode || "unknown"),
+                active: provider?.is_active !== false,
+                subscriptionStatus: String(provider?.subscription?.status || "unknown"),
+                subscribed: !!(provider?.subscription_uuid || provider?.subscription?.uuid || provider?.availability?.is_subscribed)
+              }));
               return {
                 country: code,
                 countryName: country?.country_name || (code === "RW" ? "Rwanda" : "Zambia"),
-                currency: code === "RW" ? "RWF" : "ZMW",
-                configured: !!country,
-                providers: providers.map((provider: any) => ({
-                  provider: String(provider?.provider || provider?.name || "Unknown"),
-                  currency: String(provider?.currency || (code === "RW" ? "RWF" : "ZMW")),
-                  mode: String(provider?.mode || "unknown"),
-                  subscribed: !!provider?.subscription_uuid
-                }))
+                currency,
+                configured: !!country || serviceProviders.length > 0,
+                providers: [...providers, ...serviceProviders]
               };
             };
             return json({
