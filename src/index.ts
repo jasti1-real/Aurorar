@@ -445,7 +445,7 @@ export default {
           // Keep the customer's amount and provider amount/currency aligned to avoid rejected cross-market collections.
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
-          if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
+          if (!phone) return json({ error: "Enter a valid mobile-money phone number in international format, including its country code where needed." }, 400);
           const providerCurrency = market.currency;
           const providerAmount = amount;
           const reference = crypto.randomUUID();
@@ -618,11 +618,11 @@ export default {
           const country = typeof body?.country === "string" ? body.country.toUpperCase() : "UG";
           const countryConfig: Record<string, {prefix:string;name:string}> = { UG:{prefix:"+256",name:"Uganda"}, RW:{prefix:"+250",name:"Rwanda"}, ZM:{prefix:"+260",name:"Zambia"} };
           const config = countryConfig[country];
-          const phone = normalizePhone(body?.phone);
+          const phone = normalizePhone(body?.phone, country);
           const password = body?.password;
           const refCode = typeof body?.referralCode === "string" ? body.referralCode.trim().slice(0, 40) : "";
           if (!config) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
-          if (!phone || !phone.startsWith(config.prefix)) return json({ error: "Enter a valid " + config.name + " phone number starting with " + config.prefix + "." }, 400);
+          if (!phone) return json({ error: "Enter a valid phone number in international format, including country code where needed." }, 400);
           if (typeof password !== "string" || password.length < 8 || password.length > 128) return json({ error: "Password must be 8–128 characters." }, 400);
           const exists = await env.DB.prepare("SELECT id FROM users WHERE phone = ?").bind(phone).first();
           if (exists) return json({ error: "An account with this phone number already exists. Please log in." }, 409);
