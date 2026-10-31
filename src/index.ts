@@ -425,21 +425,9 @@ export default {
           // exempt from the standard time window/minimum, but still require deposit
           // and machine purchase and remain review-only (never an instant payout).
           const requestType = body?.requestType === "welcome_bonus" ? "welcome_bonus" : "standard";
-          if (requestType === "standard") {
-            // Standard withdrawals are open from 12:00 AM (midnight) to 1:00 AM in the user's registered country's timezone.
-            const withdrawalTimeZones: Record<string, string> = { UG: "Africa/Kampala", RW: "Africa/Kigali", ZM: "Africa/Lusaka" };
-            const timeZone = withdrawalTimeZones[country];
-            if (!timeZone) return json({ error: "We could not determine your country's withdrawal time zone. Please contact support." }, 400);
-            const localParts = new Intl.DateTimeFormat("en-GB", {
-              timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23"
-            }).formatToParts(new Date());
-            const localHour = Number(localParts.find(part => part.type === "hour")?.value);
-            const localMinute = Number(localParts.find(part => part.type === "minute")?.value);
-            const localMinutes = localHour * 60 + localMinute;
-            if (localMinutes >= 60) {
-              return json({ error: "Standard withdrawals are open from 12:00 AM (midnight) to 1:00 AM in your country's local time. No request was recorded and no money was deducted." }, 409);
-            }
-          }
+          // Withdrawals may be requested at any time in all supported markets.
+          // Welcome-bonus requests remain subject to their exact bonus and eligibility checks below.
+          // This endpoint records requests only; payout processing still follows verified provider status.
           const amount = Number(body?.amount);
           if (!Number.isSafeInteger(amount) || amount <= 0 || (requestType === "standard" && amount < market.min)) return json({ error: requestType === "welcome_bonus" ? "Enter a valid welcome-bonus amount." : "The minimum withdrawal is " + market.min + " " + market.currency + ".", status:400 }, 400);
           const phone = normalizePhone(body?.phone);
