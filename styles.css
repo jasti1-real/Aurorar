@@ -3497,3 +3497,19 @@ th,td{padding:11px 12px;line-height:1.45;vertical-align:middle;overflow-wrap:any
 @media(hover:none){
  .product-card:hover{transform:none;box-shadow:var(--glass-shadow)}
 }
+
+/* Accessibility hotfix: keep primary dialog action labels readable on red buttons. */
+html body .app-modal .app-modal-actions button,
+html body .app-modal .app-modal-actions .btn,
+html body .app-modal .app-modal-actions .btn.primary,
+html body .app-modal .app-modal-actions button:disabled,
+html body .app-modal .app-modal-actions .btn:disabled{
+  color:#fff!important;
+  -webkit-text-fill-color:#fff!important;
+  text-shadow:0 1px 1px rgba(80,0,15,.18)!important;
+  opacity:1!important;
+}
+html body .app-modal .app-modal-actions button:disabled,
+html body .app-modal .app-modal-actions .btn:disabled{
+  filter:saturate(.82) brightness(.96);
+}
