@@ -17,6 +17,15 @@ This checklist is required before enabling Rwanda (RW) and Zambia (ZM) deposits/
 - Display the bonus as `UGX 2,000` in the interface for all three countries. Never substitute local-currency equivalents such as RWF or ZMW values in the customer-facing bonus.
 - The display amount is not permission to make a bonus withdrawable or to credit it more than once. Preserve the existing eligibility and ledger rules, and ensure the bonus is granted only once according to the verified backend logic.
 
+## Public MarzPay documentation check (2026-10-31)
+
+- The public Collections guide specifies the amount in the market currency and supports UGX, RWF, and ZMW by country.
+- The public Send Money guide likewise specifies the amount in the market currency for payouts.
+- The public API reference documents collection, send-money, service, balance, and transaction endpoints, but the reviewed public documentation does not establish a merchant FX conversion/UGX settlement API for Rwanda or Zambia.
+- Therefore, do not assume MarzPay automatically converts regional funds into UGX for Aurorar. Confirm the merchant account's actual settlement wallets and conversion terms with MarzPay before implementation.
+
+References: https://wallet.wearemarz.com/documentation/collections ; https://wallet.wearemarz.com/documentation/send-money ; https://wallet.wearemarz.com/documentation/api
+
 ## Required provider-side evidence
 
 An account administrator must verify in MarzPay (not infer from public documentation):
