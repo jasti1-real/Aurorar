@@ -211,11 +211,13 @@ export default {
             return json({ received: true });
           }
           if (!eventType.startsWith("collection.")) return json({ received: true, ignored: true });
-          const local = await env.DB.prepare("SELECT id, user_id, amount_ugx, currency, status FROM transactions WHERE external_reference=? AND type='deposit'").bind(reference).first<any>();
+          const local = await env.DB.prepare("SELECT id, user_id, amount_ugx, currency, status, external_reference, phone_number FROM transactions WHERE external_reference=? AND type='deposit'").bind(reference).first<any>();
           if (!local) return json({ received: true, ignored: true });
           const localCurrency = String(local.currency || "UGX").toUpperCase();
           const providerCurrency = String(tx?.amount?.currency || "").toUpperCase();
-          if (Number(tx?.amount?.raw) !== Number(local.amount_ugx) || providerCurrency !== localCurrency) return json({ error: "Payment amount or currency mismatch." }, 409);
+          const expectedProviderCurrency = localCurrency === "ZMW" ? "UGX" : localCurrency;
+          const expectedProviderAmount = localCurrency === "ZMW" ? Math.round(Number(local.amount_ugx) * (20000 / 93)) : Number(local.amount_ugx);
+          if (Number(tx?.amount?.raw) !== expectedProviderAmount || providerCurrency !== expectedProviderCurrency) return json({ error: "Payment amount or currency mismatch." }, 409);
           if (tx.status === "completed" && eventType === "collection.completed") {
             // Regional users may not have a wallet row until their first confirmed payment.
             // Ensure the matching currency wallet exists before attempting to credit it.
@@ -340,10 +342,12 @@ export default {
           };
           const market = markets[country];
           const phone = normalizePhone(body?.phone);
-          // Each market is charged in its own currency. Never convert RWF/ZMW to UGX.
+          // Zambia customer-facing amounts are ZMW; MarzPay is explicitly instructed to collect the UGX equivalent. The 93 ZMW minimum maps to exactly 20,000 UGX; keep this rate configurable when a live FX source is added.
           if (!market) return json({ error: "Choose Uganda, Rwanda, or Zambia." }, 400);
           if (!Number.isSafeInteger(amount) || amount < market.min || amount > market.max) return json({ error: "Enter an amount between " + market.min + " and " + market.max + " " + market.currency + "." }, 400);
           if (!phone || !phone.startsWith(market.prefix)) return json({ error: "Enter a valid " + market.name + " mobile money number starting with " + market.prefix + "." }, 400);
+          const providerCurrency = country === "ZM" ? "UGX" : market.currency;
+          const providerAmount = country === "ZM" ? Math.round(amount * (20000 / 93)) : amount;
           const reference = crypto.randomUUID();
           const transactionId = crypto.randomUUID();
           await env.DB.prepare("INSERT INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,phone_number,description) VALUES (?,?,'deposit',?,?,'pending',?,?,?)").bind(transactionId,userId,amount,market.currency,reference,phone,"MarzPay mobile money deposit").run();
@@ -351,10 +355,10 @@ export default {
           let providerResponse: any;
           try {
             const payload = {
-              amount,
+              amount: providerAmount,
               phone_number: phone,
               country,
-              // MarzPay derives the collection currency from country (ZM -> ZMW).
+              currency: providerCurrency,
               method: "mobile_money",
               reference,
               description: "Aurorar account deposit",
