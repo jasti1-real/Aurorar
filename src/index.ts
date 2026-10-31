@@ -569,8 +569,24 @@ export default {
           const availableBalance = Number(wallet?.available_balance || 0);
           const reservedBalance = Number(pendingWithdrawals?.reserved || 0);
           const spendableBalance = Math.max(0, availableBalance - reservedBalance);
-          if (!wallet || spendableBalance < amount) {
-            return json({ error: "Your spendable " + market.currency + " balance is not enough for this withdrawal. Available balance: " + availableBalance.toLocaleString("en-US") + " " + market.currency + "; already requested and awaiting resolution: " + reservedBalance.toLocaleString("en-US") + " " + market.currency + ". No money was deducted." }, 400);
+          // A welcome bonus is its own one-time entitlement. If legacy accounts have
+          // the credited bonus recorded but not reflected in the wallet, restore only
+          // the missing bonus amount once before validating spendable funds.
+          if (requestType === "welcome_bonus" && wallet && availableBalance < amount && reservedBalance === 0) {
+            const bonusRef = "welcome-bonus:" + userId;
+            if (country === "UG") {
+              await env.DB.prepare("UPDATE wallets SET available_balance=available_balance+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND available_balance<? AND EXISTS (SELECT 1 FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency=? AND status='completed') AND NOT EXISTS (SELECT 1 FROM withdrawal_requests WHERE user_id=? AND currency=? AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed'))").bind(amount-availableBalance,userId,amount,userId,market.currency,userId,market.currency).run();
+            } else {
+              await env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance<? AND EXISTS (SELECT 1 FROM transactions WHERE user_id=? AND type='welcome_bonus' AND currency=? AND status='completed') AND NOT EXISTS (SELECT 1 FROM withdrawal_requests WHERE user_id=? AND currency=? AND request_type='welcome_bonus' AND status IN ('requested','approved','processing','completed'))").bind(amount-availableBalance,userId,market.currency,amount,userId,market.currency,userId,market.currency).run();
+            }
+          }
+          const refreshedWallet = requestType === "welcome_bonus"
+            ? (country === "UG" ? await env.DB.prepare("SELECT available_balance FROM wallets WHERE user_id=?").bind(userId).first<any>() : await env.DB.prepare("SELECT available_balance FROM currency_wallets WHERE user_id=? AND currency=?").bind(userId,market.currency).first<any>())
+            : wallet;
+          const currentAvailableBalance = Number(refreshedWallet?.available_balance ?? availableBalance);
+          const currentSpendableBalance = Math.max(0, currentAvailableBalance - reservedBalance);
+          if (!refreshedWallet || currentSpendableBalance < amount) {
+            return json({ error: "Your spendable " + market.currency + " balance is not enough for this withdrawal. Available balance: " + currentAvailableBalance.toLocaleString("en-US") + " " + market.currency + "; already requested and awaiting resolution: " + reservedBalance.toLocaleString("en-US") + " " + market.currency + ". No money was deducted." }, 400);
           }
           const id = crypto.randomUUID();
           const taxAmount = Math.ceil(amount * 0.15);
