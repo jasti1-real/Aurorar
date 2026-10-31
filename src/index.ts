@@ -354,7 +354,7 @@ export default {
               amount,
               phone_number: phone,
               country,
-              currency: market.currency,
+              // MarzPay derives the collection currency from country (ZM -> ZMW).
               method: "mobile_money",
               reference,
               description: "Aurorar account deposit",
