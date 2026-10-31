@@ -304,7 +304,7 @@ document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',(
 function localMoney(value,currency){return Number(value||0).toLocaleString('en-US')+' '+currency}
 // Indicative display-only conversions from UGX (reference rates checked 28 Oct 2026).
 // Regional transactions remain disabled; these rates do not set payment or settlement amounts.
-const UGX_DISPLAY_RATES={UGX:1,RWF:0.3395,ZMW:0.004494};
+const UGX_DISPLAY_RATES={UGX:1,RWF:0.347,ZMW:0.004494};
 function displayCurrencyAmount(ugx,currency){return Math.round(Number(ugx||0)*(UGX_DISPLAY_RATES[currency]||1))}
 async function renderProducts(){
  const grid=$('productsGrid');
