@@ -675,17 +675,12 @@ export default {
             // Welcome bonus is shown in the account's own currency immediately.
             // It remains withdrawal-locked by the server until a completed local-currency
             // deposit and an active machine purchase exist for this account.
-            const bonusByCountry: Record<string, {currency:string; amount:number}> = {
-              UG: {currency:"UGX", amount:2000},
-              RW: {currency:"RWF", amount:678},
-              ZM: {currency:"ZMW", amount:9}
-            };
-            const bonus = bonusByCountry[country];
+            // Welcome-bonus entitlement is always UGX 2,000, independent of the user's country.
+            // Regional wallet funds remain in their local currency until verified settlement
+            // accounting is implemented; do not credit a fabricated local-currency equivalent.
+            const bonusAmountUgx = 2000;
             await env.DB.prepare("INSERT INTO wallets (user_id, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, 0, 0, 0, 0, 0)").bind(id).run();
-            if (country !== "UG") {
-              await env.DB.prepare("INSERT INTO currency_wallets (user_id, currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings) VALUES (?, ?, ?, 0, 0, 0, 0)").bind(id, bonus.currency, bonus.amount).run();
-              await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',?,?,'completed',?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonus.amount,bonus.currency,"welcome-bonus:"+id,"One-time welcome bonus credited to "+bonus.currency+" wallet").run();
-            }
+            await env.DB.prepare("INSERT OR IGNORE INTO transactions (id,user_id,type,amount_ugx,currency,status,external_reference,description,completed_at) VALUES (?,?,'welcome_bonus',?,'UGX','completed',?,?,strftime('%Y-%m-%dT%H:%M:%fZ','now'))").bind(crypto.randomUUID(),id,bonusAmountUgx,"welcome-bonus:"+id,"One-time welcome-bonus entitlement of UGX 2,000; regional wallet credit pending verified UGX ledger support").run();
             await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id).run();
             await env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id).run();
             if (referrer) {
