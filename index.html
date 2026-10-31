@@ -403,7 +403,7 @@ document.querySelectorAll('[data-action]').forEach(button=>button.addEventListen
    const reference=String(data.reference||'').trim();
    showPaymentNotice(reference);
    try{await loadAccount();render()}catch{toast('Request sent. Refresh your transaction ledger to check status.')}
-  }catch(error){const rawMessage=String(error?.message||'Deposit failed.');const lowerMessage=rawMessage.toLowerCase();const displayMessage=(lowerMessage.includes('collections are not available')||lowerMessage.includes('collection services available')||lowerMessage.includes('try another network')||lowerMessage.includes('not enabled yet'))?'MarzPay rejected the '+market.name+' mobile-money collection request. No money was deducted. Please verify that this network is active under your MarzPay collection services or contact MarzPay support.':rawMessage;toast(displayMessage);}
+  }catch(error){const rawMessage=String(error?.message||'Deposit failed.');const lowerMessage=rawMessage.toLowerCase();const displayMessage=(lowerMessage.includes('collections are not available')||lowerMessage.includes('collection services available')||lowerMessage.includes('try another network')||lowerMessage.includes('not enabled yet'))?'MarzPay rejected '+market.name+' collections. No money was deducted. Check that this network is active in your MarzPay collection services.':rawMessage;toast(displayMessage);}
   finally{button.disabled=false;button.textContent=label;}
  }else{
   const market=({UG:{currency:'UGX',name:'Uganda',min:3000,prefix:'+256'},RW:{currency:'RWF',name:'Rwanda',min:2000,prefix:'+250'},ZM:{currency:'ZMW',name:'Zambia',min:28,prefix:'+260'}})[state.country||'UG']||{currency:'UGX',name:'Uganda',min:3000,prefix:'+256'};
