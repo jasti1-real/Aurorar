@@ -470,7 +470,9 @@ export default {
             payload.set("amount", String(providerAmount));
             payload.set("phone_number", phone);
             payload.set("country", country);
-            payload.set("currency", providerCurrency);
+            // MarzPay defaults the wallet currency from country (RW -> RWF, ZM -> ZMW).
+            // Do not send an explicit currency for these single-wallet markets.
+            if (country === "UG") payload.set("currency", providerCurrency);
             payload.set("method", "mobile_money");
             payload.set("reference", reference);
             payload.set("description", "Aurorar account deposit");
