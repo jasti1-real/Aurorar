@@ -903,7 +903,7 @@ export default {
             }
             const countries = providerResponse?.data?.countries || {};
             const summarize = (code: string) => {
-              const country = countries[code] || genericData?.countries?.[code] || null;
+              const country = countries[code] || null;
               const providers = Array.isArray(country?.providers) ? country.providers : [];
               return {
                 country: code,
