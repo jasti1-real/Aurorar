@@ -13,6 +13,16 @@ export interface Env {
 const json = (body: unknown, status = 200, headers: Record<string, string> = {}) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store", ...headers } });
 
+function isEATWithdrawalWindowOpen(): boolean {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Africa/Kampala", hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+  }).formatToParts(new Date());
+  const hour = Number(parts.find(part => part.type === "hour")?.value ?? -1);
+  const minute = Number(parts.find(part => part.type === "minute")?.value ?? -1);
+  const time = hour * 60 + minute;
+  return time >= 9 * 60 && time < 17 * 60;
+}
+
 const encoder = new TextEncoder();
 const bytesToHex = (bytes: Uint8Array) => [...bytes].map(b => b.toString(16).padStart(2, "0")).join("");
 const hexToBytes = (hex: string) => new Uint8Array((hex.match(/.{1,2}/g) || []).map(v => parseInt(v, 16)));
@@ -83,6 +93,7 @@ function normalizePhone(input: unknown, country = "UG"): string | null {
 }
 
 async function submitWithdrawalPayout(env: Env, url: URL, requestId: string): Promise<Response> {
+          if (!isEATWithdrawalWindowOpen()) return json({ error: "Withdrawals and payouts are available from 9:00 AM to 5:00 PM Uganda time (EAT)." }, 403);
           if (!isWithdrawalWindowOpenEAT()) return json({ error: "Withdrawals are available from 9:00 AM to 5:00 PM Uganda time (EAT). No payout was sent." }, 403);
           if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) {
             return json({ error: "MarzPay send-money credentials and webhook verification secret must be configured in Cloudflare before approving payouts." }, 503);
@@ -534,6 +545,7 @@ export default {
             const rows = await env.DB.prepare("SELECT id, country, currency, amount, request_type, tax_amount, net_amount, phone_number, status, provider_reference, provider_transaction_uuid, provider_status, payout_submitted_at, completed_at, failure_reason, created_at, updated_at FROM withdrawal_requests WHERE user_id=? ORDER BY created_at DESC LIMIT 50").bind(userId).all();
             return json({ requests: rows.results || [] });
           }
+          if (!isEATWithdrawalWindowOpen()) return json({ error: "Withdrawals are open from 9:00 AM to 5:00 PM Uganda time (EAT). Please submit your request during that window." }, 403);
           const body = await readJson(request);
           const account = await env.DB.prepare("SELECT country FROM users WHERE id = ? AND status = 'active'").bind(userId).first<{country:string}>();
           if (!account) return json({ error: "Active account not found." }, 401);
