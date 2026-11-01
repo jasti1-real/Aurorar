@@ -871,6 +871,27 @@ export default {
               ...(Array.isArray(data?.services) ? data.services : []),
               ...(Array.isArray(genericData?.services) ? genericData.services : [])
             ];
+            const summarize = (code: string) => {
+              const currency = code === "RW" ? "RWF" : "ZMW";
+              const country = countries[code] || genericData?.countries?.[code] || null;
+              const countryProviders = Array.isArray(country?.providers) ? country.providers : [];
+              const matchingServices = serviceRows.filter((service: any) =>
+                String(service?.country_code || service?.country || service?.countryCode || "").toUpperCase() === code
+              );
+              const providers = countryProviders.length ? countryProviders : matchingServices;
+              return {
+                country: code,
+                countryName: country?.country_name || (code === "RW" ? "Rwanda" : "Zambia"),
+                currency,
+                configured: !!country || matchingServices.length > 0,
+                providers: providers.map((provider: any) => ({
+                  provider: String(provider?.provider || provider?.name || provider?.network || "Unknown"),
+                  currency: String(provider?.currency || currency),
+                  mode: String(provider?.mode || "unknown"),
+                  subscribed: !!(provider?.subscription_uuid || provider?.subscription?.uuid || provider?.availability?.is_subscribed || provider?.is_subscribed)
+                }))
+              };
+            };
             return json({
               ok: true,
               readOnly: true,
