@@ -119,8 +119,8 @@ async function submitWithdrawalPayout(env: Env, url: URL, requestId: string): Pr
           const reference = crypto.randomUUID();
           const debitAt = new Date().toISOString();
           const walletDebit = payout.currency === "UGX"
-            ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,Number(payout.amount),payout.user_id,requestId,Number(payout.amount))
-            : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency=? AND id<>? AND status IN ('requested','approved','processing')),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,Number(payout.amount),payout.user_id,payout.currency,requestId,Number(payout.amount));
+            ? env.DB.prepare("UPDATE wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency='UGX' AND id<>? AND (status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,Number(payout.amount),payout.user_id,requestId,Number(payout.amount))
+            : env.DB.prepare("UPDATE currency_wallets SET available_balance=available_balance-?,total_withdrawn=total_withdrawn+?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE user_id=? AND currency=? AND available_balance>=? AND available_balance-COALESCE((SELECT SUM(amount) FROM withdrawal_requests WHERE user_id=? AND currency=? AND id<>? AND (status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))),0)>=?").bind(Number(payout.amount),Number(payout.amount),payout.user_id,payout.currency,Number(payout.amount),payout.user_id,payout.currency,requestId,Number(payout.amount));
           const reserveResults = await env.DB.batch([
             walletDebit,
             env.DB.prepare("UPDATE withdrawal_requests SET status='processing',provider_reference=?,provider_status='submitting',wallet_debited_at=?,tax_amount=?,net_amount=?,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=? AND status='approved'").bind(reference,debitAt,taxAmount,netPayoutAmount,requestId)
@@ -604,7 +604,7 @@ export default {
               : env.DB.prepare("SELECT available_balance FROM currency_wallets WHERE user_id=? AND currency=?").bind(userId,market.currency).first<any>(),
             // Requests are not deducted at submission, so reserve their value against
             // the matching local-currency wallet to prevent double-requesting funds.
-            env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS reserved FROM withdrawal_requests WHERE user_id=? AND currency=? AND status IN ('requested','approved','processing')").bind(userId,market.currency).first<any>()
+            env.DB.prepare("SELECT COALESCE(SUM(amount),0) AS reserved FROM withdrawal_requests WHERE user_id=? AND currency=? AND (status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))").bind(userId,market.currency).first<any>()
           ]);
           const availableBalance = Number(wallet?.available_balance || 0);
           const reservedBalance = Number(pendingWithdrawals?.reserved || 0);
@@ -645,7 +645,7 @@ export default {
                     WHERE w.user_id=?
                       AND w.available_balance - COALESCE((
                         SELECT SUM(wr.amount) FROM withdrawal_requests wr
-                        WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
+                        WHERE wr.user_id=? AND wr.currency=? AND wr.(status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))
                       ),0) >= ?
                   )
                 `).bind(id,userId,country,market.currency,amount,taxAmount,netPayoutAmount,phone,idempotencyKey,requestType,userId,userId,market.currency,amount).run()
@@ -657,7 +657,7 @@ export default {
                     WHERE w.user_id=? AND w.currency=?
                       AND w.available_balance - COALESCE((
                         SELECT SUM(wr.amount) FROM withdrawal_requests wr
-                        WHERE wr.user_id=? AND wr.currency=? AND wr.status IN ('requested','approved','processing')
+                        WHERE wr.user_id=? AND wr.currency=? AND wr.(status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))
                       ),0) >= ?
                   )
                 `).bind(id,userId,country,market.currency,amount,taxAmount,netPayoutAmount,phone,idempotencyKey,requestType,userId,market.currency,userId,market.currency,amount).run();
