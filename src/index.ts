@@ -817,22 +817,23 @@ export default {
           }
           const countryCurrency: Record<string, string> = { UG: "UGX", RW: "RWF", ZM: "ZMW" };
           const currency = countryCurrency[user.country] || "UGX";
-          const ugWallet = await env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>();
-          const products = await env.DB.prepare("SELECT up.id, p.id AS product_id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days, up.starts_at, up.ends_at, up.status, 'UGX' AS currency FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.purchased_at DESC").bind(id).all();
-          const regionalProducts = currency === "UGX" ? { results: [] as any[] } : await env.DB.prepare("SELECT rup.id, rp.id AS product_id, rp.name, rup.purchase_price AS price, rp.duration_days AS days, rup.starts_at, rup.ends_at, rup.status, rup.currency, rup.daily_income FROM regional_user_products rup JOIN regional_products rp ON rp.id=rup.product_id AND rp.currency=rup.currency WHERE rup.user_id=? AND rup.status='active' ORDER BY rup.purchased_at DESC").bind(id).all();
+          // Run independent dashboard reads concurrently so mobile refreshes do not wait for each D1 query in sequence.
           await env.DB.batch([
             env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'RWF')").bind(id),
             env.DB.prepare("INSERT OR IGNORE INTO currency_wallets (user_id, currency) VALUES (?, 'ZMW')").bind(id)
           ]);
-          const currencyWallets = await env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? AND currency = ?").bind(id, currency).all();
-          const selectedWallet = currency === "UGX" ? (ugWallet || {}) : ((currencyWallets.results || [])[0] || {});
-          const transactions = await env.DB.prepare("SELECT t.id, t.type, t.amount_ugx, CASE WHEN COALESCE(t.currency,'UGX')='UGX' THEN t.amount_ugx ELSE t.local_amount END AS amount, t.currency, CASE WHEN t.type='product_purchase' AND t.currency='UGX' AND EXISTS (SELECT 1 FROM user_products up WHERE up.user_id=t.user_id AND up.status='pending_payment' AND t.external_reference='purchase:'||up.id) THEN 'processing' ELSE t.status END AS status, t.created_at FROM transactions t WHERE t.user_id = ? AND COALESCE(t.currency, 'UGX') = ? AND t.status <> 'cancelled' ORDER BY t.created_at DESC LIMIT 50").bind(id, currency).all();
           const todayEarningSql = currency === 'UGX'
             ? "SELECT COALESCE(SUM(amount),0) AS total FROM ugx_earning_ledger WHERE user_id=? AND earning_date=date(datetime('now','+3 hours')) AND status='credited'"
             : "SELECT COALESCE(SUM(amount),0) AS total FROM regional_earning_ledger WHERE user_id=? AND currency=? AND earning_date=date(datetime('now','+3 hours')) AND status='credited'";
-          const todayEarningQuery = currency === 'UGX'
-            ? await env.DB.prepare(todayEarningSql).bind(id).first<any>()
-            : await env.DB.prepare(todayEarningSql).bind(id,currency).first<any>();
+          const [ugWallet, products, regionalProducts, currencyWallets, transactions, todayEarningQuery] = await Promise.all([
+            env.DB.prepare("SELECT available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM wallets WHERE user_id = ?").bind(id).first<any>(),
+            env.DB.prepare("SELECT up.id, p.id AS product_id, p.name, up.purchase_price_ugx AS price, p.duration_days AS days, up.starts_at, up.ends_at, up.status, 'UGX' AS currency FROM user_products up JOIN products p ON p.id = up.product_id WHERE up.user_id = ? AND up.status = 'active' ORDER BY up.purchased_at DESC").bind(id).all(),
+            currency === "UGX" ? Promise.resolve({ results: [] as any[] }) : env.DB.prepare("SELECT rup.id, rp.id AS product_id, rp.name, rup.purchase_price AS price, rp.duration_days AS days, rup.starts_at, rup.ends_at, rup.status, rup.currency, rup.daily_income FROM regional_user_products rup JOIN regional_products rp ON rp.id=rup.product_id AND rp.currency=rup.currency WHERE rup.user_id=? AND rup.status='active' ORDER BY rup.purchased_at DESC").bind(id).all(),
+            env.DB.prepare("SELECT currency, available_balance, total_deposited, total_earned, total_withdrawn, referral_earnings FROM currency_wallets WHERE user_id = ? AND currency = ?").bind(id, currency).all(),
+            env.DB.prepare("SELECT t.id, t.type, t.amount_ugx, CASE WHEN COALESCE(t.currency,'UGX')='UGX' THEN t.amount_ugx ELSE t.local_amount END AS amount, t.currency, CASE WHEN t.type='product_purchase' AND t.currency='UGX' AND EXISTS (SELECT 1 FROM user_products up WHERE up.user_id=t.user_id AND up.status='pending_payment' AND t.external_reference='purchase:'||up.id) THEN 'processing' ELSE t.status END AS status, t.created_at FROM transactions t WHERE t.user_id = ? AND COALESCE(t.currency, 'UGX') = ? AND t.status <> 'cancelled' ORDER BY t.created_at DESC LIMIT 50").bind(id, currency).all(),
+            currency === 'UGX' ? env.DB.prepare(todayEarningSql).bind(id).first<any>() : env.DB.prepare(todayEarningSql).bind(id,currency).first<any>()
+          ]);
+          const selectedWallet = currency === "UGX" ? (ugWallet || {}) : ((currencyWallets.results || [])[0] || {});
           return json({ user, wallet: selectedWallet, currencyWallets: currencyWallets.results || [], products: products.results || [], regionalProducts: regionalProducts.results || [], transactions: transactions.results || [], todayEarnings: Number(todayEarningQuery?.total || 0) });
         }
         if (url.pathname === "/api/referrals" && request.method === "GET") {
