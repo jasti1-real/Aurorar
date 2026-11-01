@@ -333,8 +333,9 @@ async function renderProducts(){
    if(b.dataset.purchasing==='true')return;
    if(!state.phone){toast('Please log in to purchase a machine.');return}
    const id=Number(b.dataset.buy);
-   if(!Number.isSafeInteger(id)||id<1){toast('This machine has an invalid product ID. Please refresh the page.');return}
-   if(!await appConfirm('Purchase Machine '+id+' for '+money(toUgx(p.price,p.currency))+' from your '+({UGX:'Uganda',RWF:'Rwanda',ZMW:'Zambia'}[p.currency]||'account')+' wallet? All amounts are displayed in UGX.','Confirm purchase','Purchase machine'))return;
+   const selectedProduct=items.find(item=>item.n===id);
+   if(!Number.isSafeInteger(id)||!selectedProduct){toast('This machine has an invalid product ID. Please refresh the page.');return}
+   if(!await appConfirm('Purchase Machine '+id+' for '+money(toUgx(selectedProduct.price,selectedProduct.currency))+' from your '+({UGX:'Uganda',RWF:'Rwanda',ZMW:'Zambia'}[selectedProduct.currency]||'account')+' wallet? All amounts are displayed in UGX.','Confirm purchase','Purchase machine'))return;
    b.dataset.purchasing='true';b.disabled=true;b.textContent='Processing…';
    let purchased=false;
    try{
