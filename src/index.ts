@@ -575,6 +575,10 @@ export default {
           if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
           const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
           if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+          // Limit each account to one withdrawal request per Uganda calendar day.
+          // Include in-flight and completed requests, across standard and bonus withdrawals.
+          const dailyWithdrawal = await env.DB.prepare("SELECT id,status,created_at FROM withdrawal_requests WHERE user_id=? AND date(created_at,'+3 hours')=date('now','+3 hours') AND status IN ('requested','approved','processing','completed') ORDER BY created_at DESC LIMIT 1").bind(userId).first<any>();
+          if (dailyWithdrawal) return json({ error:"You can make only one withdrawal per day (Uganda time). Your request for today is already recorded. Check your withdrawal history and try again tomorrow.", dailyLimit:true, existingStatus:dailyWithdrawal.status }, 429);
           // New withdrawal requests are accepted only during the daily Uganda-time window.
           if (!isWithdrawalWindowOpenEAT()) return json({ error: "Withdrawals are open from 9:00 AM to 5:00 PM Uganda time (EAT). Please try again during that window." }, 403);
           if (requestType === "welcome_bonus" && country !== "UG") {
@@ -645,7 +649,7 @@ export default {
                     WHERE w.user_id=?
                       AND w.available_balance - COALESCE((
                         SELECT SUM(wr.amount) FROM withdrawal_requests wr
-                        WHERE wr.user_id=? AND wr.currency=? AND wr.(status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))
+                        WHERE wr.user_id=? AND wr.currency=? AND (wr.status IN ('requested','approved') OR (wr.status='processing' AND wr.wallet_debited_at IS NULL))
                       ),0) >= ?
                   )
                 `).bind(id,userId,country,market.currency,amount,taxAmount,netPayoutAmount,phone,idempotencyKey,requestType,userId,userId,market.currency,amount).run()
@@ -657,7 +661,7 @@ export default {
                     WHERE w.user_id=? AND w.currency=?
                       AND w.available_balance - COALESCE((
                         SELECT SUM(wr.amount) FROM withdrawal_requests wr
-                        WHERE wr.user_id=? AND wr.currency=? AND wr.(status IN ('requested','approved') OR (status='processing' AND wallet_debited_at IS NULL))
+                        WHERE wr.user_id=? AND wr.currency=? AND (wr.status IN ('requested','approved') OR (wr.status='processing' AND wr.wallet_debited_at IS NULL))
                       ),0) >= ?
                   )
                 `).bind(id,userId,country,market.currency,amount,taxAmount,netPayoutAmount,phone,idempotencyKey,requestType,userId,market.currency,userId,market.currency,amount).run();
