@@ -150,7 +150,7 @@
 const plans=[
 [1,10000,2500,60],[2,15000,3500,45],[3,20000,5000,30],[4,80000,16000,15],[5,120000,24000,15],[6,250000,50000,15],[7,500000,100000,10],[8,1000000,600000,10],[9,2000000,800000,10],[10,3000000,1000000,30]
 ];
-const money=n=>'UGX '+Number(n||0).toLocaleString('en-UG');
+// Money formatting is defined once below, with whole-UGX rounding.
 const state={phone:'',country:'UG',refCode:'',products:[],regionalProducts:[],balance:0,welcomeBonus:0,deposit:0,today:0,referrals:0,earned:0,withdrawn:0,ledger:[],referralRows:[],currencyWallets:[],withdrawalRequests:[]};
 let mode='login',deferredPrompt=null,installPromptReady=false;
 const $=id=>document.getElementById(id);
