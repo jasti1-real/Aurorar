@@ -2,9 +2,9 @@ name = "aurorar"
 main = "src/index.ts"
 compatibility_date = "2026-10-28"
 
-# 00:00 East Africa Time daily (21:00 UTC). Daily earnings run at midnight EAT.
+# Run the idempotent daily earnings reconciliation every 15 minutes; earning dates use EAT.
 [triggers]
-crons = ["0 21 * * *"]
+crons = ["*/15 * * * *"]
 
 [vars]
 REGIONAL_EARNINGS_ENABLED = "true"
