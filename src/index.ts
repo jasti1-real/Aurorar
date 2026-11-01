@@ -278,7 +278,10 @@ export default {
           // withdrawal. The wallet was reserved by debiting it before submission, so a
           // completed callback must not debit it a second time.
           if (eventType === "disbursement.completed" || eventType === "disbursement.failed") {
-            const payout = await env.DB.prepare("SELECT id,user_id,currency,amount,net_amount,country,status,provider_transaction_uuid,wallet_debited_at,wallet_refunded_at FROM withdrawal_requests WHERE provider_reference=?").bind(reference).first<any>();
+            // MarzPay documents our original send-money reference in transaction.provider_reference.
+            // transaction.reference may instead contain the provider transaction identifier.
+            const payoutReference = typeof tx?.provider_reference === "string" ? tx.provider_reference : reference;
+            const payout = await env.DB.prepare("SELECT id,user_id,currency,amount,net_amount,country,status,provider_transaction_uuid,wallet_debited_at,wallet_refunded_at FROM withdrawal_requests WHERE provider_reference=?").bind(payoutReference).first<any>();
             if (!payout) return json({ received: true, ignored: true });
             const providerCurrency = String(tx?.amount?.currency || "").toUpperCase();
             const providerAmount = Number(tx?.amount?.raw);
