@@ -58,6 +58,12 @@ async function sessionUser(request: Request, env: Env): Promise<string | null> {
     return account && account.password_salt === data.ver ? data.sub : null;
   } catch { return null; }
 }
+function isWithdrawalWindowOpenEAT(): boolean {
+  // East Africa Time is UTC+3. Window is inclusive at 09:00 and closes at 17:00.
+  const eat = new Date(Date.now() + 3 * 60 * 60 * 1000);
+  const minutes = eat.getUTCHours() * 60 + eat.getUTCMinutes();
+  return minutes >= 9 * 60 && minutes < 17 * 60;
+}
 const cookie = (token: string, maxAge: number) => `aurorar_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
 async function readJson(request: Request): Promise<any> {
   try { return await request.json(); } catch { return null; }
@@ -77,6 +83,7 @@ function normalizePhone(input: unknown, country = "UG"): string | null {
 }
 
 async function submitWithdrawalPayout(env: Env, url: URL, requestId: string): Promise<Response> {
+          if (!isWithdrawalWindowOpenEAT()) return json({ error: "Withdrawals are available from 9:00 AM to 5:00 PM Uganda time (EAT). No payout was sent." }, 403);
           if (!env.MARZPAY_API_KEY || !env.MARZPAY_API_SECRET || !env.MARZPAY_WEBHOOK_SECRET) {
             return json({ error: "MarzPay send-money credentials and webhook verification secret must be configured in Cloudflare before approving payouts." }, 503);
           }
@@ -556,6 +563,8 @@ export default {
           if (!/^[A-Za-z0-9_-]{12,80}$/.test(idempotencyKey)) return json({ error: "Please retry the request; a valid request reference is required." }, 400);
           const existing = await env.DB.prepare("SELECT id, country, currency, amount, phone_number, status, created_at FROM withdrawal_requests WHERE user_id=? AND idempotency_key=?").bind(userId,idempotencyKey).first<any>();
           if (existing) return json({ ok:true, request:existing, message:"This withdrawal request was already recorded. It has not been paid." }, 200);
+          // New withdrawal requests are accepted only during the daily Uganda-time window.
+          if (!isWithdrawalWindowOpenEAT()) return json({ error: "Withdrawals are open from 9:00 AM to 5:00 PM Uganda time (EAT). Please try again during that window." }, 403);
           if (requestType === "welcome_bonus" && country !== "UG") {
             // Entitlement is fixed at UGX 2,000; regional wallets are denominated in
             // RWF/ZMW. Do not interpret UGX as local units or create a fake conversion.
