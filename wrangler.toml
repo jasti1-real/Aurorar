@@ -1,28 +1,12 @@
 name = "aurorar"
-main = "src/index.ts"
+pages_build_output_dir = "."
 compatibility_date = "2026-10-28"
-
-# 00:00 East Africa Time daily (21:00 UTC). Daily earnings run at midnight EAT.
-[triggers]
-crons = ["0 21 * * *"]
 
 [vars]
 REGIONAL_EARNINGS_ENABLED = "true"
-
-[assets]
-directory = "."
-binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "aurorar"
 database_id = "fd28156b-122e-44b3-b8c6-cb379dd4b514"
 migrations_dir = "migrations"
-
-# The static site is served from the repository root.
-# API Worker entry point will be added at src/index.ts before enabling API routes.
-# Configure secrets in Cloudflare Workers > Settings > Variables and Secrets.
-# SESSION_SECRET
-# MARZPAY_API_BASE_URL
-# MARZPAY_API_KEY
-# MARZPAY_WEBHOOK_SECRET
